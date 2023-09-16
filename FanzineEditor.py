@@ -476,7 +476,7 @@ class FanzinesPage(GridDataSource):
         self._colDefs: ColDefinitionsList=ColDefinitionsList([])
         for i in range(self._numCols):
             self._colDefs.append(ColDefinition("", IsEditable="no"))
-        self._fanzineList: list[FanzinesRow]=[]
+        self._fanzineList: list[FanzinesPageRow]=[]
         self._gridDataRowClass=FanzinesPageRow
 
 
