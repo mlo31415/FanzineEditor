@@ -472,6 +472,7 @@ class FanzinesPageRow(GridDataRowClass):
 class FanzinesPage(GridDataSource):
     def __init__(self):
         GridDataSource.__init__(self)
+        self._numCols=5
         self._colDefs: ColDefinitionsList=ColDefinitionsList([])
         for i in range(self._numCols):
             self._colDefs.append(ColDefinition("", IsEditable="no"))
