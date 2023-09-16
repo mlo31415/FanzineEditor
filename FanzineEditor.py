@@ -71,17 +71,16 @@ def main():
         g_LogDialog=None
 
     # Initialize the GUI
-    frame=FanzineEditor(None)
+    FanzineEditor(None)
 
     # Run the event loop
     app.MainLoop()
 
-
     LogClose()
-
     sys.exit(1)
 
 
+#------------------------------------------------------------------------------
 g_LogDialog: Optional[LogDialog]=None
 def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear=False, Flush=False, timestamp=False) -> None:
     RealLog(text, isError=isError, noNewLine=noNewLine, Print=Print, Clear=Clear, Flush=Flush, timestamp=timestamp)
