@@ -464,6 +464,25 @@ class FanzinesPage(GridDataSource):
     @property
     def NumRows(self) -> int:        # FanzineTablePage(GridDataSource)
         return len(self._fanzineList)
+    @property
+    def FanzineList(self) -> list[str]:
+        return self._fanzineList
+    @FanzineList.setter
+    def FanzineList(self, val: list[str]):
+        self._fanzineList=val
+        numrows=len(val)/self._numCols
+        if len(val)%self._numCols != 0:
+            numrows+=1
+        self._rows=[]
+        row=self._rows
+        for i in range(len(val)):
+            row=i//self._numCols
+            col=i%self._numCols
+            if col == 0:
+                self._rows.append(self._gridDataRowClass(self._numCols*[""]))
+            self._rows[row][col]=val[i]
+
+
 
     def __getitem__(self, index: int) -> FanzinesPageRow:        # FanzineTablePage(GridDataSource)
         return self.Rows[index]
