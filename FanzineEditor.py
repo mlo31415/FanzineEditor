@@ -76,6 +76,7 @@ def main():
     # Run the event loop
     app.MainLoop()
 
+
     LogClose()
 
     sys.exit(1)
@@ -143,7 +144,7 @@ class FanzineEditor(FanzineGrid):
 
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
 
-        self.ClearMainWindow()
+        #self.ClearMainWindow()
         self.RefreshWindow()
 
         self.Show(True)
@@ -217,7 +218,7 @@ class FanzineEditor(FanzineGrid):
 
 
     def MaybeSetNeedsSavingFlag(self):       # MainWindow(MainFrame)
-        s="Editing "+self.lstFilename
+        s="Editing "
         if self.NeedsSaving():
             s=s+" *"        # Add on a change marker if needed
         self.SetTitle(s)
@@ -434,11 +435,10 @@ class FanzinesPage(GridDataSource):
         self._gridDataRowClass=FanzinesRow
 
 
-
     def Signature(self) -> int:        # FanzineTablePage(GridDataSource)
         s=self._colDefs.Signature()
         s+=sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
-        return s+hash(self._specialTextColor)+self._colDefs.Signature()
+        return s+self._colDefs.Signature()
 
     # Inherited from GridDataSource
     @property
