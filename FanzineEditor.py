@@ -471,14 +471,6 @@ class FanzinesPage(GridDataSource):
     def __setitem__(self, index: int, val: FanzinesPageRow) -> None:        # FanzineTablePage(GridDataSource)
         self._fanzineList[index]=val
 
-
-    @property
-    def SpecialTextColor(self) -> Optional[Color]:        # FanzineTablePage(GridDataSource)
-        return self._specialTextColor
-    @SpecialTextColor.setter
-    def SpecialTextColor(self, val: Optional[Color]) -> None:        # FanzineTablePage(GridDataSource)
-        self._specialTextColor=val
-
     def CanAddColumns(self) -> bool:        # FanzineTablePage(GridDataSource)
         return False
 
