@@ -70,11 +70,8 @@ def main():
         g_LogDialog.Destroy()
         g_LogDialog=None
 
-    # Read the list of fanzines
-    fanzinelist=GetFanzineList()
-
     # Initialize the GUI
-    (None)
+    frame=FanzineEditor(None)
 
     # Run the event loop
     app.MainLoop()
