@@ -125,9 +125,9 @@ class FanzineEditor(FanzineGrid):
         self._dataGrid: DataGrid=DataGrid(self.FanzineGrid)
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
 
-        self.IsNewDirectory=False   # Are we creating a new directory? (Alternative is that we're editing an old one.)
-        # self.RootDirectoryPath is the location in which to create new LSTfile directories and the place to look for one to open.
-        # The default is the CWD. We turn all the separators to '/' for prettiness
+        fanzoinesList=GetFanzineList()
+        fanzoinesList.sort(key=lambda name: name.casefold())
+
         self.RootDirectoryPath=Settings().Get("Root directory", default=os.getcwd()).replace("\\", "/")
 
         # Get the default PDF directory
