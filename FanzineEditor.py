@@ -481,6 +481,10 @@ class FanzinesPage(GridDataSource):
     def CanAddColumns(self) -> bool:        # FanzineTablePage(GridDataSource)
         return False
 
+    def CanMoveColumns(self) -> bool:     # FanzineTablePage(GridDataSource)
+        return False             # Override if columns can't be moved
+
+
     def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        # FanzineTablePage(GridDataSource)
         for i in range(num):
             ftr=FanzinesPageRow([""]*self.NumCols)
