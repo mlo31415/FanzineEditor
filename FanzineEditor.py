@@ -409,7 +409,7 @@ class FanzinesPageRow(GridDataRowClass):
 
     @property
     def CanDeleteColumns(self) -> bool:      # FanzineTableRow(GridDataRowClass)
-        return True
+        return False
 
     # This deletes a single column from the datasource.
     # It must be implemented here because WxDataGrid doesn't understand the details of the DataSource
