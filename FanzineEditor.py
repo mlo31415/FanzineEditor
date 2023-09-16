@@ -13,7 +13,7 @@ from GenLogDialogClass import LogDialog
 from FTP import FTP
 from bs4 import BeautifulSoup
 
-from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinitionsList, GridDataRowClass
+from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition
 from WxHelpers import OnCloseHandling
 from LSTFile import *
 from HelpersPackage import Bailout,  MessageBox, SetReadOnlyFlag, RemoveTopLevelHTMLTags
@@ -430,8 +430,11 @@ class FanzinesPage(GridDataSource):
     def __init__(self):
         GridDataSource.__init__(self)
         self._colDefs: ColDefinitionsList=ColDefinitionsList([])
+        for i in range(self._numCols):
+            self._colDefs.append(ColDefinition("", IsEditable="no"))
         self._fanzineList: list[FanzinesRow]=[]
-        self._gridDataRowClass=FanzinesRow
+        self._gridDataRowClass=FanzinesPageRow
+
 
 
     def Signature(self) -> int:        # FanzineTablePage(GridDataSource)
