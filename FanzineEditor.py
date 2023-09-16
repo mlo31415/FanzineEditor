@@ -106,16 +106,16 @@ def GetFanzineList() -> list[str]:
 
     # Process the column 1, which is of the form  LINK="Zed-Nielsen_Hayden/ Zed"
     # Split it into Zed-Nielsen_Hayden and Zed, the first being the directoy name and the second being the display name
+    namelist: list[str]=[]
     for row in rowtable:
         r1=row[1]
         m=re.match(r'\s*LINK=\"([^/]*)/\s*(.*)\"\s*', r1)
         if m is not None:
-            r1=[m.groups()[0], m.groups()[1]]
-            row=row[0:0]+r1+row[2:]
+            namelist.append(m.groups()[0])
             #Log(str(row))
         else:
-            Log(f"Failure: {row}")
-    return [x[0] for x in rowtable]
+            Log(f"GetFanzineList() Failure: {row}")
+    return namelist
 
 
 class FanzineEditor(FanzineGrid):
