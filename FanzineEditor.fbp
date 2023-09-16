@@ -45,7 +45,7 @@
             <property name="id">wxID_ANY</property>
             <property name="maximum_size"></property>
             <property name="minimum_size"></property>
-            <property name="name">MainFrame</property>
+            <property name="name">FanzineSeriesEdit</property>
             <property name="pos"></property>
             <property name="size">1000,772</property>
             <property name="style">wxDEFAULT_FRAME_STYLE</property>
