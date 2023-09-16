@@ -479,7 +479,7 @@ class FanzinesPage(GridDataSource):
         self._specialTextColor=val
 
     def CanAddColumns(self) -> bool:        # FanzineTablePage(GridDataSource)
-        return True
+        return False
 
     def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        # FanzineTablePage(GridDataSource)
         for i in range(num):
