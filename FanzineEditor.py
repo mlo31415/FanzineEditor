@@ -128,11 +128,6 @@ class FanzineEditor(FanzineGrid):
         fanzoinesList=GetFanzineList()
         fanzoinesList.sort(key=lambda name: name.casefold())
 
-        self.RootDirectoryPath=Settings().Get("Root directory", default=os.getcwd()).replace("\\", "/")
-
-        # Get the default PDF directory
-        self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
-
         # Position the window on the screen it was on before
         tlwp=Settings().Get("Top Level Window Position")
         if tlwp:
