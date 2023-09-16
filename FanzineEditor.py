@@ -114,7 +114,8 @@ def GetFanzineList() -> list[str]:
             #Log(str(row))
         else:
             Log(f"Failure: {row}")
-    i=0
+    return [x[0] for x in rowtable]
+
 
 class FanzineEditor(FanzineGrid):
     def __init__(self, parent):
