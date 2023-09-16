@@ -128,6 +128,7 @@ class FanzineEditor(FanzineGrid):
         fanzinesList=GetFanzineList()
         fanzinesList.sort(key=lambda name: name.casefold())
         self.Datasource.FanzineList=fanzinesList
+        self._dataGrid.HideRowLabels()
 
         # Position the window on the screen it was on before
         tlwp=Settings().Get("Top Level Window Position")
