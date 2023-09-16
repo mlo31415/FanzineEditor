@@ -445,8 +445,10 @@ class FanzinesPage(GridDataSource):
         self._colDefs: ColDefinitionsList=ColDefinitionsList([])
         for i in range(self._numCols):
             self._colDefs.append(ColDefinition("", IsEditable="no"))
-        self._fanzineList: list[FanzinesPageRow]=[]
+        self._rows: list[FanzinesPageRow]=[]
         self._gridDataRowClass=FanzinesPageRow
+
+        self._fanzineList:list[str]=[]
 
 
 
@@ -456,10 +458,10 @@ class FanzinesPage(GridDataSource):
     # Inherited from GridDataSource
     @property
     def Rows(self) -> list[FanzinesPageRow]:        # FanzineTablePage(GridDataSource)
-        return self._fanzineList
+        return self._rows
     @Rows.setter
     def Rows(self, rows: list) -> None:        # FanzineTablePage(GridDataSource)
-        self._fanzineList=rows
+        self._rows=rows
 
     @property
     def NumRows(self) -> int:        # FanzineTablePage(GridDataSource)
