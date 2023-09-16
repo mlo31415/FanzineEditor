@@ -141,7 +141,6 @@ class FanzineEditor(FanzineGrid):
         if tlws:
             self.SetSize(tlws)
 
-
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
 
         #self.ClearMainWindow()

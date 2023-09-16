@@ -40,7 +40,7 @@ class FanzineSeriesWindow(FanzineSeriesEdit):
         FanzineSeriesEdit.__init__(self, parent)
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
-        self.Datasource=FanzineTablePage()      # Note that this is an empty instance
+        self.Datasource=FanzineIndexPage()      # Note that this is an empty instance
 
         self._dataGrid._ColorCellByValue=self.ColorCells01ByValue
 
@@ -83,10 +83,10 @@ class FanzineSeriesWindow(FanzineSeriesEdit):
 
 
     @property
-    def Datasource(self) -> FanzineTablePage:       # MainWindow(MainFrame)
+    def Datasource(self) -> FanzineIndexPage:       # MainWindow(MainFrame)
         return self._Datasource
     @Datasource.setter
-    def Datasource(self, val: FanzineTablePage):
+    def Datasource(self, val: FanzineIndexPage):
         self._Datasource=val
         self._dataGrid.Datasource=val
 
@@ -1648,7 +1648,7 @@ class FanzineTableRow(GridDataRowClass):
 #####################################################################################################
 #####################################################################################################
 
-class FanzineTablePage(GridDataSource):
+class FanzineIndexPage(GridDataSource):
     def __init__(self):
         GridDataSource.__init__(self)
         self._colDefs: ColDefinitionsList=ColDefinitionsList([])
