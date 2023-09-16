@@ -90,6 +90,7 @@ def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear
         g_LogDialog.textLogWindow.AppendText(text)
 
 
+# Read the classic fanzine list on fanac.org and return a list of all *fanzine directory names*
 def GetFanzineList() -> list[str]:
     html=FTP().GetFileAsString("fanzines", "Classic_Fanzines.html")
     soup=BeautifulSoup(html, 'html.parser')
