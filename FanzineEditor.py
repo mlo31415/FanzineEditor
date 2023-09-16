@@ -361,33 +361,6 @@ class FanzineEditor(FanzineGrid):
 
         # Re-initialize the form
 
-
-        # Create default column headers
-        self.stdColHeaders: ColDefinitionsList=ColDefinitionsList([
-                                                              ColDefinition("Filename", Type="str"),
-                                                              ColDefinition("Issue", Type="required str"),
-                                                              ColDefinition("Title", Type="str", preferred="Issue"),
-                                                              ColDefinition("Whole", Type="int", Width=75),
-                                                              ColDefinition("WholeNum", Type="int", Width=75, preferred="Whole"),
-                                                              ColDefinition("Vol", Type="int", Width=50),
-                                                              ColDefinition("Volume", Type="int", Width=50, preferred="Vol"),
-                                                              ColDefinition("Num", Type="int", Width=50),
-                                                              ColDefinition("Number", Type="int", Width=50, preferred="Num"),
-                                                              ColDefinition("Month", Type="str", Width=75),
-                                                              ColDefinition("Day", Type="int", Width=50),
-                                                              ColDefinition("Year", Type="int", Width=50),
-                                                              ColDefinition("Pages", Type="int", Width=50),
-                                                              ColDefinition("PDF", Type="str", Width=50),
-                                                              ColDefinition("Notes", Type="str", Width=120),
-                                                              ColDefinition("Scanned", Type="str", Width=100),
-                                                              ColDefinition("Scanned BY", Type="str", Width=100),
-                                                              ColDefinition("Country", Type="str", Width=50),
-                                                              ColDefinition("Editor", Type="str", Width=75),
-                                                              ColDefinition("Author", Type="str", Width=75),
-                                                              ColDefinition("Mailing", Type="str", Width=75),
-                                                              ColDefinition("Repro", Type="str", Width=75)
-                                                              ])
-
         # Create an empty datasource
         self.Datasource._fanzineList=[]
 
