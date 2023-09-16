@@ -451,7 +451,7 @@ class FanzinesPage(GridDataSource):
 
 
     def Signature(self) -> int:        # FanzineTablePage(GridDataSource)
-        return sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
+        return sum([x.__hash__() *(i+1) for i, x in enumerate(self._fanzineList)])
 
     # Inherited from GridDataSource
     @property
