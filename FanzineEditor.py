@@ -125,8 +125,9 @@ class FanzineEditor(FanzineGrid):
         self._dataGrid: DataGrid=DataGrid(self.FanzineGrid)
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
 
-        fanzoinesList=GetFanzineList()
-        fanzoinesList.sort(key=lambda name: name.casefold())
+        fanzinesList=GetFanzineList()
+        fanzinesList.sort(key=lambda name: name.casefold())
+        self.Datasource.FanzineList=fanzinesList
 
         # Position the window on the screen it was on before
         tlwp=Settings().Get("Top Level Window Position")
