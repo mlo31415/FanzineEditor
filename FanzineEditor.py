@@ -406,7 +406,7 @@ class FanzineEditor(FanzineGrid):
 #=============================================================
 # An individual file to be listed under a convention
 # This is a single row
-class FanzinesRow(GridDataRowClass):
+class FanzinesPageRow(GridDataRowClass):
 
     def __init__(self, cells: list[str]):
         GridDataRowClass.__init__(self)
@@ -422,8 +422,8 @@ class FanzinesRow(GridDataRowClass):
         self._cells.extend(s)
 
     # Make a deep copy of a FanzineTableRow
-    def Copy(self) -> FanzinesRow:      # FanzineTableRow(GridDataRowClass)
-        ftr=FanzinesRow([])
+    def Copy(self) -> FanzinesPageRow:      # FanzineTableRow(GridDataRowClass)
+        ftr=FanzinesPageRow([])
         ftr._cells=self._cells
         return ftr
 
@@ -487,7 +487,7 @@ class FanzinesPage(GridDataSource):
 
     # Inherited from GridDataSource
     @property
-    def Rows(self) -> list[FanzinesRow]:        # FanzineTablePage(GridDataSource)
+    def Rows(self) -> list[FanzinesPageRow]:        # FanzineTablePage(GridDataSource)
         return self._fanzineList
     @Rows.setter
     def Rows(self, rows: list) -> None:        # FanzineTablePage(GridDataSource)
@@ -497,10 +497,10 @@ class FanzinesPage(GridDataSource):
     def NumRows(self) -> int:        # FanzineTablePage(GridDataSource)
         return len(self._fanzineList)
 
-    def __getitem__(self, index: int) -> FanzinesRow:        # FanzineTablePage(GridDataSource)
+    def __getitem__(self, index: int) -> FanzinesPageRow:        # FanzineTablePage(GridDataSource)
         return self.Rows[index]
 
-    def __setitem__(self, index: int, val: FanzinesRow) -> None:        # FanzineTablePage(GridDataSource)
+    def __setitem__(self, index: int, val: FanzinesPageRow) -> None:        # FanzineTablePage(GridDataSource)
         self._fanzineList[index]=val
 
 
@@ -516,7 +516,7 @@ class FanzinesPage(GridDataSource):
 
     def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        # FanzineTablePage(GridDataSource)
         for i in range(num):
-            ftr=FanzinesRow([""]*self.NumCols)
+            ftr=FanzinesPageRow([""]*self.NumCols)
             self._fanzineList.insert(insertat+i, ftr)
 
 
