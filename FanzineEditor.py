@@ -100,7 +100,7 @@ def GetFanzineList() -> list[str]:
     for row in rows[1:]:
         cols= [str(col) for col in row.children if col != "\n/n"]
         cols=[RemoveTopLevelHTMLTags(col) for col in cols]
-        Log(str(cols))
+        #Log(str(cols))
         rowtable.append(cols)
 
     # Process the column 1, which is of the form  LINK="Zed-Nielsen_Hayden/ Zed"
@@ -111,7 +111,7 @@ def GetFanzineList() -> list[str]:
         if m is not None:
             r1=[m.groups()[0], m.groups()[1]]
             row=row[0:0]+r1+row[2:]
-            Log(str(row))
+            #Log(str(row))
         else:
             Log(f"Failure: {row}")
     i=0
