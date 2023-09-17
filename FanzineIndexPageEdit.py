@@ -446,7 +446,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
         # We need do nothing in two cases: There are no PDFs or everything is a PDF and there is no PDF column
         # Then return -1
-        if (allPDFs and ipdfcol == -1):
+        if allPDFs and ipdfcol == -1:
             return -1
         if noPDFs:
             return -1
@@ -722,7 +722,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
                         i+=1
                         newpname=os.path.join(self.TargetDirectoryPathname, f"{os.path.splitext(self.lstFilename)[0]}-old-{i}.LST")
                     os.rename(oldname, newpname)
-                except Exception as e:
+                except Exception:
                     LogError(f"OnSave fails when trying to rename {oldname} to {newpname}")
                     Bailout(PermissionError, f"OnSave fails when trying to rename {oldname} to {newpname}", "LSTError")
 
