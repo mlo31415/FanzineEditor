@@ -159,7 +159,7 @@ class FanzineEditor(FanzinesGrid):
 
 
     def OnClose(self, event):       # FanzineEditor(FanzineGrid)
-        if OnCloseHandling(event, self.NeedsSaving(), "The LST file has been updated and not yet saved. Exit anyway?"):
+        if OnCloseHandling(event, self.NeedsSaving(), "The list of fanzines has been updated and not yet saved. Exit anyway?"):
             return
         self.MarkAsSaved()  # The contents have been declared doomed
 
