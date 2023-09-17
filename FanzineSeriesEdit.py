@@ -10,7 +10,7 @@ import wx.grid
 import sys
 
 import HelpersPackage
-from GenGUIClass import FanzineSeriesEdit
+from GenGUIClass import FanzineIndexPageEdit
 from FTP import FTP
 
 from NewFanzineDialog import NewFanzineWindow
@@ -22,7 +22,6 @@ from HelpersPackage import Bailout, IsInt, Int0, ZeroIfNone, MessageBox, RemoveS
 from HelpersPackage import  ComparePathsCanonical, FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, SplitOnSpan, RemoveArticles, RemoveHyperlinkContainingPattern
 from PDFHelpers import GetPdfPageCount
-from Log import LogClose
 from Log import Log as RealLog
 from Settings import Settings
 from FanzineIssueSpecPackage import MonthNameToInt
@@ -35,9 +34,9 @@ class EditMode(Enum):
     EditingOld=2
 
 
-class FanzineSeriesWindow(FanzineSeriesEdit):
+class FanzineIndexPageWindow(FanzineIndexPageEdit):
     def __init__(self, parent, url: str=""):
-        FanzineSeriesEdit.__init__(self, parent)
+        FanzineIndexPageEdit.__init__(self, parent)
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzineIndexPage()      # Note that this is an empty instance
@@ -228,7 +227,7 @@ class FanzineSeriesWindow(FanzineSeriesEdit):
         # Copy the row data over into the Datasource class
         # Because the LST data tends to be especially sloppy in the column count (extra or missing semicolons),
         # we expand to cover the maximum number of columns found so as to drop nothing.
-        FTRList: list[FanzineTableRow]=[FanzineTableRow(row) for row in lstfile.Rows]
+        FTRList: list[FanzineIndexPageTableRow]=[FanzineIndexPageTableRow(row) for row in lstfile.Rows]
         # Find the longest row and lengthen all the rows to that length
         maxlen=max([len(row) for row in FTRList])
         maxlen=max(maxlen, len(lstfile.ColumnHeaders))
@@ -1275,10 +1274,10 @@ class FanzineSeriesWindow(FanzineSeriesEdit):
     def OnPopupInsertRow(self, event):
         irow=self._dataGrid.clickedRow
         # Insert an empty row just before the clicked row
-        rows :[FanzineTableRow]=[]
+        rows :[FanzineIndexPageTableRow]=[]
         if irow > 0:
             rows=self.Datasource.Rows[:irow]
-        rows.append(FanzineTableRow([""]*self.Datasource.NumCols))
+        rows.append(FanzineIndexPageTableRow([""]*self.Datasource.NumCols))
         rows.extend(self.Datasource.Rows[irow:])
         self.Datasource.Rows=rows
         self.RefreshWindow()
@@ -1584,7 +1583,7 @@ class FanzineSeriesWindow(FanzineSeriesEdit):
 #=============================================================
 # An individual file to be listed under a convention
 # This is a single row
-class FanzineTableRow(GridDataRowClass):
+class FanzineIndexPageTableRow(GridDataRowClass):
 
     def __init__(self, cells: list[str]):
         GridDataRowClass.__init__(self)
@@ -1600,8 +1599,8 @@ class FanzineTableRow(GridDataRowClass):
         self._cells.extend(s)
 
     # Make a deep copy of a FanzineTableRow
-    def Copy(self) -> FanzineTableRow:      # FanzineTableRow(GridDataRowClass)
-        ftr=FanzineTableRow([])
+    def Copy(self) -> FanzineIndexPageTableRow:      # FanzineTableRow(GridDataRowClass)
+        ftr=FanzineIndexPageTableRow([])
         ftr._cells=self._cells
         return ftr
 
@@ -1651,8 +1650,8 @@ class FanzineIndexPage(GridDataSource):
     def __init__(self):
         GridDataSource.__init__(self)
         self._colDefs: ColDefinitionsList=ColDefinitionsList([])
-        self._fanzineList: list[FanzineTableRow]=[]
-        self._gridDataRowClass=FanzineTableRow
+        self._fanzineList: list[FanzineIndexPageTableRow]=[]
+        self._gridDataRowClass=FanzineIndexPageTableRow
         self._name: str=""
         self._specialTextColor: Optional[Color, bool]=True
         self.TopComments: list[str]=[]
@@ -1679,7 +1678,7 @@ class FanzineIndexPage(GridDataSource):
 
     # Inherited from GridDataSource
     @property
-    def Rows(self) -> list[FanzineTableRow]:        # FanzineTablePage(GridDataSource)
+    def Rows(self) -> list[FanzineIndexPageTableRow]:        # FanzineTablePage(GridDataSource)
         return self._fanzineList
     @Rows.setter
     def Rows(self, rows: list) -> None:        # FanzineTablePage(GridDataSource)
@@ -1689,10 +1688,10 @@ class FanzineIndexPage(GridDataSource):
     def NumRows(self) -> int:        # FanzineTablePage(GridDataSource)
         return len(self._fanzineList)
 
-    def __getitem__(self, index: int) -> FanzineTableRow:        # FanzineTablePage(GridDataSource)
+    def __getitem__(self, index: int) -> FanzineIndexPageTableRow:        # FanzineTablePage(GridDataSource)
         return self.Rows[index]
 
-    def __setitem__(self, index: int, val: FanzineTableRow) -> None:        # FanzineTablePage(GridDataSource)
+    def __setitem__(self, index: int, val: FanzineIndexPageTableRow) -> None:        # FanzineTablePage(GridDataSource)
         self._fanzineList[index]=val
 
 
@@ -1708,6 +1707,6 @@ class FanzineIndexPage(GridDataSource):
 
     def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        # FanzineTablePage(GridDataSource)
         for i in range(num):
-            ftr=FanzineTableRow([""]*self.NumCols)
+            ftr=FanzineIndexPageTableRow([""]*self.NumCols)
             self._fanzineList.insert(insertat+i, ftr)
 

@@ -7,8 +7,7 @@ import wx
 import wx.grid
 import sys
 
-from GenGUIClass import FanzineGrid
-from GenLogDialogClass import LogDialog
+
 from FTP import FTP
 from bs4 import BeautifulSoup
 
@@ -20,7 +19,9 @@ from Log import LogOpen, LogClose
 from Log import Log as RealLog
 from Settings import Settings
 
-from FanzineSeriesEdit import FanzineSeriesWindow
+from FanzineSeriesEdit import FanzineIndexPageWindow
+from GenGUIClass import FanzinesGrid
+from GenLogDialogClass import LogDialog
 
 
 def main():
@@ -118,9 +119,9 @@ def GetFanzineList() -> list[str]:
     return namelist
 
 
-class FanzineEditor(FanzineGrid):
+class FanzineEditor(FanzinesGrid):
     def __init__(self, parent):
-        FanzineGrid.__init__(self, parent)
+        FanzinesGrid.__init__(self, parent)
 
         self._dataGrid: DataGrid=DataGrid(self.FanzineGrid)
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
@@ -218,7 +219,7 @@ class FanzineEditor(FanzineGrid):
     def OnGridCellDoubleClick(self, event):        # DataGrid
         #self.SaveClickLocation(vent)
         url=self._Datasource.Rows[event.Row][event.Col]
-        fsw=FanzineSeriesWindow(None, url)
+        fsw=FanzineIndexPageWindow(None, url)
 
 
     # ------------------

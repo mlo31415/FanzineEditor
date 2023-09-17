@@ -17,7 +17,7 @@
         <property name="image_path_wrapper_function_name"></property>
         <property name="indent_with_spaces"></property>
         <property name="internationalize">0</property>
-        <property name="name">FanacLSTGenerator</property>
+        <property name="name">FanzinesEditor</property>
         <property name="namespace"></property>
         <property name="path">.</property>
         <property name="precompiled_header"></property>
@@ -45,7 +45,7 @@
             <property name="id">wxID_ANY</property>
             <property name="maximum_size"></property>
             <property name="minimum_size"></property>
-            <property name="name">FanzineSeriesEdit</property>
+            <property name="name">FanzineIndexPageEdit</property>
             <property name="pos"></property>
             <property name="size">1000,772</property>
             <property name="style">wxDEFAULT_FRAME_STYLE</property>
@@ -2730,7 +2730,7 @@
             <property name="id">wxID_ANY</property>
             <property name="maximum_size"></property>
             <property name="minimum_size"></property>
-            <property name="name">FanzineGrid</property>
+            <property name="name">FanzinesGrid</property>
             <property name="pos"></property>
             <property name="size">806,502</property>
             <property name="style">wxDEFAULT_FRAME_STYLE</property>
@@ -2995,7 +2995,7 @@
                                 <property name="gripper">0</property>
                                 <property name="hidden">0</property>
                                 <property name="id">wxID_ANY</property>
-                                <property name="label">  </property>
+                                <property name="label"></property>
                                 <property name="markup">0</property>
                                 <property name="max_size"></property>
                                 <property name="maximize_button">0</property>
