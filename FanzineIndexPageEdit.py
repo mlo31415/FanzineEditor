@@ -7,7 +7,6 @@ import os
 import shutil
 import wx
 import wx.grid
-import sys
 
 import HelpersPackage
 from GenGUIClass import FanzineIndexPageEdit
@@ -51,8 +50,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
 
-        self.ButtonBackgroundColor=self.bLoadExistingLSTFile.GetBackgroundColour()
-
         # Position the window on the screen it was on before
         tlwp=Settings().Get("Top Level Window Position")
         if tlwp:
@@ -62,7 +59,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
             self.SetSize(tlws)
 
         self.Datasource.targetDirectory=""
-        self.SetLocalDirectoryLabel()
 
         # The edit mode we are presently in.
         self.Editmode: EditMode=EditMode.NoneSelected
@@ -73,12 +69,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self.RefreshWindow()
 
         self.Show(True)
-
-    def SetLocalDirectoryLabel(self):
-        # Set the local directory.  Since this is not editable, it can be done here.
-        self.lRootDirectory.SetWindowStyle(self.lRootDirectory.GetWindowStyle()|wx.ST_ELLIPSIZE_MIDDLE)
-        self.lRootDirectory.SetLabel(f"Local Directory:   {self.RootDirectoryPath}/{self.Datasource.TargetDirectory}")
-        self.lRootDirectory.GetContainingSizer().Layout()
 
 
     @property
@@ -111,9 +101,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
             self.tDirectoryServer.SetEditable(False)
             self.tFanzineName.SetEditable(False)
 
-            # We begin with just these two buttons highlighted as pink.  When one of them is selected, the highlighting on both is permanently removed.
-            self.bLoadExistingLSTFile.SetBackgroundColour(Color.Pink)
-            self.bCreateNewFanzineDir.SetBackgroundColour(Color.Pink)
             return
 
         # OK, one or the other edit button has been pressed.  Adjust editing and coloring accordingly
@@ -128,11 +115,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self.cbComplete.Enabled=True
         self.cbAlphabetizeIndividually.Enabled=True
         self.wxGrid.Enabled=True
-
-        self.SetLocalDirectoryLabel()
-
-        self.bLoadExistingLSTFile.SetBackgroundColour(self.ButtonBackgroundColor)
-        self.bCreateNewFanzineDir.SetBackgroundColour(self.ButtonBackgroundColor)
 
         # The basic split is whether we are editing an existing LST or creating a new directory
         if self.Editmode == EditMode.EditingOld:
@@ -559,7 +541,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self.lstFilename=targetFilename
         # Get the newly selected target directory's path relative to rootpath
         self.Datasource.TargetDirectory=os.path.relpath(targetDirectoryPathname, start=self.RootDirectoryPath)
-        self.SetLocalDirectoryLabel()
 
         # Rummage through the setup.bld file in the LST file's directory to get Complete and Credits
         complete, credits=self.ReadSetupBld(self.TargetDirectoryPathname)
@@ -587,10 +568,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     # Initialize the main window to empty
     # This also initiazes the datasource
     def ClearMainWindow(self):       # MainWindow(MainFrame)
-
-        # We begin with two buttons highlighted to focus the user on picking one.  When one of them is selected, the highlighting on both is permanently removed.
-        self.bLoadExistingLSTFile.SetBackgroundColour(self.ButtonBackgroundColor)
-        self.bCreateNewFanzineDir.SetBackgroundColour(self.ButtonBackgroundColor)
 
         # Re-initialize the form
         self.lstFilename=""
@@ -663,7 +640,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
             self.Editmode=EditMode.CreatingNew
 
             self.Datasource.TargetDirectory=dlg.Directory
-            self.SetLocalDirectoryLabel()
 
             self.tFanzineName.SetValue(dlg.FanzineName)
             self.GenerateServerNameFromFanzineName()
