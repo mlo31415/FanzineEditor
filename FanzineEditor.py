@@ -13,7 +13,7 @@ from GenLogDialogClass import LogDialog
 from FTP import FTP
 from bs4 import BeautifulSoup
 
-from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition
+from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition
 from WxHelpers import OnCloseHandling
 from LSTFile import *
 from HelpersPackage import Bailout,  MessageBox, SetReadOnlyFlag, RemoveTopLevelHTMLTags
