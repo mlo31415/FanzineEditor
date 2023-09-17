@@ -17,12 +17,11 @@ from NewFanzineDialog import NewFanzineWindow
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass
 from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, AddChar, MessageBoxInput
-from LSTFile import *
 from HelpersPackage import Bailout, IsInt, Int0, ZeroIfNone, MessageBox, RemoveScaryCharacters, SetReadOnlyFlag, ParmDict
 from HelpersPackage import  ComparePathsCanonical, FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
-from HelpersPackage import RemoveHyperlink, SplitOnSpan, RemoveArticles, RemoveHyperlinkContainingPattern
+from HelpersPackage import RemoveHyperlink, SplitOnSpan, RemoveArticles, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders
 from PDFHelpers import GetPdfPageCount
-from Log import Log as RealLog
+from Log import Log, LogError
 from Settings import Settings
 from FanzineIssueSpecPackage import MonthNameToInt
 
