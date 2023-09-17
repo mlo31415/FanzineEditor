@@ -19,7 +19,7 @@ from Log import LogOpen, LogClose
 from Log import Log as RealLog
 from Settings import Settings
 
-from FanzineSeriesEdit import FanzineIndexPageWindow
+from FanzineIndexPageEdit import FanzineIndexPageWindow
 from GenGUIClass import FanzinesGrid
 from GenLogDialogClass import LogDialog
 
