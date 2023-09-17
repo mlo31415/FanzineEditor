@@ -235,9 +235,9 @@ class FanzineEditor(FanzineGrid):
 
     #-------------------
     def OnGridCellDoubleClick(self, event):        # DataGrid
-        #self.SaveClickLocation(event)
+        #self.SaveClickLocation(vent)
+        url=self._Datasource.Rows[event.Row][event.Col]
         i=0
-        #TODO: Is this all?
 
     # RMB click handling for grid and grid label clicks
     def RMBHandler(self, isCellClick: bool, event):       # FanzineEditor(FanzineGrid)
