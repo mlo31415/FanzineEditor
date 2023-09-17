@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from enum import Enum
 from typing import Union, Optional
-
 import os
 import shutil
 import wx
 import wx.grid
+import re
+
+from bs4 import BeautifulSoup
 
 import HelpersPackage
 from GenGUIClass import FanzineIndexPageEdit
