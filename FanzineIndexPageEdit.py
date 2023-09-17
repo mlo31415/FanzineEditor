@@ -1667,3 +1667,16 @@ class FanzineIndexPage(GridDataSource):
             ftr=FanzineIndexPageTableRow([""]*self.NumCols)
             self._fanzineList.insert(insertat+i, ftr)
 
+    # Read a fanzine index page fanac.org/fanzines/URL and fill in the class
+    def GetFanzineList(url: str):
+        html=FTP().GetFileAsString("fanzines/"+url, "Classic_Fanzines.html")
+        soup=BeautifulSoup(html, 'html.parser')
+        table=soup.find_all("table", class_="sortable")[0]
+        rows=table.find_all_next("tr")
+        row=rows[0]
+        rowtable: list[list[str]]=[]
+        for row in rows[1:]:
+            cols=[str(col) for col in row.children if col != "\n/n"]
+            cols=[RemoveTopLevelHTMLTags(col) for col in cols]
+            # Log(str(cols))
+            rowtable.append(cols)
