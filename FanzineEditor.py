@@ -219,20 +219,6 @@ class FanzineEditor(FanzineGrid):
         return self._signature != self.Signature()
 
 
-    #------------------
-    def OnGridCellChanged(self, event):       # FanzineEditor(FanzineGrid)
-        self._dataGrid.OnGridCellChanged(event)  # Pass event handling to WxDataGrid
-
-        self.RefreshWindow()
-
-    #------------------
-    def OnGridCellRightClick(self, event):       # FanzineEditor(FanzineGrid)
-        # Do generic RMB on grid processing
-        self._dataGrid.OnGridCellRightClick(event, self.m_GridPopup)
-
-        # Call the RMB handler
-        self.RMBHandler(True, event)
-
     #-------------------
     def OnGridCellDoubleClick(self, event):        # DataGrid
         #self.SaveClickLocation(vent)
