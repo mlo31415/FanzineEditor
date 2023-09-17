@@ -21,6 +21,8 @@ from Log import LogOpen, LogClose
 from Log import Log as RealLog
 from Settings import Settings
 
+from FanzineSeriesEdit import FanzineSeriesWindow
+
 
 def main():
 
@@ -229,7 +231,7 @@ class FanzineEditor(FanzineGrid):
     def OnGridCellDoubleClick(self, event):        # DataGrid
         #self.SaveClickLocation(vent)
         url=self._Datasource.Rows[event.Row][event.Col]
-        i=0
+        fsw=FanzineSeriesWindow(None)
 
     # ------------------
     # Initialize the main window to empty
