@@ -296,10 +296,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
 
     def OnClose(self, event):       # MainWindow(MainFrame)
-        if OnCloseHandling(event, self.NeedsSaving(), "The LST file has been updated and not yet saved. Exit anyway?"):
+        if not self.OKToClose(event):
             return
-
-        self.MarkAsSaved()  # The contents have been declared doomed
 
         # Save the window's position
         pos=self.GetPosition()
@@ -309,6 +307,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
         self.Destroy()
 
+
+    # The user has requested that the dialog be closed or wiped and reloaded.
+    # Check to see if it has unsaved information.
+    # If it does, ask the user if he wants to save it first.
+    def OKToClose(self, event) -> bool:
+        if OnCloseHandling(event, self.NeedsSaving(), "The LST file has been updated and not yet saved. Dispose anyway?"):
+            self.MarkAsSaved()  # The contents have been declared doomed, so mark it as saved so as not to trigger any more queries.
+            return True
+
+        return False
 
 
     def OnAddNewIssues(self, event):       # MainWindow(MainFrame)
@@ -500,10 +508,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     #------------------
     # Load an LST file from disk into an LSTFile class
     def OnLoadExistingLSTFile(self, event):       # MainWindow(MainFrame)
-
-        if OnCloseHandling(None, self.NeedsSaving(), "The LST file has been updated and not yet saved. Replace anyway?"):
+        if not self.OKToClose(event):
             return
-        self.MarkAsSaved()  # OK, the existing contents have been declared doomed.
 
         self.Editmode=EditMode.EditingOld
         self.tDirectoryServer.SetValue("")
@@ -616,8 +622,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     # ------------------
     # Create a new, empty LST file
     def OnCreateNewFanzineDir(self, event):       # MainWindow(MainFrame)
-
-        if OnCloseHandling(None, self.NeedsSaving(), "The LST file has been updated and not yet saved. Erase anyway?"):
+        if not self.OKToClose(event):
             return
 
         dlg=NewFanzineWindow(None, self.RootDirectoryPath)
