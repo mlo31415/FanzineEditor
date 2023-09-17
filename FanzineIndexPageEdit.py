@@ -515,14 +515,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self.tDirectoryServer.SetValue("")
 
         # Call the File Open dialog to get an LST file
-        with wx.FileDialog(self, "Select LST file to load", self.RootDirectoryPath, "", "*.LST", wx.FD_OPEN) as dlg:
-            dlg.SetWindowStyle(wx.STAY_ON_TOP)
-
-            if dlg.ShowModal() != wx.ID_OK:
-                return False
-
-            targetFilename=dlg.GetFilename()
-            targetDirectoryPathname=os.path.split(dlg.GetPath())[0]
+        # with wx.FileDialog(self, "Select LST file to load", self.RootDirectoryPath, "", "*.LST", wx.FD_OPEN) as dlg:
+        #     dlg.SetWindowStyle(wx.STAY_ON_TOP)
+        #
+        #     if dlg.ShowModal() != wx.ID_OK:
+        #         return False
+        #
+        #     targetFilename=dlg.GetFilename()
+        #     targetDirectoryPathname=os.path.split(dlg.GetPath())[0]
 
         with ProgressMsg(self, f"Loading '{targetFilename}'"):
 
