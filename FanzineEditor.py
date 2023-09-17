@@ -174,21 +174,6 @@ class FanzineEditor(FanzineGrid):
         sys.exit(1)
 
 
-
-    # Save an LST file
-    def SaveFile(self, lstfile: LSTFile, name: str):       # FanzineEditor(FanzineGrid)
-        Log(f"LstFile.SaveFile: save {name}")
-        try:
-            if not lstfile.Save(name):
-                LogError(f"OnSave failed (1) while trying to save {name}")
-                MessageBox(f"Failure saving '{name}'")
-                return
-            self.MarkAsSaved()
-        except:
-            LogError(f"OnSave failed while trying to save {name}")
-            Bailout(PermissionError, "OnSave failed (2) when trying to write file "+name, "LSTError")
-
-
     def MaybeSetNeedsSavingFlag(self):       # FanzineEditor(FanzineGrid)
         s="Editing "
         if self.NeedsSaving():
@@ -214,6 +199,7 @@ class FanzineEditor(FanzineGrid):
 
     def NeedsSaving(self):       # FanzineEditor(FanzineGrid)
         return self._signature != self.Signature()
+
 
     def OnSearchText(self, event):
         searchtext=self.tSearch.GetValue()
