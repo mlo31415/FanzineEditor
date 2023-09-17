@@ -332,8 +332,7 @@ class FanzineSeriesWindow(FanzineSeriesEdit):
         Settings().Put("Top Level Windows Size", (size.width, size.height))
 
         self.Destroy()
-        LogClose()
-        sys.exit(1)
+
 
 
     def OnAddNewIssues(self, event):       # MainWindow(MainFrame)
