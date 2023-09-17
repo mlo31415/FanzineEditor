@@ -527,7 +527,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         #     targetFilename=dlg.GetFilename()
         #     targetDirectoryPathname=os.path.split(dlg.GetPath())[0]
 
-        with ProgressMsg(self, f"Loading '{targetFilename}'"):
+        with ProgressMsg(self, f"Loading '{self.url}'"):
+            self.LoadLSTFile2(self.url)
 
             self.LoadLSTFile2(targetDirectoryPathname, targetFilename)
 
@@ -564,7 +565,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     def ClearMainWindow(self):       # MainWindow(MainFrame)
 
         # Re-initialize the form
-        self.lstFilename=""
         self.Datasource.TargetDirectory=""
         self.Datasource.ServerDirectory=""
 
@@ -901,7 +901,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
 
     # Save an LST file
-    def SaveFile(self, lstfile: LSTFile, name: str):       # MainWindow(MainFrame)
+    def SaveFile(self, lstfile: any, name: str):       # MainWindow(MainFrame)
         Log(f"LstFile.SaveFile: save {name}")
         try:
             if not lstfile.Save(name):
