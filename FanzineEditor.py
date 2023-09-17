@@ -156,11 +156,6 @@ class FanzineEditor(FanzineGrid):
         self._dataGrid.Datasource=val
 
 
-
-    def OnExitClicked(self, event):       # FanzineEditor(FanzineGrid)
-        self.OnClose(event)
-
-
     def OnClose(self, event):       # FanzineEditor(FanzineGrid)
         if OnCloseHandling(event, self.NeedsSaving(), "The LST file has been updated and not yet saved. Exit anyway?"):
             return
@@ -224,96 +219,6 @@ class FanzineEditor(FanzineGrid):
         #self.SaveClickLocation(vent)
         url=self._Datasource.Rows[event.Row][event.Col]
         i=0
-
-    # RMB click handling for grid and grid label clicks
-    def RMBHandler(self, isCellClick: bool, event):       # FanzineEditor(FanzineGrid)
-        isLabelClick=not isCellClick
-
-        # Everything remains disabled when we're outside the defined columns
-        if self._dataGrid.clickedColumn > self.Datasource.NumCols:    # Click is outside populated columns.  The +1 is because of the split of the 1st column
-            return
-        if self._dataGrid.clickedRow > self.Datasource.NumRows:      # Click is outside the populated rows
-            return
-
-        # ---- Helper fn -----
-        def Enable(name: str) -> None:
-            mi=self.m_GridPopup.FindItemById(self.m_GridPopup.FindItem(name))
-            if mi is not None:
-                mi.Enable(True)
-
-        if self._dataGrid.HasSelection():
-            Enable("Copy")
-            Enable("Erase Selection")
-            top, left, bottom, right=self._dataGrid.SelectionBoundingBox()
-            if left == right:
-                Enable("Sort on Selected Column")
-            if bottom-top == 1:
-                if self.Datasource.Rows[top][0].lower().endswith(".pdf") and not self.Datasource.Rows[bottom][0].lower().endswith(".pdf") or \
-                    not self.Datasource.Rows[top][0].lower().endswith(".pdf") and self.Datasource.Rows[bottom][0].lower().endswith(".pdf"):
-                    # Enable Merge if exactly two rows are highlighted and if exactly one of them is a PDF
-                    Enable("Merge")
-
-        if self._dataGrid.clipboard is not None:
-            Enable("Paste")
-
-        if self._dataGrid.clickedRow != -1:
-            Enable("Delete Row(s)")
-            Enable("Insert a Row")
-
-        # We enable the Add Column to Left item if we're on a column to the left of the first -- it can be off the right and a column will be added to the right
-        if self._dataGrid.clickedColumn > 1:
-            Enable("Insert Column to Left")
-
-        # We only allow a column to be deleted if the cursor is in a column with more than one highlighted cell and no hiughlif=ghted cells in other columns.
-        if self.Datasource.Element.CanDeleteColumns:
-            top, left, bottom, right=self._dataGrid.SelectionBoundingBox()
-            if right == left and bottom-top > 0:
-                if self._dataGrid.clickedColumn == right:
-                    Enable("Delete Column")
-
-
-        # We enable the Add Column to right item if we're on any existing column
-        if self._dataGrid.clickedColumn > 0:        # Can't insert columns between the 1st two
-            Enable("Insert Column to Right")
-
-        if self._dataGrid.clickedRow == -1: #Indicates we're on a column header
-            Enable("Rename Column")
-
-        if self._dataGrid.clickedRow >= 0 and self._dataGrid.clickedColumn >= 0:
-            Enable("Add a Link")
-
-        # Check to see if there is a hyperlink in this row
-        if self._dataGrid.clickedRow >= 0:
-            row=self.Datasource.Rows[self._dataGrid.clickedRow]
-            for col in row:
-                _, link, _, _=FindLinkInString(col)
-                if link != "":
-                    Enable("Clear All Links")
-                    break
-
-        # We only enable Extract Scanner when we're in the Notes column and there's something to extract.
-        if self.Datasource.ColDefs[self._dataGrid.clickedColumn].Preferred == "Notes":
-            # We only want to enable the "Extract Scanner" item if the Notes column contains scanned by information
-            for row in self.Datasource.Rows:
-                note=row[self._dataGrid.clickedColumn].lower()
-                if "scan by" in note or \
-                        "scans by" in note or \
-                        "scanned by" in note or \
-                        "scanning by" in note or \
-                        "scanned at" in note:
-                    Enable("Extract Scanner")
-                    break
-
-        # We only enable Extract Editor when we're in the Notes column and there's something to extract.
-        if self.Datasource.ColDefs[self._dataGrid.clickedColumn].Preferred == "Notes":
-            # We only want to enable the "Extract Editor" item if the Notes column contains edited by information
-            for row in self.Datasource.Rows:
-                note=row[self._dataGrid.clickedColumn].lower()
-                if "edited by" in note or \
-                        "editor " in note:
-                    Enable("Extract Editor")
-                    break
-
 
     # ------------------
     # Initialize the main window to empty
