@@ -148,7 +148,7 @@ class FanzineEditor(FanzineGrid):
 
 
     @property
-    def Datasource(self) -> FanzinesPage:       # MainWindow(MainFrame)
+    def Datasource(self) -> FanzinesPage:       # FanzineEditor(FanzineGrid)
         return self._Datasource
     @Datasource.setter
     def Datasource(self, val: FanzinesPage):
@@ -157,11 +157,11 @@ class FanzineEditor(FanzineGrid):
 
 
 
-    def OnExitClicked(self, event):       # MainWindow(MainFrame)
+    def OnExitClicked(self, event):       # FanzineEditor(FanzineGrid)
         self.OnClose(event)
 
 
-    def OnClose(self, event):       # MainWindow(MainFrame)
+    def OnClose(self, event):       # FanzineEditor(FanzineGrid)
         if OnCloseHandling(event, self.NeedsSaving(), "The LST file has been updated and not yet saved. Exit anyway?"):
             return
         self.MarkAsSaved()  # The contents have been declared doomed
@@ -179,7 +179,7 @@ class FanzineEditor(FanzineGrid):
 
 
     # Save an LST file
-    def SaveFile(self, lstfile: LSTFile, name: str):       # MainWindow(MainFrame)
+    def SaveFile(self, lstfile: LSTFile, name: str):       # FanzineEditor(FanzineGrid)
         Log(f"LstFile.SaveFile: save {name}")
         try:
             if not lstfile.Save(name):
@@ -192,14 +192,14 @@ class FanzineEditor(FanzineGrid):
             Bailout(PermissionError, "OnSave failed (2) when trying to write file "+name, "LSTError")
 
 
-    def MaybeSetNeedsSavingFlag(self):       # MainWindow(MainFrame)
+    def MaybeSetNeedsSavingFlag(self):       # FanzineEditor(FanzineGrid)
         s="Editing "
         if self.NeedsSaving():
             s=s+" *"        # Add on a change marker if needed
         self.SetTitle(s)
 
 
-    def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # MainWindow(MainFrame)
+    def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # FanzineEditor(FanzineGrid)
         self.MaybeSetNeedsSavingFlag()
         if not DontRefreshGrid:
             self._dataGrid.RefreshWxGridFromDatasource()
@@ -207,26 +207,26 @@ class FanzineEditor(FanzineGrid):
 
     # ----------------------------------------------
     # Used to determine if anything has been updated
-    def Signature(self) -> int:       # MainWindow(MainFrame)
+    def Signature(self) -> int:       # FanzineEditor(FanzineGrid)
         return self.Datasource.Signature()
 
 
-    def MarkAsSaved(self):       # MainWindow(MainFrame)
+    def MarkAsSaved(self):       # FanzineEditor(FanzineGrid)
         self._signature=self.Signature()
 
 
-    def NeedsSaving(self):       # MainWindow(MainFrame)
+    def NeedsSaving(self):       # FanzineEditor(FanzineGrid)
         return self._signature != self.Signature()
 
 
     #------------------
-    def OnGridCellChanged(self, event):       # MainWindow(MainFrame)
+    def OnGridCellChanged(self, event):       # FanzineEditor(FanzineGrid)
         self._dataGrid.OnGridCellChanged(event)  # Pass event handling to WxDataGrid
 
         self.RefreshWindow()
 
     #------------------
-    def OnGridCellRightClick(self, event):       # MainWindow(MainFrame)
+    def OnGridCellRightClick(self, event):       # FanzineEditor(FanzineGrid)
         # Do generic RMB on grid processing
         self._dataGrid.OnGridCellRightClick(event, self.m_GridPopup)
 
@@ -240,7 +240,7 @@ class FanzineEditor(FanzineGrid):
         #TODO: Is this all?
 
     # RMB click handling for grid and grid label clicks
-    def RMBHandler(self, isCellClick: bool, event):       # MainWindow(MainFrame)
+    def RMBHandler(self, isCellClick: bool, event):       # FanzineEditor(FanzineGrid)
         isLabelClick=not isCellClick
 
         # Everything remains disabled when we're outside the defined columns
@@ -332,7 +332,7 @@ class FanzineEditor(FanzineGrid):
     # ------------------
     # Initialize the main window to empty
     # This also initiazes the datasource
-    def ClearMainWindow(self):       # MainWindow(MainFrame)
+    def ClearMainWindow(self):       # FanzineEditor(FanzineGrid)
 
         # Re-initialize the form
 
