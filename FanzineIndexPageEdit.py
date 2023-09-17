@@ -44,7 +44,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
         self.IsNewDirectory=False   # Are we creating a new directory? (Alternative is that we're editing an old one.)
 
-        self.lstFilename: str=""
+        self.url=url
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
 
@@ -528,14 +528,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
             self.LoadLSTFile2(targetDirectoryPathname, targetFilename)
 
-
-    def LoadLSTFile2(self, targetDirectoryPathname, targetFilename):
+    def LoadLSTFile2(self, url: str):
         # Try to load the LSTFile
         # targetFilename=os.path.relpath(targetDirectoryPathname, start=self.RootDirectoryPath)
-        self.LoadLSTFile(targetDirectoryPathname, targetFilename)
-        self.lstFilename=targetFilename
-        # Get the newly selected target directory's path relative to rootpath
-        self.Datasource.TargetDirectory=os.path.relpath(targetDirectoryPathname, start=self.RootDirectoryPath)
+        self.LoadLSTFile(url)
 
         # Rummage through the setup.bld file in the LST file's directory to get Complete and Credits
         complete, credits=self.ReadSetupBld(self.TargetDirectoryPathname)
@@ -678,7 +674,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
         self.SaveExistingLSTFile()
 
-        self.LoadLSTFile2(self.TargetDirectoryPathname, self.lstFilename)
+        self.LoadLSTFile2(self.url)
 
 
     #------------------
@@ -916,7 +912,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
 
     def MaybeSetNeedsSavingFlag(self):       # MainWindow(MainFrame)
-        s="Editing "+self.lstFilename
+        s="Editing "+self.url
         if self.NeedsSaving():
             s=s+" *"        # Add on a change marker if needed
         self.SetTitle(s)
