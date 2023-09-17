@@ -46,7 +46,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         # self.RootDirectoryPath is the location in which to create new LSTfile directories and the place to look for one to open.
         # The default is the CWD. We turn all the separators to '/' for prettiness
         self.RootDirectoryPath=Settings().Get("Root directory", default=os.getcwd()).replace("\\", "/")
-
+        self.lstFilename: str=""
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
 
