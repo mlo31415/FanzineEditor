@@ -178,28 +178,6 @@ class FanzineEditor(FanzineGrid):
 
 
 
-    def CopyTemplateFile(self, settingName: str, newName: str, newDirectory: str, templateDirectory: str) -> bool:
-        setupTemplateName=Settings().Get(settingName, default="")
-        Log(f"CopyTemplateFile: from '{setupTemplateName}' in '{templateDirectory}' to '{newName}' in '{newDirectory}'")
-        if not setupTemplateName:
-            MessageBox(f"Settings file does not contain value for key '{settingName}'. Save failed.")
-            Log("Settings:")
-            Log(Settings().Dump())
-            return False
-
-        newpathname=os.path.join(newDirectory, newName)
-        # Remove the template if it already exists in the target directory
-        if os.path.exists(newpathname):  # Delete any existing file
-            Log(f"CopyTemplateFile: '{newpathname}' already exists, so removing it")
-            SetReadOnlyFlag(newName, False)
-            os.remove(newpathname)
-
-        # Copy the template over, renaming it setup.ftp
-        Log(f"CopyTemplateFile: copy '{os.path.join(templateDirectory, setupTemplateName)}'  to  {newpathname}")
-        shutil.copy(os.path.join(templateDirectory, setupTemplateName), newpathname)
-        return True
-
-
     # Save an LST file
     def SaveFile(self, lstfile: LSTFile, name: str):       # MainWindow(MainFrame)
         Log(f"LstFile.SaveFile: save {name}")
