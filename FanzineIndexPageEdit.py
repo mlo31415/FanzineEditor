@@ -43,9 +43,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self._dataGrid._ColorCellByValue=self.ColorCells01ByValue
 
         self.IsNewDirectory=False   # Are we creating a new directory? (Alternative is that we're editing an old one.)
-        # self.RootDirectoryPath is the location in which to create new LSTfile directories and the place to look for one to open.
-        # The default is the CWD. We turn all the separators to '/' for prettiness
-        self.RootDirectoryPath=Settings().Get("Root directory", default=os.getcwd()).replace("\\", "/")
+
         self.lstFilename: str=""
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
@@ -78,10 +76,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     def Datasource(self, val: FanzineIndexPage):
         self._Datasource=val
         self._dataGrid.Datasource=val
-
-    @property
-    def TargetDirectoryPathname(self) -> str:
-        return os.path.normpath(os.path.join(self.RootDirectoryPath, self.Datasource.TargetDirectory))
 
 
     # Look at information available and color buttons and fields accordingly.
@@ -333,12 +327,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
         if len(files) == 0:     # Should never happen as there's no way to return from dlg w/o selecting pdfs or hitting cancel.  But just in case...
             return
-
-        # Do we need to create the target directory?  (This is the fanzine's directory.)
-        if not os.path.exists(self.TargetDirectoryPathname):
-            # Create the new directory
-            os.mkdir(self.TargetDirectoryPathname)
-            Log(f"CreateLSTDirectory: Created directory {self.TargetDirectoryPathname}", Flush=True)
 
         # Copy the files from the source directory to the target directory if necessary.
         # Rename them with "safe" names for use on fanac.org (and for Jack's SW) if necessary
