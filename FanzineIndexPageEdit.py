@@ -304,6 +304,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     def OnClose(self, event):       # MainWindow(MainFrame)
         if OnCloseHandling(event, self.NeedsSaving(), "The LST file has been updated and not yet saved. Exit anyway?"):
             return
+
         self.MarkAsSaved()  # The contents have been declared doomed
 
         # Save the window's position
@@ -366,14 +367,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
                     try:
                         shutil.move(file, newfilepathname)
                         newlyAddedFiles.append(safefilename)
-                    except FileNotFoundError as e:
+                    except FileNotFoundError:
                         LogError(f"FileNotFound: {file}")
                 else:
                     # It's a copy (the normal case)
                     try:
                         shutil.copy(oldfilepathname, newfilepathname)
                         newlyAddedFiles.append(safefilename)
-                    except FileNotFoundError as e:
+                    except FileNotFoundError:
                         LogError(f"FileNotFound: {oldfilepathname}")
 
         # The files are all now in the target directory and, if needed, renamed to safe names.
