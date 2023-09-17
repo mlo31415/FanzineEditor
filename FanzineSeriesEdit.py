@@ -36,7 +36,7 @@ class EditMode(Enum):
 
 
 class FanzineSeriesWindow(FanzineSeriesEdit):
-    def __init__(self, parent):
+    def __init__(self, parent, url: str=""):
         FanzineSeriesEdit.__init__(self, parent)
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)

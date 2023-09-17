@@ -208,16 +208,19 @@ class FanzineEditor(FanzineGrid):
             self.Datasource.FanzineList=fanzinelist
             self.RefreshWindow()
 
+
     def OnClearSearch( self, event ):
         self.Datasource.FanzineList=self._fanzinesList
         self.tSearch.SetValue("")
         self.RefreshWindow()
 
+
     #-------------------
     def OnGridCellDoubleClick(self, event):        # DataGrid
         #self.SaveClickLocation(vent)
         url=self._Datasource.Rows[event.Row][event.Col]
-        fsw=FanzineSeriesWindow(None)
+        fsw=FanzineSeriesWindow(None, url)
+
 
     # ------------------
     # Initialize the main window to empty
