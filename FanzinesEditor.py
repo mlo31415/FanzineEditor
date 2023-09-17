@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Union, Optional
 
 import os
-import shutil
 import wx
 import wx.grid
 import sys
@@ -16,7 +15,7 @@ from bs4 import BeautifulSoup
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition
 from WxHelpers import OnCloseHandling
 from LSTFile import *
-from HelpersPackage import Bailout,  MessageBox, RemoveTopLevelHTMLTags
+from HelpersPackage import MessageBox, RemoveTopLevelHTMLTags
 from Log import LogOpen, LogClose
 from Log import Log as RealLog
 from Settings import Settings
