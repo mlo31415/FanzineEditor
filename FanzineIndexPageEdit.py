@@ -27,12 +27,6 @@ from FanzineIssueSpecPackage import MonthNameToInt
 
 
 
-class EditMode(Enum):
-    NoneSelected=0
-    CreatingNew=1
-    EditingOld=2
-
-
 class FanzineIndexPageWindow(FanzineIndexPageEdit):
     def __init__(self, parent, url: str=""):
         FanzineIndexPageEdit.__init__(self, parent)
@@ -58,9 +52,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
         self.Datasource.targetDirectory=""
 
-        # The edit mode we are presently in.
-        self.Editmode: EditMode=EditMode.NoneSelected
-
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
 
         self.ClearMainWindow()
@@ -81,24 +72,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     # Look at information available and color buttons and fields accordingly.
     def ColorFields(self):
 
-        # If neither button has been pressed, we are in EditMode NoneSelected and everything else is suppressed.
-        if self.Editmode == EditMode.NoneSelected:
-            self.bAddNewIssues.Enable(False)
-            self.tEditors.SetEditable(False)
-            self.tDates.SetEditable(False)
-            self.tFanzineType.Enabled=False
-            self.tTopComments.SetEditable(False)
-            self.tLocaleText.SetEditable(False)
-            self.cbComplete.Enabled=False
-            self.cbAlphabetizeIndividually.Enabled=False
-            self.wxGrid.Enabled=False
-            self.tDirectoryServer.SetEditable(False)
-            self.tFanzineName.SetEditable(False)
-
-            return
-
-        # OK, one or the other edit button has been pressed.  Adjust editing and coloring accordingly
-
         # Some things are turned on for both EditingOld and CreatingNew
         self.tFanzineName.SetEditable(True)
         self.tEditors.SetEditable(True)
@@ -110,27 +83,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self.cbAlphabetizeIndividually.Enabled=True
         self.wxGrid.Enabled=True
 
-        # The basic split is whether we are editing an existing LST or creating a new directory
-        if self.Editmode == EditMode.EditingOld:
-            self.tDirectoryServer.SetEditable(False)
-            self.tFanzineName.SetEditable(False)
-            # On an old directory, we always have a target defined, so we can always add new issues
-            self.bAddNewIssues.Enable(True)
-
-        if self.Editmode == EditMode.CreatingNew:
-            self.tDirectoryServer.SetEditable(True)
-            self.tFanzineName.SetEditable(True)
-            self.bAddNewIssues.Enable(True)
+        self.tDirectoryServer.SetEditable(False)
+        self.tFanzineName.SetEditable(False)
+        # On an old directory, we always have a target defined, so we can always add new issues
+        self.bAddNewIssues.Enable(True)
 
         # Whether or not the save button is enabled depends on what more we are in and what has been filled in.
         self.bSave.Enable(False)
-        if self.Editmode == EditMode.CreatingNew:
-            if len(self.tDirectoryServer.GetValue()) > 0 and len(self.tFanzineName.GetValue()) > 0 and len(self.Datasource.Rows) > 0:
-                self.bSave.Enable()
-
-        if self.Editmode == EditMode.EditingOld:
-            if self.tFanzineName.GetValue() and len(self.Datasource.Rows) > 0:
-                self.bSave.Enable()
+        if self.tFanzineName.GetValue() and len(self.Datasource.Rows) > 0:
+            self.bSave.Enable()
 
 
     #------------------
@@ -153,142 +114,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         if cells[0] == "" and cells[1] == "":
             return
 
-        val=LSTFile.RowToLST(cells)
-        #Log(f"1: {val=}")
-        if val == "":
-            self._dataGrid.SetCellBackgroundColor(irow, 0, Color.Pink)
-            self._dataGrid.SetCellBackgroundColor(irow, 1, Color.Pink)
-            return
-
-        val=LSTFile.LSTToRow(val)
-        #Log(f"2: {val=}")
-        if val == ("", ""):
-            self._dataGrid.SetCellBackgroundColor(irow, 0, Color.Pink)
-            self._dataGrid.SetCellBackgroundColor(irow, 1, Color.Pink)
-            return
-
         return
-
-
-    #------------------
-    # Open a dialog to allow the user to select an LSTFile on disk.
-    # Load it (and some other stuff) into self's 'LSFFile() object
-    def LoadLSTFile(self, path: str, lstfilename: str):       # MainWindow(MainFrame)
-
-        # Clear out any old information from form.
-        self.ClearMainWindow()
-        self.Editmode=EditMode.EditingOld
-        self.RefreshWindow()
-
-        self.lstFilename=lstfilename
-        Log(f"ClearMainWindow() initializes {self.lstFilename=}")
-        lstfile=LSTFile()   # Start with an empty LSTfile
-
-        # Read the lst file
-        pathname=os.path.join(path, lstfilename)
-        try:
-            lstfile.Load(pathname)
-        except Exception as e:
-            LogError(f"MainWindow: Failure reading LST file '{pathname}'")
-            Bailout(e, f"MainWindow: Failure reading LST file '{pathname}'", "LSTError")
-
-        if len(lstfile.Rows) == 0:
-            Bailout(None, f"LST file {pathname} appears to have no rows.  It cannot be read.", "LST file load error")
-
-
-        self._dataGrid.NumCols=0
-        self._dataGrid.DeleteRows(0, self._dataGrid.NumRows)
-        self._dataGrid.Grid.ScrollLines(-999)   # Scroll down a long ways to show start of file
-
-        # Copy the row data over into the Datasource class
-        # Because the LST data tends to be especially sloppy in the column count (extra or missing semicolons),
-        # we expand to cover the maximum number of columns found so as to drop nothing.
-        FTRList: list[FanzineIndexPageTableRow]=[FanzineIndexPageTableRow(row) for row in lstfile.Rows]
-        # Find the longest row and lengthen all the rows to that length
-        maxlen=max([len(row) for row in FTRList])
-        maxlen=max(maxlen, len(lstfile.ColumnHeaders))
-        if len(lstfile.ColumnHeaders) < maxlen:
-            lstfile.ColumnHeaders.extend([""]*(maxlen-len(lstfile.ColumnHeaders)))
-        for row in FTRList:
-            if len(row) < maxlen:
-                row.Extend([""]*(maxlen-len(row)))
-
-        # Turn the Column Headers into the grid's columns
-        self.Datasource.ColDefs=ColDefinitionsList([])
-        for name in lstfile.ColumnHeaders:
-            if name == "":
-                self.Datasource.ColDefs.append(ColDefinition())
-            elif name in self.stdColHeaders:
-                name=self.stdColHeaders[name].Preferred
-                self.Datasource.ColDefs.append(self.stdColHeaders[name])
-            else:
-                self.Datasource.ColDefs.append(ColDefinition(name))
-
-        self.Datasource._fanzineList=FTRList
-        self.Datasource.AlphabetizeIndividually=lstfile.AlphabetizeIndividually
-
-        self._dataGrid.RefreshWxGridFromDatasource(RetainSelection=False)
-
-        # Fill in the upper stuff
-        self.tFanzineName.SetValue(lstfile.FanzineName.strip())
-        self.tEditors.SetValue(lstfile.Editors.strip())
-        self.tDates.SetValue(lstfile.Dates.strip())
-
-        num=self.tFanzineType.FindString(lstfile.FanzineType)
-        if num == -1:
-            num=0
-        self.tFanzineType.SetSelection(num)
-        if len(lstfile.TopComments) > 0:
-            self.tTopComments.SetValue("\n".join(lstfile.TopComments))
-        if lstfile.Locale:
-            self.tLocaleText.SetValue("\n".join(lstfile.Locale))
-
-        if lstfile.FanzineType and lstfile.FanzineType in self.tFanzineType.Items:
-            self.tFanzineType.SetSelection(self.tFanzineType.Items.index(lstfile.FanzineType))
-        else:
-            self.tFanzineType.SetSelection(0)
-        self.OnFanzineType(None)        # I don't know why, but SetSelection does not trigger this event
-
-        self.cbAlphabetizeIndividually.SetValue(lstfile.AlphabetizeIndividually)
-        self.OnCheckAlphabetizeIndividually(None)  # Need to manually trigger datasource action
-        self.cbComplete.SetValue(lstfile.Complete)
-
-        self.ExtractApaMailings()
-        self.FillInPDFColumn()
-        self.FillInPagesColumn()
-        self.StandardizeColumns()
-
-
-    # Create a new LSTFile from the datasource
-    def CreateLSTFileFromDatasourceEtc(self) -> LSTFile:       # MainWindow(MainFrame)
-
-        lstfile=LSTFile()
-
-        # Fill in the upper stuff
-        lstfile.FanzineName=self.Datasource.FanzineName
-        lstfile.Editors=self.Datasource.Editors
-        lstfile.Dates=self.Datasource.Dates
-        lstfile.FanzineType=self.Datasource.FanzineType
-
-        lstfile.TopComments=self.Datasource.TopComments
-        lstfile.Locale=self.Datasource.Locale
-
-        lstfile.Complete=self.Datasource.Complete
-        lstfile.AlphabetizeIndividually=self.Datasource.AlphabetizeIndividually
-        Log(f"CreateLSTFileFromDatasourceEtc(): {lstfile.Complete=} and {lstfile.AlphabetizeIndividually=}")
-
-        # Copy over the column headers
-        lstfile.ColumnHeaders=self.Datasource.ColHeaders
-
-        # Now copy the grid's cell contents to the LSTFile structure
-        lstfile.Rows=[]
-        for i in range(self.Datasource.NumRows):
-            row=[None]*self.Datasource.NumCols
-            for j in range(self.Datasource.NumCols):
-                row[j]=self.wxGrid.GetCellValue(i, j)
-            lstfile.Rows.append(row)
-
-        return lstfile
 
 
     def OnExitClicked(self, event):       # MainWindow(MainFrame)
@@ -514,7 +340,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         if not self.OKToClose(event):
             return
 
-        self.Editmode=EditMode.EditingOld
         self.tDirectoryServer.SetValue("")
 
         # Call the File Open dialog to get an LST file
@@ -530,7 +355,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         with ProgressMsg(self, f"Loading '{self.url}'"):
             self.LoadLSTFile2(self.url)
 
-            self.LoadLSTFile2(targetDirectoryPathname, targetFilename)
 
     def LoadLSTFile2(self, url: str):
         # Try to load the LSTFile
@@ -552,10 +376,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
             self.Datasource.Credits=""
 
         # And see if we can pick up the server directory from setup.ftp
-        directory=self.ReadSetupFtp(targetDirectoryPathname)
-        if directory != "":
-            self.tDirectoryServer.SetValue(directory)
-            self.Datasource.ServerDirectory=directory
         self.MarkAsSaved()
         self.RefreshWindow()
 
@@ -630,7 +450,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         if dlg.Directory != "":
 
             self.ClearMainWindow()
-            self.Editmode=EditMode.CreatingNew
 
             self.Datasource.TargetDirectory=dlg.Directory
 
@@ -670,11 +489,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     # Save an LSTFile object to disk and maybe create a whole new directory
     def OnSave(self, event):       # MainWindow(MainFrame)
 
-        if self.Editmode == EditMode.CreatingNew:
-            self.CreateNewLSTDirectory()
-            self.lstFilename=self.Datasource.TargetDirectory+".lst"
-            Log(f"OnSave() initializes {self.lstFilename=}")
-
         self.SaveExistingLSTFile()
 
         self.LoadLSTFile2(self.url)
@@ -685,7 +499,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     def SaveExistingLSTFile(self):       # MainWindow(MainFrame)
 
         # In normal mode we save each edited LST file by renaming it and the edited version is given the original name
-        # In debug more, the original version stays put and the edited version is saved as -new
 
         newfname=self.lstFilename
         oldname=os.path.join(self.TargetDirectoryPathname, newfname)
@@ -777,7 +590,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
             return False
         with open(filename, "r") as fd:
             lines=fd.readlines()
-        RealLog(f"Read {lines=}")
+        Log(f"Read {lines=}")
         # Turn the inout lines into a dictionary of key:value pairs.  The value is a tuple of the key in its actual case and the value
         setupbld: ParmDict=ParmDict(CaseInsensitiveCompare=True)
         setupbld.AppendLines(lines)
@@ -844,7 +657,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
             m=re.match("(^.*/fanzines/)(.*)$", line)
             if m is not None:
                 found=True
-                lines[i]=m.groups()[0]+self.Datasource.ServerDirectory
+                lines[i]=m.groups()[0]#+self.Datasource.ServerDirectory
         if not found:
             MessageBox("Can't edit setup.ftp. Save failed.")
             Log("CreateLSTDirectory: Can't edit setup.ftp. Save failed.")
@@ -944,12 +757,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
     # This method updates the local directory name by computing it from the fanzine name.  It only applies when creating a new LST file
     def OnFanzineNameChar(self, event):
-        if self.Editmode == EditMode.CreatingNew:
-            # The only time we update the local directory
-            fname=AddChar(self.tFanzineName.GetValue(), event.GetKeyCode())
-            self.tFanzineName.SetValue(fname)
-            self.GenerateServerNameFromFanzineName()
-            self.tFanzineName.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
+        # The only time we update the local directory
+        fname=AddChar(self.tFanzineName.GetValue(), event.GetKeyCode())
+        self.tFanzineName.SetValue(fname)
+        self.GenerateServerNameFromFanzineName()
+        self.tFanzineName.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
 
 
     def GenerateServerNameFromFanzineName(self):
@@ -1003,10 +815,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self.RefreshWindow(DontRefreshGrid=True)
         # Don't need to refresh because nothing changed
 
-    # ------------------
-    def OnDirectoryServer(self, event):       # MainWindow(MainFrame)
-        self.Datasource.ServerDirectory=self.tDirectoryServer.GetValue()
-        self.RefreshWindow(DontRefreshGrid=True)
 
     #------------------
     def OnTextLocale(self, event):       # MainWindow(MainFrame)
@@ -1620,8 +1428,6 @@ class FanzineIndexPage(GridDataSource):
         self.Complete=False     # Is this fanzine series complete?
         self.AlphabetizeIndividually=False      # Treat all issues as part of main series
         self.Credits=""         # Who is to be credited for this affair?
-        self.ServerDirectory=""  # Server directory to be created under /fanzines
-        self.TargetDirectory=""     # Local directory containing LST files
 
 
     def Signature(self) -> int:        # FanzineTablePage(GridDataSource)
@@ -1629,7 +1435,6 @@ class FanzineIndexPage(GridDataSource):
         s+=hash(f"{self._name.strip()};{' '.join(self.TopComments).strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{' '.join(self.TopComments).strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{self.FanzineName};{self.Editors};{self.Dates};{self.FanzineType};{self.Credits};{self.Complete}{self.AlphabetizeIndividually}")
-        s+=hash(f"{self.ServerDirectory.strip()};{self.TargetDirectory.strip()}")
         s+=sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
         return s+hash(self._specialTextColor)+self._colDefs.Signature()
 
