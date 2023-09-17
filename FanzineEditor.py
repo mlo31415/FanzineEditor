@@ -233,6 +233,11 @@ class FanzineEditor(FanzineGrid):
         # Call the RMB handler
         self.RMBHandler(True, event)
 
+    #-------------------
+    def OnGridCellDoubleClick(self, event):        # DataGrid
+        #self.SaveClickLocation(event)
+        i=0
+        #TODO: Is this all?
 
     # RMB click handling for grid and grid label clicks
     def RMBHandler(self, isCellClick: bool, event):       # MainWindow(MainFrame)
