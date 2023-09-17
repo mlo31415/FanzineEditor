@@ -125,9 +125,10 @@ class FanzineEditor(FanzineGrid):
         self._dataGrid: DataGrid=DataGrid(self.FanzineGrid)
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
 
-        fanzinesList=GetFanzineList()
-        fanzinesList.sort(key=lambda name: name.casefold())
-        self.Datasource.FanzineList=fanzinesList
+        self._fanzinesList=GetFanzineList()
+        self._fanzinesList.sort(key=lambda name: name.casefold())
+        self.Datasource.FanzineList=self._fanzinesList
+
         self._dataGrid.HideRowLabels()
         self._dataGrid.HideColLabels()
 
@@ -213,6 +214,11 @@ class FanzineEditor(FanzineGrid):
     def NeedsSaving(self):       # FanzineEditor(FanzineGrid)
         return self._signature != self.Signature()
 
+    def OnSearchText(self, event):
+        searchtext=self.tSearch.GetValue()
+        fanzinelist=[x for x in self._fanzinesList if searchtext.casefold() in x.casefold()]
+        self.Datasource.FanzineList=fanzinelist
+        self.RefreshWindow()
 
     #-------------------
     def OnGridCellDoubleClick(self, event):        # DataGrid
