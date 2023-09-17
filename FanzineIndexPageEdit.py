@@ -683,14 +683,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
             Log(f"OnSave() initializes {self.lstFilename=}")
 
         self.SaveExistingLSTFile()
-        # When we're in debug mode, we don;t overrighe the old file, so when we do the reload, we need to do it from the new filename
-        if g_debug:
-            newname=os.path.splitext(self.lstFilename)
-            newfname=newname[0]+"-new"+newname[1]
-            newpname=os.path.join(self.TargetDirectoryPathname, newfname)
-        else:
-            newpname=self.lstFilename
-        self.LoadLSTFile2(self.TargetDirectoryPathname, newpname)
+
+        self.LoadLSTFile2(self.TargetDirectoryPathname, self.lstFilename)
 
 
     #------------------
@@ -700,15 +694,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         # In normal mode we save each edited LST file by renaming it and the edited version is given the original name
         # In debug more, the original version stays put and the edited version is saved as -new
 
-        if g_debug:
-            newname=os.path.splitext(self.lstFilename)
-            newfname=newname[0]+"-new"+newname[1]
-            newpname=os.path.join(self.TargetDirectoryPathname, newfname)
-        else:
-            newfname=self.lstFilename
-            oldname=os.path.join(self.TargetDirectoryPathname, newfname)
-            if os.path.exists(oldname):
-                newpname=os.path.join(self.TargetDirectoryPathname, os.path.splitext(self.lstFilename)[0]+"-old.LST")
+        newfname=self.lstFilename
+        oldname=os.path.join(self.TargetDirectoryPathname, newfname)
+        if os.path.exists(oldname):
+            newpname=os.path.join(self.TargetDirectoryPathname, os.path.splitext(self.lstFilename)[0]+"-old.LST")
 
         with ProgressMsg(self, f"Creating {newfname}"):
 
@@ -722,22 +711,21 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
                     Log(f"Could not create setup.bld using {templateDirectory=}")
 
 
-            if not g_debug:
-                # If there is an old file, rename it
-                if os.path.exists(oldname):
+            # If there is an old file, rename it
+            if os.path.exists(oldname):
 
-                    try:
-                        i=0
-                        # Look for an available new name
-                        while os.path.exists(newpname):
-                            i+=1
-                            newpname=os.path.join(self.TargetDirectoryPathname, f"{os.path.splitext(self.lstFilename)[0]}-old-{i}.LST")
-                        os.rename(oldname, newpname)
-                    except Exception as e:
-                        LogError(f"OnSave fails when trying to rename {oldname} to {newpname}")
-                        Bailout(PermissionError, f"OnSave fails when trying to rename {oldname} to {newpname}", "LSTError")
+                try:
+                    i=0
+                    # Look for an available new name
+                    while os.path.exists(newpname):
+                        i+=1
+                        newpname=os.path.join(self.TargetDirectoryPathname, f"{os.path.splitext(self.lstFilename)[0]}-old-{i}.LST")
+                    os.rename(oldname, newpname)
+                except Exception as e:
+                    LogError(f"OnSave fails when trying to rename {oldname} to {newpname}")
+                    Bailout(PermissionError, f"OnSave fails when trying to rename {oldname} to {newpname}", "LSTError")
 
-                self.SaveFile(lstfile, oldname)
+            self.SaveFile(lstfile, oldname)
 
             if os.path.exists(newpname):
                 os.remove(newpname)
