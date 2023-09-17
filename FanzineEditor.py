@@ -16,8 +16,7 @@ from bs4 import BeautifulSoup
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition
 from WxHelpers import OnCloseHandling
 from LSTFile import *
-from HelpersPackage import Bailout,  MessageBox, SetReadOnlyFlag, RemoveTopLevelHTMLTags
-from HelpersPackage import  FindLinkInString
+from HelpersPackage import Bailout,  MessageBox, RemoveTopLevelHTMLTags
 from Log import LogOpen, LogClose
 from Log import Log as RealLog
 from Settings import Settings
