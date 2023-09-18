@@ -83,7 +83,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self.cbAlphabetizeIndividually.Enabled=True
         self.wxGrid.Enabled=True
 
-        self.tDirectoryServer.SetEditable(False)
         self.tFanzineName.SetEditable(False)
         # On an old directory, we always have a target defined, so we can always add new issues
         self.bAddNewIssues.Enable(True)
@@ -340,8 +339,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         if not self.OKToClose(event):
             return
 
-        self.tDirectoryServer.SetValue("")
-
         # Call the File Open dialog to get an LST file
         # with wx.FileDialog(self, "Select LST file to load", self.RootDirectoryPath, "", "*.LST", wx.FD_OPEN) as dlg:
         #     dlg.SetWindowStyle(wx.STAY_ON_TOP)
@@ -384,10 +381,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     # This also initiazes the datasource
     def ClearMainWindow(self):       # MainWindow(MainFrame)
 
-        # Re-initialize the form
-        self.Datasource.TargetDirectory=""
-        self.Datasource.ServerDirectory=""
-
         # Create default column headers
         self.stdColHeaders: ColDefinitionsList=ColDefinitionsList([
                                                               ColDefinition("Filename", Type="str"),
@@ -428,7 +421,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self.tFanzineType.SetSelection(0)
         self.tLocaleText.SetValue("")
         self.tCredits.SetValue("")
-        self.tDirectoryServer.SetValue("")
         self.cbComplete.SetValue(False)
         self.cbAlphabetizeIndividually.SetValue(False)
 
@@ -454,7 +446,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
             self.Datasource.TargetDirectory=dlg.Directory
 
             self.tFanzineName.SetValue(dlg.FanzineName)
-            self.GenerateServerNameFromFanzineName()
 
             self.tCredits.SetValue(self.Datasource.Credits.strip())
 
@@ -657,7 +648,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
             m=re.match("(^.*/fanzines/)(.*)$", line)
             if m is not None:
                 found=True
-                lines[i]=m.groups()[0]#+self.Datasource.ServerDirectory
+                lines[i]=m.groups()[0]
         if not found:
             MessageBox("Can't edit setup.ftp. Save failed.")
             Log("CreateLSTDirectory: Can't edit setup.ftp. Save failed.")
@@ -760,18 +751,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         # The only time we update the local directory
         fname=AddChar(self.tFanzineName.GetValue(), event.GetKeyCode())
         self.tFanzineName.SetValue(fname)
-        self.GenerateServerNameFromFanzineName()
         self.tFanzineName.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
-
-
-    def GenerateServerNameFromFanzineName(self):
-        # Log(f"OnFanzineNameChar: {fname=}  {event.GetKeyCode()}")
-        converted=self.tFanzineName.GetValue()
-        converted=RemoveArticles(converted)
-        converted=RemoveScaryCharacters(converted)
-        converted=SplitOnSpan(" _.,", converted)
-        converted="_".join(converted)
-        self.tDirectoryServer.SetValue(converted)
 
 
     def OnFanzineName(self, event):       # MainWindow(MainFrame)
