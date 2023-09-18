@@ -220,6 +220,9 @@ class FanzineEditor(FanzinesGrid):
         #self.SaveClickLocation(vent)
         url=self._Datasource.Rows[event.Row][event.Col]
         fsw=FanzineIndexPageWindow(None, url)
+        if fsw.failure:
+            Log(f"FanzineIndexPageWindow('{url}') failed")
+
 
 
     # ------------------
