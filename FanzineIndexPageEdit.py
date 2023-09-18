@@ -32,7 +32,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         FanzineIndexPageEdit.__init__(self, parent)
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
-        self.Datasource=FanzineIndexPage()      # Note that this is an empty instance
+        self.Datasource=FanzineIndexPage()
+        self.failure=False
+        if not self.Datasource.GetFanzinePage(url):
+            self.failure=True
+            return
+
+        self.url=url
 
         self._dataGrid._ColorCellByValue=self.ColorCells01ByValue
 
