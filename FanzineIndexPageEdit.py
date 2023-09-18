@@ -44,7 +44,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
         self.IsNewDirectory=False   # Are we creating a new directory? (Alternative is that we're editing an old one.)
 
-        self.url=url
+
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
 
