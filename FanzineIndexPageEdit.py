@@ -42,8 +42,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
         self.url=url
 
-        self._dataGrid._ColorCellByValue=self.ColorCells01ByValue
-
         self.IsNewDirectory=False   # Are we creating a new directory? (Alternative is that we're editing an old one.)
 
         # Get the default PDF directory
