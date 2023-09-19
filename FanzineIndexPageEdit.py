@@ -66,7 +66,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self.tEditors.SetValue(", ".join(self.Datasource.Editors))
         self.tFanzineName.SetValue(self.Datasource.FanzineName)
         if self.Datasource.FanzineType in self.Datasource.FanzineType:
-            self.tFanzineType.SetSelection(self.Datasource.FanzineType.index(self.Datasource.FanzineType))
+            self.tFanzineType.SetSelection(self.tFanzineType.Items.index(self.Datasource.FanzineType))
         self.tLocaleText.SetValue(self.Datasource.Locale)
 
         self.RefreshWindow()
@@ -1508,7 +1508,7 @@ class FanzineIndexPage(GridDataSource):
             topmattersplit=[x.replace("\n\n", "\n").removesuffix("\n") for x in topmattersplit if x != ""]
             fanzinename=topmattersplit[0]
             editors=topmattersplit[1].split("\n")
-            dates, type=topmattersplit[2].split("\n")
+            dates, fanzinetype=topmattersplit[2].split("\n")
 
         headers: list[str]=[]
         rows: list[list[str]]=[]
