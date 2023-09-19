@@ -1534,6 +1534,14 @@ class FanzineIndexPage(GridDataSource):
             if len(lasttext) == 2:
                 credits=lasttext[0]
 
+
+        Log(f"GetFanzinePage({url}):")
+        Log(f"     {credits=}")
+        Log(f"     {dates=}")
+        Log(f"     {editors=}")
+        Log(f"     {fanzinetype=}")
+        Log(f"     {locale=}")
+        Log(f"     {fanzinename=}")
         self.Credits=credits
         self.Dates=dates
         self.Editors=editors
