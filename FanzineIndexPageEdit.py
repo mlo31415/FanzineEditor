@@ -35,10 +35,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzineIndexPage()
-        self.failure=False
-        if not self.Datasource.GetFanzinePage(url):
-            self.failure=True
-            return
 
         self.url=url
 
@@ -58,6 +54,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self.Datasource.targetDirectory=""
 
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
+
+        # Load the fanzine index page
+        self.failure=False
+        if not self.Datasource.GetFanzinePage(url):
+            self.failure=True
+            return
 
         self.tCredits.SetValue(self.Datasource.Credits)
         self.tDates.SetValue(self.Datasource.Dates)
