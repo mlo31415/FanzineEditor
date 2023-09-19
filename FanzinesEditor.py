@@ -123,7 +123,7 @@ class FanzineEditor(FanzinesGrid):
     def __init__(self, parent):
         FanzinesGrid.__init__(self, parent)
 
-        self._dataGrid: DataGrid=DataGrid(self.FanzineGrid)
+        self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
 
         self._fanzinesList=GetFanzineList()

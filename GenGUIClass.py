@@ -567,29 +567,29 @@ class FanzinesGrid ( wx.Frame ):
 
 		bSizer3.Add( fgSizer7, 0, wx.EXPAND, 5 )
 
-		self.FanzineGrid = wx.grid.Grid( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.wxGrid = wx.grid.Grid( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0 )
 
 		# Grid
-		self.FanzineGrid.CreateGrid( 10, 5 )
-		self.FanzineGrid.EnableEditing( False )
-		self.FanzineGrid.EnableGridLines( True )
-		self.FanzineGrid.EnableDragGridSize( False )
-		self.FanzineGrid.SetMargins( 0, 0 )
+		self.wxGrid.CreateGrid( 10, 5 )
+		self.wxGrid.EnableEditing( False )
+		self.wxGrid.EnableGridLines( True )
+		self.wxGrid.EnableDragGridSize( False )
+		self.wxGrid.SetMargins( 0, 0 )
 
 		# Columns
-		self.FanzineGrid.EnableDragColMove( False )
-		self.FanzineGrid.EnableDragColSize( True )
-		self.FanzineGrid.SetColLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
+		self.wxGrid.EnableDragColMove( False )
+		self.wxGrid.EnableDragColSize( True )
+		self.wxGrid.SetColLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
 
 		# Rows
-		self.FanzineGrid.EnableDragRowSize( True )
-		self.FanzineGrid.SetRowLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
+		self.wxGrid.EnableDragRowSize( True )
+		self.wxGrid.SetRowLabelAlignment( wx.ALIGN_CENTER, wx.ALIGN_CENTER )
 
 		# Label Appearance
 
 		# Cell Defaults
-		self.FanzineGrid.SetDefaultCellAlignment( wx.ALIGN_LEFT, wx.ALIGN_TOP )
-		bSizer3.Add( self.FanzineGrid, 0, wx.ALL, 5 )
+		self.wxGrid.SetDefaultCellAlignment( wx.ALIGN_LEFT, wx.ALIGN_TOP )
+		bSizer3.Add( self.wxGrid, 0, wx.ALL, 5 )
 
 
 		self.SetSizer( bSizer3 )
@@ -601,7 +601,7 @@ class FanzinesGrid ( wx.Frame ):
 		self.tSearch.Bind( wx.EVT_TEXT, self.OnSearchText )
 		self.bClearSearch.Bind( wx.EVT_BUTTON, self.OnClearSearch )
 		self.bExit.Bind( wx.EVT_BUTTON, self.OnClose )
-		self.FanzineGrid.Bind( wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnGridCellDoubleClick )
+		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnGridCellDoubleClick )
 
 	def __del__( self ):
 		pass
