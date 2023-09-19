@@ -61,6 +61,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
             self.failure=True
             return
 
+        # Add the various values into the dialog
         self.tCredits.SetValue(self.Datasource.Credits)
         self.tDates.SetValue(self.Datasource.Dates)
         self.tEditors.SetValue(", ".join(self.Datasource.Editors))
