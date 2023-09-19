@@ -65,7 +65,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self.tDates.SetValue(self.Datasource.Dates)
         self.tEditors.SetValue(", ".join(self.Datasource.Editors))
         self.tFanzineName.SetValue(self.Datasource.FanzineName)
-        if self.Datasource.FanzineType in self.Datasource.FanzineType:
+        if self.Datasource.FanzineType in self.tFanzineType.Items:
             self.tFanzineType.SetSelection(self.tFanzineType.Items.index(self.Datasource.FanzineType))
         self.tLocaleText.SetValue(self.Datasource.Locale)
 
