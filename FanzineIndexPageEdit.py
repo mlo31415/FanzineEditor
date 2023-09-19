@@ -19,7 +19,8 @@ from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefini
 from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, AddChar, MessageBoxInput
 from HelpersPackage import Bailout, IsInt, Int0, ZeroIfNone, MessageBox, RemoveScaryCharacters, SetReadOnlyFlag, ParmDict
 from HelpersPackage import  ComparePathsCanonical, FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
-from HelpersPackage import RemoveHyperlink, SplitOnSpan, RemoveArticles, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders
+from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders
+from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags
 from PDFHelpers import GetPdfPageCount
 from Log import Log, LogError
 from Settings import Settings
