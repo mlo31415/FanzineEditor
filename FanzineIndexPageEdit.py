@@ -8,6 +8,7 @@ import wx.grid
 import re
 
 from bs4 import BeautifulSoup
+import bs4
 
 import HelpersPackage
 from GenGUIClass import FanzineIndexPageEdit
@@ -45,7 +46,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
         self.IsNewDirectory=False   # Are we creating a new directory? (Alternative is that we're editing an old one.)
 
-
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
 
@@ -61,7 +61,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
 
-        self.ClearMainWindow()
+        self.tCredits.SetValue(self.Datasource.Credits)
+        self.tDates.SetValue(self.Datasource.Dates)
+        self.tEditors.SetValue(", ".join(self.Datasource.Editors))
+        self.tFanzineName.SetValue(self.Datasource.FanzineName)
+        if self.Datasource.FanzineType in self.Datasource.FanzineType:
+            self.tFanzineType.SetSelection(self.Datasource.FanzineType.index(self.Datasource.FanzineType))
+        self.tLocaleText.SetValue(self.Datasource.Locale)
+
         self.RefreshWindow()
 
         self.Show(True)
@@ -724,6 +731,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
     def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # MainWindow(MainFrame)
         self.MaybeSetNeedsSavingFlag()
+
         if not DontRefreshGrid:
             self._dataGrid.RefreshWxGridFromDatasource()
         self.ColorFields()
@@ -745,10 +753,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
     # This method updates the local directory name by computing it from the fanzine name.  It only applies when creating a new LST file
     def OnFanzineNameChar(self, event):
-        # The only time we update the local directory
-        fname=AddChar(self.tFanzineName.GetValue(), event.GetKeyCode())
-        self.tFanzineName.SetValue(fname)
-        self.tFanzineName.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
+        return
+        # # The only time we update the local directory
+        # fname=AddChar(self.tFanzineName.GetValue(), event.GetKeyCode())
+        # self.tFanzineName.SetValue(fname)
+        # self.tFanzineName.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
 
 
     def OnFanzineName(self, event):       # MainWindow(MainFrame)
@@ -767,7 +776,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
 
     def OnFanzineType(self, event):       # MainWindow(MainFrame)
-        self.Datasource.FanzineType=self.tFanzineType.GetString(self.tFanzineType.GetSelection()).strip()
+
+        self.tCredits.SetValue(self.Datasource.Credits)
+        self.tDates.SetValue(self.Datasource.Dates)
+        self.tEditors.SetValue(", ".join(self.Datasource.Editors))
+        self.tFanzineName.SetValue(self.Datasource.FanzineName)
+        self.tFanzineType.SetValue(self.Datasource.FanzineType)
+        self.tLocaleText.SetValue(self.Datasource.Locale)
         self.RefreshWindow(DontRefreshGrid=True)
 
     #------------------
@@ -1449,16 +1464,86 @@ class FanzineIndexPage(GridDataSource):
             ftr=FanzineIndexPageTableRow([""]*self.NumCols)
             self._fanzineList.insert(insertat+i, ftr)
 
+    def SelectNonNavigableStrings(self, soupstuff) -> list:
+        return [x for x in soupstuff if type(x) is not bs4.element.NavigableString]
+
+
     # Read a fanzine index page fanac.org/fanzines/URL and fill in the class
-    def GetFanzineList(url: str):
-        html=FTP().GetFileAsString("fanzines/"+url, "Classic_Fanzines.html")
+    def GetFanzinePage(self, url: str):
+        #FTP().SetDirectory("/")
+        html=FTP().GetFileAsString("/fanzines/"+url, "index.html")
         soup=BeautifulSoup(html, 'html.parser')
-        table=soup.find_all("table", class_="sortable")[0]
-        rows=table.find_all_next("tr")
-        row=rows[0]
-        rowtable: list[list[str]]=[]
-        for row in rows[1:]:
-            cols=[str(col) for col in row.children if col != "\n/n"]
-            cols=[RemoveTopLevelHTMLTags(col) for col in cols]
-            # Log(str(cols))
-            rowtable.append(cols)
+        body=soup.findAll("body")
+        bodytext=str(body)
+        _, bodytext=SearchAndReplace(r"(<script>.+?</script>)", bodytext, "", ignorenewlines=True)
+
+        tables=body[0].findAll("table")
+        top=tables[0]
+        theTable=tables[2]
+        bottom=tables[3]
+
+        locale="(not found)"
+        localeStuff=body[0].findAll("fanac-type")
+        if len(localeStuff) > 0:
+            localeStuff=str(localeStuff[0])
+            _, localeStuff=SearchAndReplace(r"(</?fanac-type>)", localeStuff, "")
+            _, locale=SearchAndReplace(r"(</?h2/?>)", localeStuff, "")
+
+
+        fanzinename="(not found)"
+        editors="(not found)"
+        dates="(not found)"
+        fanzinetype="(not found)"
+        # Extract the fanzine Name, Editors, Dates and Type
+        if len(top.findAll("td")) > 1:
+            topmatter=top.findAll("td")[1]
+            # This looks like:
+            # '<td border="none" class="fmz"><h1 class="sansserif">Apollo<br/><h2>Joe Hensley <br/> Lionel Innman<br/><h2>1943 - 1946<br/><br/>Genzine</h2></h2></h1></td>'
+            # Split it first by <h[12].
+            topmattersplit=re.split(r"</?h[12]/?>", str(topmatter))
+            for i, stuff in enumerate(topmattersplit):
+                stuff=re.sub(r"</?br/?>", "\n", stuff)
+                _, stuff=SearchAndReplace(r"(<.*?>)", stuff, "")
+                topmattersplit[i]=stuff
+            topmattersplit=[x.replace("\n\n", "\n").removesuffix("\n") for x in topmattersplit if x != ""]
+            fanzinename=topmattersplit[0]
+            editors=topmattersplit[1].split("\n")
+            dates, type=topmattersplit[2].split("\n")
+
+        headers: list[str]=[]
+        rows: list[list[str]]=[]
+        theRows=theTable.findAll("tr")
+        if len(theRows) > 0:
+            row0=theRows[0].findAll("th")
+            if len(row0) > 0:
+                headers=[RemoveAllHTMLLikeTags(str(x)) for x in row0]
+            if len(theRows) > 1:
+                for thisrow in theRows[1:]:
+                    cols=thisrow.findAll("td")
+                    row=[RemoveAllHTMLLikeTags(str(x)) for x in cols]
+                    rows.append(row)
+
+        credits="(not found)"
+        loc=bodytext.rfind("</table>")
+        if loc >= 0:
+            lasttext=bodytext[loc+len("</table>"):]
+            lasttext=re.split(r"</?br/?", lasttext)
+            lasttext=[RemoveAllHTMLLikeTags(x) for x in lasttext]
+            lasttext=[x.replace(r"/n", "").replace("\n", "") for x in lasttext]
+            lasttext=[x for x in lasttext if len(x) > 0]
+            if len(lasttext) == 2:
+                credits=lasttext[0]
+
+        self.Credits=credits
+        self.Dates=dates
+        self.Editors=editors
+        self.FanzineType=fanzinetype
+        self.Locale=locale
+        self.FanzineName=fanzinename
+
+        return True
+
+
+
+
+
