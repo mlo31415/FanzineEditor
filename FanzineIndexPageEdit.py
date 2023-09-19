@@ -57,7 +57,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
         # Load the fanzine index page
         self.failure=False
-        if not self.Datasource.GetFanzinePage(url):
+        if not self.Datasource.GetFanzineIndexPage(url):
             self.failure=True
             return
 
@@ -1469,7 +1469,7 @@ class FanzineIndexPage(GridDataSource):
 
 
     # Read a fanzine index page fanac.org/fanzines/URL and fill in the class
-    def GetFanzinePage(self, url: str):
+    def GetFanzineIndexPage(self, url: str):
         #FTP().SetDirectory("/")
         html=FTP().GetFileAsString("/fanzines/"+url, "index.html")
         soup=BeautifulSoup(html, 'html.parser')
