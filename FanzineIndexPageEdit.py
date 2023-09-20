@@ -1377,7 +1377,7 @@ class FanzineIndexPageTableRow(GridDataRowClass):
 
     # We multiply the cell has by the cell index (+1) so that moves right and left also change the signature
     def Signature(self) -> int:      # FanzineTableRow(GridDataRowClass)
-        return 0    #TODO
+        return sum([x.__hash__()*(i+1) for i, x in enumerate(self._cells)])
 
 
     @property
@@ -1470,8 +1470,11 @@ class FanzineIndexPage(GridDataSource):
         s+=hash(f"{self._name.strip()};{' '.join(self.TopComments).strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{' '.join(self.TopComments).strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{self.FanzineName};{self.Editors};{self.Dates};{self.FanzineType};{self.Credits};{self.Complete}{self.AlphabetizeIndividually}")
+        s+=self._colDefs.Signature()
         s+=sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
-        return s+hash(self._specialTextColor)+self._colDefs.Signature()
+        s+=hash(self._specialTextColor)+self._colDefs.Signature()
+        Log(f"FanzineIndexPage(GridDataSource).Signature={s}")
+        return s
 
     # Inherited from GridDataSource
     @property
