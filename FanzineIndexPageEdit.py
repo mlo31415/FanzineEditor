@@ -734,12 +734,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     def UpdateNeedsSavingFlag(self):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
         s="Editing "+self.url
         if self.NeedsSaving():
-            s=s+" *"        # Add on a change marker if needed
+            s=s+" *"        # Append a change marker if needed
         self.SetTitle(s)
 
 
-    def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # MainWindow(MainFrame)
-        self.MaybeSetNeedsSavingFlag()
+    def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # FanzineIndexPageWindow(FanzineIndexPageEdit)
         self.UpdateNeedsSavingFlag()
 
         if not DontRefreshGrid:
