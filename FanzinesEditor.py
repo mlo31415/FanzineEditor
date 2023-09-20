@@ -144,6 +144,7 @@ class FanzineEditor(FanzinesGrid):
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
 
         #self.ClearMainWindow()
+        self.MarkAsSaved()
         self.RefreshWindow()
 
         self.Show(True)
@@ -222,7 +223,6 @@ class FanzineEditor(FanzinesGrid):
         fsw=FanzineIndexPageWindow(None, url)
         if fsw.failure:
             Log(f"FanzineIndexPageWindow('{url}') failed")
-
 
 
     # ------------------
@@ -324,6 +324,7 @@ class FanzinesPage(GridDataSource):
 
     def Signature(self) -> int:        # FanzinesPage(GridDataSource)
         return sum([x.__hash__() *(i+1) for i, x in enumerate(self._fanzineList)])
+
 
     # Inherited from GridDataSource
     @property
