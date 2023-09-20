@@ -175,7 +175,7 @@ class FanzineEditor(FanzinesGrid):
         sys.exit(1)
 
 
-    def MaybeSetNeedsSavingFlag(self):       # FanzineEditor(FanzineGrid)
+    def UpdateNeedsSavingFlag(self):       # FanzineEditor(FanzineGrid)
         s="Editing "
         if self.NeedsSaving():
             s=s+" *"        # Add on a change marker if needed
@@ -183,7 +183,7 @@ class FanzineEditor(FanzinesGrid):
 
 
     def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # FanzineEditor(FanzineGrid)
-        self.MaybeSetNeedsSavingFlag()
+        self.UpdateNeedsSavingFlag()
         if not DontRefreshGrid:
             self._dataGrid.RefreshWxGridFromDatasource()
 

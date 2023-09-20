@@ -486,7 +486,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
                 gStdColHeaders["Notes"]
             ])
 
-            self.MaybeSetNeedsSavingFlag()
+            self.UpdateNeedsSavingFlag()
             self.RefreshWindow()
 
     #------------------
@@ -731,7 +731,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
             Bailout(PermissionError, "OnSave failed (2) when trying to write file "+name, "LSTError")
 
 
-    def MaybeSetNeedsSavingFlag(self):       # MainWindow(MainFrame)
+    def UpdateNeedsSavingFlag(self):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
         s="Editing "+self.url
         if self.NeedsSaving():
             s=s+" *"        # Add on a change marker if needed
@@ -740,6 +740,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
     def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # MainWindow(MainFrame)
         self.MaybeSetNeedsSavingFlag()
+        self.UpdateNeedsSavingFlag()
 
         if not DontRefreshGrid:
             self._dataGrid.RefreshWxGridFromDatasource()
@@ -830,7 +831,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     #-------------------
     def OnKeyDown(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
         self._dataGrid.OnKeyDown(event) # Pass event to WxDataGrid to handle
-        self.MaybeSetNeedsSavingFlag()
+        self.UpdateNeedsSavingFlag()
 
     #-------------------
     def OnKeyUp(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
