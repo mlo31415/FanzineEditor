@@ -103,6 +103,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         #     self.wxGrid._colDefs.append(ColDefinition("", IsEditable="no"))
 
         self._dataGrid.RefreshWxGridFromDatasource()
+        self.MarkAsSaved()
         self.RefreshWindow()
 
         self.Show(True)
