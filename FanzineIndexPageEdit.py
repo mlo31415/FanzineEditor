@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Union, Optional
+from typing import Optional
 import os
 import shutil
 import wx
@@ -17,7 +17,7 @@ from FTP import FTP
 from NewFanzineDialog import NewFanzineWindow
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass
-from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, AddChar, MessageBoxInput
+from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, MessageBoxInput
 from HelpersPackage import Bailout, IsInt, Int0, ZeroIfNone, MessageBox, RemoveScaryCharacters, SetReadOnlyFlag, ParmDict
 from HelpersPackage import  ComparePathsCanonical, FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders
@@ -27,6 +27,30 @@ from Log import Log, LogError
 from Settings import Settings
 from FanzineIssueSpecPackage import MonthNameToInt
 
+# Create default column headers
+gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
+    ColDefinition("Filename", Type="str"),
+    ColDefinition("Issue", Type="required str"),
+    ColDefinition("Title", Type="str", preferred="Issue"),
+    ColDefinition("Whole", Type="int", Width=75),
+    ColDefinition("WholeNum", Type="int", Width=75, preferred="Whole"),
+    ColDefinition("Vol", Type="int", Width=50),
+    ColDefinition("Volume", Type="int", Width=50, preferred="Vol"),
+    ColDefinition("Num", Type="int", Width=50),
+    ColDefinition("Number", Type="int", Width=50, preferred="Num"),
+    ColDefinition("Month", Type="str", Width=75),
+    ColDefinition("Day", Type="int", Width=50),
+    ColDefinition("Year", Type="int", Width=50),
+    ColDefinition("Pages", Type="int", Width=50),
+    ColDefinition("PDF", Type="str", Width=50),
+    ColDefinition("Notes", Type="str", Width=120),
+    ColDefinition("Scanned", Type="str", Width=100),
+    ColDefinition("Country", Type="str", Width=50),
+    ColDefinition("Editor", Type="str", Width=75),
+    ColDefinition("Author", Type="str", Width=75),
+    ColDefinition("Mailing", Type="str", Width=75),
+    ColDefinition("Repro", Type="str", Width=75)
+])
 
 
 class FanzineIndexPageWindow(FanzineIndexPageEdit):
@@ -69,7 +93,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         if self.Datasource.FanzineType in self.tFanzineType.Items:
             self.tFanzineType.SetSelection(self.tFanzineType.Items.index(self.Datasource.FanzineType))
         self.tLocaleText.SetValue(self.Datasource.Locale)
+        
+        # Now load the fanzine issue data
+        self._dataGrid.HideRowLabels()
 
+        self._dataGrid.NumCols=self.Datasource.NumCols
+        self._dataGrid.AppendRows(self.Datasource.NumRows)
+        # for i in range(self.Datasource.NumCols):
+        #     self.wxGrid._colDefs.append(ColDefinition("", IsEditable="no"))
+
+        self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
 
         self.Show(True)
@@ -396,32 +429,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     # This also initiazes the datasource
     def ClearMainWindow(self):       # MainWindow(MainFrame)
 
-        # Create default column headers
-        self.stdColHeaders: ColDefinitionsList=ColDefinitionsList([
-                                                              ColDefinition("Filename", Type="str"),
-                                                              ColDefinition("Issue", Type="required str"),
-                                                              ColDefinition("Title", Type="str", preferred="Issue"),
-                                                              ColDefinition("Whole", Type="int", Width=75),
-                                                              ColDefinition("WholeNum", Type="int", Width=75, preferred="Whole"),
-                                                              ColDefinition("Vol", Type="int", Width=50),
-                                                              ColDefinition("Volume", Type="int", Width=50, preferred="Vol"),
-                                                              ColDefinition("Num", Type="int", Width=50),
-                                                              ColDefinition("Number", Type="int", Width=50, preferred="Num"),
-                                                              ColDefinition("Month", Type="str", Width=75),
-                                                              ColDefinition("Day", Type="int", Width=50),
-                                                              ColDefinition("Year", Type="int", Width=50),
-                                                              ColDefinition("Pages", Type="int", Width=50),
-                                                              ColDefinition("PDF", Type="str", Width=50),
-                                                              ColDefinition("Notes", Type="str", Width=120),
-                                                              ColDefinition("Scanned", Type="str", Width=100),
-                                                              ColDefinition("Scanned BY", Type="str", Width=100),
-                                                              ColDefinition("Country", Type="str", Width=50),
-                                                              ColDefinition("Editor", Type="str", Width=75),
-                                                              ColDefinition("Author", Type="str", Width=75),
-                                                              ColDefinition("Mailing", Type="str", Width=75),
-                                                              ColDefinition("Repro", Type="str", Width=75)
-                                                              ])
-
         # Create an empty datasource
         self.Datasource._fanzineList=[]
 
@@ -466,16 +473,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
             # Create default column headers
             self._Datasource.ColDefs=ColDefinitionsList([
-                self.stdColHeaders["Filename"],
-                self.stdColHeaders["Issue"],
-                self.stdColHeaders["Whole"],
-                self.stdColHeaders["Vol"],
-                self.stdColHeaders["Number"],
-                self.stdColHeaders["Month"],
-                self.stdColHeaders["Day"],
-                self.stdColHeaders["Year"],
-                self.stdColHeaders["Pages"],
-                self.stdColHeaders["Notes"]
+                gStdColHeaders["Filename"],
+                gStdColHeaders["Issue"],
+                gStdColHeaders["Whole"],
+                gStdColHeaders["Vol"],
+                gStdColHeaders["Number"],
+                gStdColHeaders["Month"],
+                gStdColHeaders["Day"],
+                gStdColHeaders["Year"],
+                gStdColHeaders["Pages"],
+                gStdColHeaders["Notes"]
             ])
 
             self.MaybeSetNeedsSavingFlag()
@@ -1029,13 +1036,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self._dataGrid.DeleteSelectedRows() # Pass event to WxDataGrid to handle
         self.RefreshWindow()
 
-    def OnPopupInsertRow(self, event):
+    def OnPopupInsertRow(self, event):       # MainWindow(MainFrame)
         irow=self._dataGrid.clickedRow
         # Insert an empty row just before the clicked row
         rows :[FanzineIndexPageTableRow]=[]
         if irow > 0:
             rows=self.Datasource.Rows[:irow]
-        rows.append(FanzineIndexPageTableRow([""]*self.Datasource.NumCols))
+        rows.append(FanzineIndexPageTableRow(self.Datasource.ColDefs))
         rows.extend(self.Datasource.Rows[irow:])
         self.Datasource.Rows=rows
         self.RefreshWindow()
@@ -1047,8 +1054,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         # (We have to do this here because WxDataGrid doesn't know about header semantics.)
         icol=self._dataGrid.clickedColumn
         cd=self.Datasource.ColDefs[icol]
-        if cd.Name in self.stdColHeaders:
-            self.Datasource.ColDefs[icol]=self.stdColHeaders[cd.Name]
+        if cd.Name in gStdColHeaders:
+            self.Datasource.ColDefs[icol]=gStdColHeaders[cd.Name]
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
 
@@ -1240,7 +1247,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
             # Append a mailing column if needed
             if "Mailing" not in self._Datasource.ColHeaders:
-                self._Datasource.InsertColumnHeader(-1, self.stdColHeaders["Mailing"])
+                self._Datasource.InsertColumnHeader(-1, gStdColHeaders["Mailing"])
                 # Append an empty cell to each row
                 for row in self._Datasource.Rows:
                     row.Extend([""])
@@ -1301,7 +1308,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
             # Append an editor column if needed
             if "Editor" not in self._Datasource.ColHeaders:
-                self._Datasource.InsertColumnHeader(-1, self.stdColHeaders["Editor"])
+                self._Datasource.InsertColumnHeader(-1, gStdColHeaders["Editor"])
                 # Append an empty cell to each row
                 for row in self._Datasource.Rows:
                     row.Extend([""])
@@ -1339,13 +1346,18 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
 
 #=============================================================
-# An individual file to be listed under a convention
+# An individual fanzine to be listed in a fanzine index table
 # This is a single row
 class FanzineIndexPageTableRow(GridDataRowClass):
 
-    def __init__(self, cells: list[str]):
+    def __init__(self, coldefs: ColDefinitionsList, row: None | list[str]=None):
         GridDataRowClass.__init__(self)
-        self._cells: list[str]=cells
+        self._tableColdefs=coldefs
+        if row is None:
+            self._cells=[""]*len(self._tableColdefs)
+        else:
+            self._cells=row
+
 
     def __str__(self):      # FanzineTableRow(GridDataRowClass)
         return str(self._cells)
@@ -1358,20 +1370,14 @@ class FanzineIndexPageTableRow(GridDataRowClass):
 
     # Make a deep copy of a FanzineTableRow
     def Copy(self) -> FanzineIndexPageTableRow:      # FanzineTableRow(GridDataRowClass)
-        ftr=FanzineIndexPageTableRow([])
-        ftr._cells=self._cells
-        return ftr
+        val=FanzineIndexPageTableRow(self._tableColdefs)
+        val._cells=[x for x in self._cells]     # Make a new list containing the old cell data
+        return val
 
     # We multiply the cell has by the cell index (+1) so that moves right and left also change the signature
     def Signature(self) -> int:      # FanzineTableRow(GridDataRowClass)
-        return sum([(i+1)*hash(x) for i, x in enumerate(self._cells)])
+        return 0    #TODO
 
-    @property
-    def Cells(self) -> list[str]:      # FanzineTableRow(GridDataRowClass)
-        return self._cells
-    @Cells.setter
-    def Cells(self, newcells: list[str]):
-        self._cells=newcells
 
     @property
     def CanDeleteColumns(self) -> bool:      # FanzineTableRow(GridDataRowClass)
@@ -1383,19 +1389,54 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         del self._cells[icol]
 
 
-    def __getitem__(self, index: Union[int, slice]) -> str | list[str]:      # FanzineTableRow(GridDataRowClass)
-        if type(index) is int:
-            return self._cells[index]
-        if type(index) is slice:
-            return self._cells[index]
-            #return self._cells(self.List[index])
-        raise KeyError
+    def Cells(self, val: [str]):
+        self._cells=val
 
-    def __setitem__(self, index: Union[str, int, slice], value: Union[str, int, bool]) -> None:      # FanzineTableRow(GridDataRowClass)
+
+    # Get or set a value by name or column number
+    #def GetVal(self, name: Union[str, int]) -> Union[str, int]:
+    def __getitem__(self, index: str | int | slice) -> str | list[str]:        # FanzineTableRow(GridDataRowClass)
+
         if type(index) is int:
+            if index < 0 or  index >= len(self._cells):
+                raise IndexError
+            return self._cells[index]
+
+        assert type(index) is not slice
+
+        assert type(index) is str
+
+        index=CanonicizeColumnHeaders(index)
+        if index not in self._tableColdefs:
+            raise IndexError
+
+        index=self._tableColdefs.index(index)
+        return self._cells[index]
+
+
+    #def SetVal(self, nameOrCol: Union[str, int], val: Union[str, int]) -> None:
+    def __setitem__(self, index: str | int | slice, value: str | int) -> None:        # FanzineTableRow(GridDataRowClass)
+        if type(value) is int:
+            value=str(value)    # All data is stored as strings
+
+        if type(index) is int:
+            if index < 0 or  index >= len(self._cells):
+                raise IndexError
             self._cells[index]=value
             return
-        raise KeyError
+
+        assert type(index) is not slice
+
+        assert type(index) is str
+
+        index=CanonicizeColumnHeaders(index)
+        if index not in self._tableColdefs:
+            raise IndexError
+
+        index=self._tableColdefs.index(index)
+        self._cells[index]=value
+        return
+
 
     def IsEmptyRow(self) -> bool:      # FanzineTableRow(GridDataRowClass)
         return all([cell == "" for cell in self._cells])
@@ -1423,7 +1464,7 @@ class FanzineIndexPage(GridDataSource):
         self.Credits=""         # Who is to be credited for this affair?
 
 
-    def Signature(self) -> int:        # FanzineTablePage(GridDataSource)
+    def Signature(self) -> int:        # FanzineIndexPage(GridDataSource)
         s=self._colDefs.Signature()
         s+=hash(f"{self._name.strip()};{' '.join(self.TopComments).strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{' '.join(self.TopComments).strip()};{' '.join(self.Locale).strip()}")
@@ -1433,44 +1474,44 @@ class FanzineIndexPage(GridDataSource):
 
     # Inherited from GridDataSource
     @property
-    def Rows(self) -> list[FanzineIndexPageTableRow]:        # FanzineTablePage(GridDataSource)
+    def Rows(self) -> list[FanzineIndexPageTableRow]:        # FanzineIndexPage(GridDataSource)
         return self._fanzineList
     @Rows.setter
-    def Rows(self, rows: list) -> None:        # FanzineTablePage(GridDataSource)
+    def Rows(self, rows: list) -> None:        # FanzineIndexPage(GridDataSource)
         self._fanzineList=rows
 
     @property
-    def NumRows(self) -> int:        # FanzineTablePage(GridDataSource)
+    def NumRows(self) -> int:        # FanzineIndexPage(GridDataSource)
         return len(self._fanzineList)
 
-    def __getitem__(self, index: int) -> FanzineIndexPageTableRow:        # FanzineTablePage(GridDataSource)
+    def __getitem__(self, index: int) -> FanzineIndexPageTableRow:        # FanzineIndexPage(GridDataSource)
         return self.Rows[index]
 
-    def __setitem__(self, index: int, val: FanzineIndexPageTableRow) -> None:        # FanzineTablePage(GridDataSource)
+    def __setitem__(self, index: int, val: FanzineIndexPageTableRow) -> None:        # FanzineIndexPage(GridDataSource)
         self._fanzineList[index]=val
 
 
     @property
-    def SpecialTextColor(self) -> Optional[Color]:        # FanzineTablePage(GridDataSource)
+    def SpecialTextColor(self) -> Optional[Color]:        # FanzineIndexPage(GridDataSource)
         return self._specialTextColor
     @SpecialTextColor.setter
-    def SpecialTextColor(self, val: Optional[Color]) -> None:        # FanzineTablePage(GridDataSource)
+    def SpecialTextColor(self, val: Optional[Color]) -> None:        # FanzineIndexPage(GridDataSource)
         self._specialTextColor=val
 
-    def CanAddColumns(self) -> bool:        # FanzineTablePage(GridDataSource)
+    def CanAddColumns(self) -> bool:        # FanzineIndexPage(GridDataSource)
         return True
 
-    def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        # FanzineTablePage(GridDataSource)
+    def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        # FanzineIndexPage(GridDataSource)
         for i in range(num):
-            ftr=FanzineIndexPageTableRow([""]*self.NumCols)
+            ftr=FanzineIndexPageTableRow(self._colDefs)
             self._fanzineList.insert(insertat+i, ftr)
 
-    def SelectNonNavigableStrings(self, soupstuff) -> list:
+    def SelectNonNavigableStrings(self, soupstuff) -> list:        # FanzineIndexPage(GridDataSource)
         return [x for x in soupstuff if type(x) is not bs4.element.NavigableString]
 
 
     # Read a fanzine index page fanac.org/fanzines/URL and fill in the class
-    def GetFanzineIndexPage(self, url: str):
+    def GetFanzineIndexPage(self, url: str):        # FanzineIndexPage(GridDataSource)
         #FTP().SetDirectory("/")
         html=FTP().GetFileAsString("/fanzines/"+url, "index.html")
         soup=BeautifulSoup(html, 'html.parser')
@@ -1511,6 +1552,7 @@ class FanzineIndexPage(GridDataSource):
             editors=topmattersplit[1].split("\n")
             dates, fanzinetype=topmattersplit[2].split("\n")
 
+        # Now interpret the table to generate the column headers and data rows
         headers: list[str]=[]
         rows: list[list[str]]=[]
         theRows=theTable.findAll("tr")
@@ -1523,6 +1565,20 @@ class FanzineIndexPage(GridDataSource):
                     cols=thisrow.findAll("td")
                     row=[RemoveAllHTMLLikeTags(str(x)) for x in cols]
                     rows.append(row)
+        # self.rows=rows
+        # self.cols=headers
+        # And construct the grid
+        self._colDefs: ColDefinitionsList=ColDefinitionsList([])
+        for header in headers:
+            # First cannonicize the header
+            header=CanonicizeColumnHeaders(header)
+            scd=ColDefinition(f"({header})", Type="str", Width=75)  # The default when it's unrecognizable
+            if header in gStdColHeaders:
+                scd=gStdColHeaders[gStdColHeaders.index(header)]
+            self._colDefs.append(scd)
+        for row in rows:
+            self.Rows.append(FanzineIndexPageTableRow(self._colDefs, row) )
+        i=0
 
         credits="(not found)"
         loc=bodytext.rfind("</table>")

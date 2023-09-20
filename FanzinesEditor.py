@@ -322,19 +322,19 @@ class FanzinesPage(GridDataSource):
 
 
 
-    def Signature(self) -> int:        # FanzineTablePage(GridDataSource)
+    def Signature(self) -> int:        # FanzinesPage(GridDataSource)
         return sum([x.__hash__() *(i+1) for i, x in enumerate(self._fanzineList)])
 
     # Inherited from GridDataSource
     @property
-    def Rows(self) -> list[FanzinesPageRow]:        # FanzineTablePage(GridDataSource)
+    def Rows(self) -> list[FanzinesPageRow]:        # FanzinesPage(GridDataSource)
         return self._rows
     @Rows.setter
-    def Rows(self, rows: list) -> None:        # FanzineTablePage(GridDataSource)
+    def Rows(self, rows: list) -> None:        # FanzinesPage(GridDataSource)
         self._rows=rows
 
     @property
-    def NumRows(self) -> int:        # FanzineTablePage(GridDataSource)
+    def NumRows(self) -> int:        # FanzinesPage(GridDataSource)
         numcells=len(self._fanzineList)
         if numcells%self._numCols == 0:
             return numcells//self._numCols
@@ -360,20 +360,20 @@ class FanzinesPage(GridDataSource):
 
 
 
-    def __getitem__(self, index: int) -> FanzinesPageRow:        # FanzineTablePage(GridDataSource)
+    def __getitem__(self, index: int) -> FanzinesPageRow:        # FanzinesPage(GridDataSource)
         return self.Rows[index]
 
-    def __setitem__(self, index: int, val: FanzinesPageRow) -> None:        # FanzineTablePage(GridDataSource)
+    def __setitem__(self, index: int, val: FanzinesPageRow) -> None:        # FanzinesPage(GridDataSource)
         self._fanzineList[index]=val
 
-    def CanAddColumns(self) -> bool:        # FanzineTablePage(GridDataSource)
+    def CanAddColumns(self) -> bool:        # FanzinesPage(GridDataSource)
         return False
 
-    def CanMoveColumns(self) -> bool:     # FanzineTablePage(GridDataSource)
+    def CanMoveColumns(self) -> bool:     # FanzinesPage(GridDataSource)
         return False             # Override if columns can't be moved
 
 
-    def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        # FanzineTablePage(GridDataSource)
+    def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        # FanzinesPage(GridDataSource)
         for i in range(num):
             ftr=FanzinesPageRow([""]*self.NumCols)
             self._fanzineList.insert(insertat+i, ftr)
