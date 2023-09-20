@@ -1473,7 +1473,6 @@ class FanzineIndexPage(GridDataSource):
         s+=self._colDefs.Signature()
         s+=sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
         s+=hash(self._specialTextColor)+self._colDefs.Signature()
-        Log(f"FanzineIndexPage(GridDataSource).Signature={s}")
         return s
 
     # Inherited from GridDataSource
