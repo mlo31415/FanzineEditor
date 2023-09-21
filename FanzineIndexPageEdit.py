@@ -1524,7 +1524,8 @@ class FanzineIndexPage(GridDataSource):
             LogError(f"Unable to download 'index.html' from '/Fanzines-test/{url}'")
             return False
 
-        m=re.match(r"<!-- fanac fanzine index page V([0-9]+\.[0-9]+)-->", html)
+        # This is the tag that makes a new-style page.  The version number may somday be significant
+        m=re.match(r"<!--\s+fanac\s+fanzines+indexs+pages+V([0-9]+\.[0-9]+)-->", html, flags=re.IGNORECASE)
         if m is None:
             return self.GetFanzineIndexPageOld(html)
 
