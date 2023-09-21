@@ -1524,6 +1524,14 @@ class FanzineIndexPage(GridDataSource):
             LogError(f"Unable to download 'index.html' from '/Fanzines-test/{url}'")
             return False
 
+        m=re.match(r"<!-- fanac fanzine index page V([0-9]+\.[0-9]+)-->", html)
+        if m is None:
+            return self.GetFanzineIndexPageOld(html)
+
+        return self.GetFanzineIndexPageNew(html)
+
+    def GetFanzineIndexPageOld(self, html: str) -> bool:  # FanzineIndexPage(GridDataSource)
+
         soup=BeautifulSoup(html, 'html.parser')
         body=soup.findAll("body")
         bodytext=str(body)
@@ -1633,6 +1641,10 @@ class FanzineIndexPage(GridDataSource):
         self.FanzineName=fanzinename
 
         return True
+
+    def GetFanzineIndexPageNew(self, html: str ) -> bool:
+        return False
+
 
     # Read a fanzine index page fanac.org/fanzines/URL and fill in the class
     def PutFanzineIndexPage(self, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
