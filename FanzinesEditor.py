@@ -13,7 +13,7 @@ from FTP import FTP
 from bs4 import BeautifulSoup
 
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition
-from WxHelpers import OnCloseHandling
+from WxHelpers import OnCloseHandling, ProgressMsg
 from HelpersPackage import MessageBox, RemoveTopLevelHTMLTags
 from Log import LogOpen, LogClose
 from Log import Log as RealLog
@@ -126,9 +126,10 @@ class FanzineEditor(FanzinesGrid):
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
 
-        self._fanzinesList=GetFanzineList()
-        self._fanzinesList.sort(key=lambda name: name.casefold())
-        self.Datasource.FanzineList=self._fanzinesList
+        with ProgressMsg(None, "Loading main fanzine index"):
+            self._fanzinesList=GetFanzineList()
+            self._fanzinesList.sort(key=lambda name: name.casefold())
+            self.Datasource.FanzineList=self._fanzinesList
 
         self._dataGrid.HideRowLabels()
         self._dataGrid.HideColLabels()
