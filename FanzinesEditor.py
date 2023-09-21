@@ -6,6 +6,7 @@ import os
 import wx
 import wx.grid
 import sys
+import re
 
 
 from FTP import FTP
