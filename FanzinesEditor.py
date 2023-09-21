@@ -222,6 +222,7 @@ class FanzineEditor(FanzinesGrid):
         url=self._Datasource.Rows[event.Row][event.Col]
         fsw=FanzineIndexPageWindow(None, url)
         if fsw.failure:
+            MessageBox(f"Unable to load {url}", Title="Loading Fanzine Index page", ignoredebugger=True)
             Log(f"FanzineIndexPageWindow('{url}') failed")
 
 
