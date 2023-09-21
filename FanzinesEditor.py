@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition
 from WxHelpers import OnCloseHandling, ProgressMsg
 from HelpersPackage import MessageBox, RemoveTopLevelHTMLTags
-from Log import LogOpen, LogClose
+from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
 
@@ -94,6 +94,10 @@ def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear
 # Read the classic fanzine list on fanac.org and return a list of all *fanzine directory names*
 def GetFanzineList() -> list[str]:
     html=FTP().GetFileAsString("Fanzines-test", "Classic_Fanzines.html")
+    if html is None:
+        LogError(f"Unable to download 'index.html' from '/Fanzines-test/{url}'")
+        return None
+
     soup=BeautifulSoup(html, 'html.parser')
     table=soup.find_all("table", class_="sortable")[0]
     rows=table.find_all_next("tr")
@@ -128,6 +132,8 @@ class FanzineEditor(FanzinesGrid):
 
         with ProgressMsg(None, "Downloading main fanzine page"):
             self._fanzinesList=GetFanzineList()
+            if self._fanzinesList is None:
+                return
             self._fanzinesList.sort(key=lambda name: name.casefold())
             self.Datasource.FanzineList=self._fanzinesList
 
