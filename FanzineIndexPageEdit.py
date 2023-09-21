@@ -1514,9 +1514,12 @@ class FanzineIndexPage(GridDataSource):
 
 
     # Read a fanzine index page fanac.org/fanzines/URL and fill in the class
-    def GetFanzineIndexPage(self, url: str):        # FanzineIndexPage(GridDataSource)
-        #FTP().SetDirectory("/")
+    def GetFanzineIndexPage(self, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
         html=FTP().GetFileAsString("/Fanzines-test/"+url, "index.html")
+        if html is None:
+            LogError(f"Unable to download 'index.html' from '/Fanzines-test/{url}'")
+            return False
+
         soup=BeautifulSoup(html, 'html.parser')
         body=soup.findAll("body")
         bodytext=str(body)
