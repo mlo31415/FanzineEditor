@@ -80,10 +80,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
 
         # Load the fanzine index page
-        self.failure=False
-        if not self.Datasource.GetFanzineIndexPage(url):
-            self.failure=True
-            return
+        with ProgressMsg(parent, f"Downloading Fanzine Index Page: {url}"):
+            self.failure=False
+            if not self.Datasource.GetFanzineIndexPage(url):
+                self.failure=True
+                return
 
         # Add the various values into the dialog
         self.tCredits.SetValue(self.Datasource.Credits)
