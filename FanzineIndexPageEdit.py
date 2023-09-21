@@ -1390,7 +1390,10 @@ class FanzineIndexPageTableRow(GridDataRowClass):
     def DelCol(self, icol: int) -> None:      # FanzineTableRow(GridDataRowClass)
         del self._cells[icol]
 
-
+    @property
+    def Cells(self):
+        return self._cells
+    @Cells.setter
     def Cells(self, val: [str]):
         self._cells=val
 
@@ -1560,18 +1563,12 @@ class FanzineIndexPage(GridDataSource):
             dates, fanzinetype=topmattersplit[2].split("\n")
 
         # Now interpret the table to generate the column headers and data rows
-        headers: list[str]=[]
-        rows: list[list[str]]=[]
         theRows=theTable.findAll("tr")
+        headers: list[str]=[]
         if len(theRows) > 0:
             row0=theRows[0].findAll("th")
             if len(row0) > 0:
                 headers=[RemoveAllHTMLLikeTags(str(x)) for x in row0]
-            if len(theRows) > 1:
-                for thisrow in theRows[1:]:
-                    cols=thisrow.findAll("td")
-                    row=[RemoveAllHTMLLikeTags(str(x)) for x in cols]
-                    rows.append(row)
         # self.rows=rows
         # self.cols=headers
         # And construct the grid
@@ -1583,6 +1580,28 @@ class FanzineIndexPage(GridDataSource):
             if header in gStdColHeaders:
                 scd=gStdColHeaders[gStdColHeaders.index(header)]
             self._colDefs.append(scd)
+
+        # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
+        # The first step is to prepend a URL column to the start before the Issue column
+        temp=ColDefinitionsList([ColDefinition("URL", 100, "URL", "yes")])
+        temp.append(self._colDefs)
+        self._colDefs=temp
+
+        rows: list[list[str]]=[]
+        if len(theRows) > 1:
+            for thisrow in theRows[1:]:
+                row=[]
+                cols=thisrow.findAll("td")
+                # We treat column 0 specially, extracting its hyperref and turning it into two
+                cols0=str(cols[0])
+                _, url, text, _=FindLinkInString(cols0)
+                if url == "" and text == "":
+                    row=["", cols0]
+                else:
+                    row=[url, text]
+                row.extend([RemoveAllHTMLLikeTags(str(x)) for x in cols[1:]])
+                rows.append(row)
+
         for row in rows:
             self.Rows.append(FanzineIndexPageTableRow(self._colDefs, row) )
         i=0
