@@ -1634,6 +1634,76 @@ class FanzineIndexPage(GridDataSource):
 
         return True
 
+    # Read a fanzine index page fanac.org/fanzines/URL and fill in the class
+    def PutFanzineIndexPage(self, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
+
+        output=""
+        if not os.path.exists("Fanzine Page Template.html"):
+            LogError(f"PutFanzineIndexPage() can't load ';'Fanzine Page Template.html' at {os.path.curdir}")
+            return False
+        with open("Fanzine Page Template.html") as f:
+            output=f.read()
+
+        # San the input string looking for a pair of HTML comments of the form '<!-- fanac-<tag> start> ... <fanac-<tag> end>'
+        # separate the string into three p[ices: Before the start tag, between the tags, after the end tag.
+        # Return None if the tags are not found.
+        def FindFanacCommentsInHTML(s: str, opentag: str, closetag) -> tuple[str | None, str, str]:
+
+            # Scan for the tags
+            locopen=s.find(opentag)
+            if locopen < 0:
+                return None, "", ""
+            locclose=s.find(closetag)
+            if locclose < locopen:
+                return None, "", ""
+
+            start=s[locopen]
+            middle=s[locopen+len(opentag): locclose]
+            end=s[locclose+len(closetag):]
+            return start, middle, end
+
+        def InsertUsingFanacComments(s: str, tag: str, insert: str) -> str:
+            opentag=f"<fanac-{tag} start>"
+            closetag=f"fanac-{tag} end>"
+            start, mid, end=FindFanacCommentsInHTML(s, opentag, closetag)
+            if start is None:
+                LogError(f"Unable to locate tag pair <fanac-{tag} start/end>")
+                return ""
+            return start+opentag+insert+closetag+end
+
+        insert=f"{self.FanzineName}<BR><H2>self.Editor<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
+        output=InsertUsingFanacComments(output, "header", insert)
+        if output == "":
+            return False
+
+        output=InsertUsingFanacComments(output, "locale", str(self.Locale))     #TODO: Handle Locale lists better
+        if output == "":
+            return False
+
+        # Now interpret the table to generate the column headers and data rows
+        insert=""
+        for header in self.ColHeaders:
+            insert+=f"<TH>{header}</TH>\n"
+        output=InsertUsingFanacComments(output, "table-headers", insert)
+        if output == "":
+            return False
+
+        insert=""
+        for row in self.Rows:
+            insert+="<TD>\n"
+            for cell in row.Cells:
+                insert+=f"<TR>CLASS='left'{cell}</TR>\n"
+            insert+="</TD>\n"
+        output=InsertUsingFanacComments(output, "table-rows", insert)
+        if output == "":
+            return False
+
+        temp=InsertUsingFanacComments(output, "scan", self.Credits)
+        if len(temp) > 0:
+            output=temp
+
+        i=0     #TODO write the bugger!
+        return True
 
 
 
