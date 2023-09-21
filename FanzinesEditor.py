@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Union, Optional
+from typing import Optional
 
 import os
 import wx
@@ -287,7 +287,7 @@ class FanzinesPageRow(GridDataRowClass):
         del self._cells[icol]
 
 
-    def __getitem__(self, index: Union[int, slice]) -> str | list[str]:      # FanzineTableRow(GridDataRowClass)
+    def __getitem__(self, index: int | slice) -> str | list[str]:      # FanzineTableRow(GridDataRowClass)
         if type(index) is int:
             return self._cells[index]
         if type(index) is slice:
@@ -295,7 +295,7 @@ class FanzinesPageRow(GridDataRowClass):
             #return self._cells(self.List[index])
         raise KeyError
 
-    def __setitem__(self, index: Union[str, int, slice], value: Union[str, int, bool]) -> None:      # FanzineTableRow(GridDataRowClass)
+    def __setitem__(self, index: str | int | slice, value: str | int | bool) -> None:      # FanzineTableRow(GridDataRowClass)
         if type(index) is int:
             self._cells[index]=value
             return
