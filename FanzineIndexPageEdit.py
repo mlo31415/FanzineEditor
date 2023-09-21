@@ -1647,7 +1647,7 @@ class FanzineIndexPage(GridDataSource):
         # San the input string looking for a pair of HTML comments of the form '<!-- fanac-<tag> start> ... <fanac-<tag> end>'
         # separate the string into three p[ices: Before the start tag, between the tags, after the end tag.
         # Return None if the tags are not found.
-        def FindFanacCommentsInHTML(s: str, opentag: str, closetag) -> tuple[str | None, str, str]:
+        def FindFanacTagsInHTML(s: str, opentag: str, closetag) -> tuple[str | None, str, str]:
 
             # Scan for the tags
             locopen=s.find(opentag)
@@ -1665,7 +1665,7 @@ class FanzineIndexPage(GridDataSource):
         def InsertUsingFanacComments(s: str, tag: str, insert: str) -> str:
             opentag=f"<fanac-{tag} start>"
             closetag=f"fanac-{tag} end>"
-            start, mid, end=FindFanacCommentsInHTML(s, opentag, closetag)
+            start, mid, end=FindFanacTagsInHTML(s, opentag, closetag)
             if start is None:
                 LogError(f"Unable to locate tag pair <fanac-{tag} start/end>")
                 return ""
