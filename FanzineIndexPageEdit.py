@@ -17,11 +17,11 @@ from FTP import FTP
 from NewFanzineDialog import NewFanzineWindow
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass
-from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, MessageBoxInput
+from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage
 from HelpersPackage import Bailout, IsInt, Int0, ZeroIfNone, MessageBox, RemoveScaryCharacters, SetReadOnlyFlag, ParmDict
 from HelpersPackage import  ComparePathsCanonical, FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders
-from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags
+from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, InsertUsingFanacComments
 from PDFHelpers import GetPdfPageCount
 from Log import Log, LogError
 from Settings import Settings
@@ -1568,40 +1568,58 @@ class FanzineIndexPage(GridDataSource):
         with open("Fanzine Page Template.html") as f:
             output=f.read()
 
-
-        insert=f"{self.FanzineName}<BR><H2>self.Editor<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
-        output=InsertUsingFanacComments(output, "header", insert)
-        if output == "":
+        insert=f"{self.FanzineName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
         temp=InsertUsingFanacComments(output, "header", insert)
+        if temp == "":
+            LogError(f"PutFanzineIndexPage({url} failed: InsertUsingFanacComments('header')")
             return False
+        output=temp
 
-        output=InsertUsingFanacComments(output, "locale", str(self.Locale))     #TODO: Handle Locale lists better
-        if output == "":
+        insert=f"<H2>{self.Locale}</H2>"
+        temp=InsertUsingFanacComments(output, "locale", insert)     #TODO: Handle Locale lists better
+        if temp == "":
+            LogError(f"PutFanzineIndexPage({url} failed: InsertUsingFanacComments('Locale')")
             return False
+        output=temp
 
         # Now interpret the table to generate the column headers and data rows
-        insert=""
-        for header in self.ColHeaders:
-            insert+=f"<TH>{header}</TH>\n"
-        output=InsertUsingFanacComments(output, "table-headers", insert)
-        if output == "":
+        # The 1st col is the URL and it gets mixed with ther 2nd to form an Href.
+        insert="\n<TR>\n"
+        if len(self.ColHeaders) < 2:
+            LogError(f"PutFanzineIndexPage({url} failed: {len(self.ColHeaders)=}")
             return False
+        insert+=f"<TH>{self.ColHeaders[1]}</TH>\n"
+        for header in self.ColHeaders[2:]:
+            insert+=f"<TH>{header}</TH>\n"
+        insert+="</TR>\n"
+        temp=InsertUsingFanacComments(output, "table-headers", insert)
+        if temp == "":
+            LogError(f"PutFanzineIndexPage({url} failed: InsertUsingFanacComments('table-headers')")
+            return False
+        output=temp
 
+        # Now the rows
         insert=""
         for row in self.Rows:
-            insert+="<TD>\n"
-            for cell in row.Cells:
-                insert+=f"<TR>CLASS='left'{cell}</TR>\n"
-            insert+="</TD>\n"
-        output=InsertUsingFanacComments(output, "table-rows", insert)
-        if output == "":
+            if row.IsEmptyRow():
+                continue
+            insert+="\n<TR>"
+            insert+=f"\n<TD><a href='{row.Cells[0]}'>{row.Cells[1]}</A></TD>\n"
+            for cell in row.Cells[2:]:
+                insert+=f"<TD CLASS='left'>{cell}</TD>\n"
+            insert+="</TR>\n"
+        temp=InsertUsingFanacComments(output, "table-rows", insert)
+        if temp == "":
+            LogError(f"PutFanzineIndexPage({url} failed: InsertUsingFanacComments('table-rows')")
             return False
+        output=temp
 
         temp=InsertUsingFanacComments(output, "scan", self.Credits)
+        # Different test because we don't always have a credit in the file.
         if len(temp) > 0:
             output=temp
 
-        i=0     #TODO write the bugger!
+        FTP().PutFileAsString("/Fanzines-test/"+url, "index-new.html", output)
         return True
 
 
