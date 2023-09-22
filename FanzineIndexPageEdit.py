@@ -449,11 +449,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     #------------------
     # Save an LSTFile object to disk and maybe create a whole new directory
     def OnSave(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
-
-        self.SaveExistingLSTFile()
-
-        self.LoadLSTFile2(self.url)
-
+        with ProgressMsg(self.Parent, f"Uploading Fanzine Index Page: {self.url}"):
+            self.failure=False
+            if not self.Datasource.PutFanzineIndexPage(self.url):
+                self.failure=True
+                return
 
 
 
