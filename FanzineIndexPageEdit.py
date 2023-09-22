@@ -1568,36 +1568,11 @@ class FanzineIndexPage(GridDataSource):
         with open("Fanzine Page Template.html") as f:
             output=f.read()
 
-        # San the input string looking for a pair of HTML comments of the form '<!-- fanac-<tag> start> ... <fanac-<tag> end>'
-        # separate the string into three p[ices: Before the start tag, between the tags, after the end tag.
-        # Return None if the tags are not found.
-        def FindFanacTagsInHTML(s: str, opentag: str, closetag) -> tuple[str | None, str, str]:
-
-            # Scan for the tags
-            locopen=s.find(opentag)
-            if locopen < 0:
-                return None, "", ""
-            locclose=s.find(closetag)
-            if locclose < locopen:
-                return None, "", ""
-
-            start=s[locopen]
-            middle=s[locopen+len(opentag): locclose]
-            end=s[locclose+len(closetag):]
-            return start, middle, end
-
-        def InsertUsingFanacComments(s: str, tag: str, insert: str) -> str:
-            opentag=f"<fanac-{tag} start>"
-            closetag=f"fanac-{tag} end>"
-            start, mid, end=FindFanacTagsInHTML(s, opentag, closetag)
-            if start is None:
-                LogError(f"Unable to locate tag pair <fanac-{tag} start/end>")
-                return ""
-            return start+opentag+insert+closetag+end
 
         insert=f"{self.FanzineName}<BR><H2>self.Editor<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
         output=InsertUsingFanacComments(output, "header", insert)
         if output == "":
+        temp=InsertUsingFanacComments(output, "header", insert)
             return False
 
         output=InsertUsingFanacComments(output, "locale", str(self.Locale))     #TODO: Handle Locale lists better
