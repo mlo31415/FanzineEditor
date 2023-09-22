@@ -382,50 +382,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
                     self.Datasource.MoveColumns(iMailing, 1, iNotes)
 
 
-
-    #------------------
-    # Load an LST file from disk into an LSTFile class
-    def OnLoadExistingLSTFile(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
-        if not self.OKToClose(event):
-            return
-
-        # Call the File Open dialog to get an LST file
-        # with wx.FileDialog(self, "Select LST file to load", self.RootDirectoryPath, "", "*.LST", wx.FD_OPEN) as dlg:
-        #     dlg.SetWindowStyle(wx.STAY_ON_TOP)
-        #
-        #     if dlg.ShowModal() != wx.ID_OK:
-        #         return False
-        #
-        #     targetFilename=dlg.GetFilename()
-        #     targetDirectoryPathname=os.path.split(dlg.GetPath())[0]
-
-        with ProgressMsg(self, f"Loading '{self.url}'"):
-            self.LoadLSTFile2(self.url)
-
-
-    def LoadLSTFile2(self, url: str):               # FanzineIndexPageWindow(FanzineIndexPageEdit)
-        # Try to load the LSTFile
-        # targetFilename=os.path.relpath(targetDirectoryPathname, start=self.RootDirectoryPath)
-        self.LoadLSTFile(url)
-
-        # Rummage through the setup.bld file in the LST file's directory to get Complete and Credits
-        complete, credits=self.ReadSetupBld(self.TargetDirectoryPathname)
-        if complete is not None:
-            self.cbComplete.SetValue(complete)
-        else:
-            self.cbComplete.SetValue(False)
-        self.OnCheckComplete(None)  # Need to manually trigger datasource action
-        if credits is not None:
-            self.tCredits.SetValue(credits.strip())
-            self.Datasource.Credits=credits
-        else:
-            self.tCredits.SetValue("")
-            self.Datasource.Credits=""
-
-        # And see if we can pick up the server directory from setup.ftp
-        self.MarkAsSaved()
-        self.RefreshWindow()
-
     # ------------------
     # Initialize the main window to empty
     # This also initiazes the datasource
