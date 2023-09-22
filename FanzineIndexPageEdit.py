@@ -631,6 +631,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
     def MarkAsSaved(self):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
         self._signature=self.Signature()
+        self.UpdateNeedsSavingFlag()
 
 
     def NeedsSaving(self):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
