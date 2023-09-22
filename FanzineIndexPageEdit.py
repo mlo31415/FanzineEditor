@@ -455,52 +455,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         self.LoadLSTFile2(self.url)
 
 
-    #------------------
-    # Save an existing LST file by simply overwriting what exists.
-    def SaveExistingLSTFile(self):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
 
-        # In normal mode we save each edited LST file by renaming it and the edited version is given the original name
-
-        newfname=self.lstFilename
-        oldname=os.path.join(self.TargetDirectoryPathname, newfname)
-        if os.path.exists(oldname):
-            newpname=os.path.join(self.TargetDirectoryPathname, os.path.splitext(self.lstFilename)[0]+"-old.LST")
-
-        with ProgressMsg(self, f"Creating {newfname}"):
-
-            # Create an instance of the LSTfile class from the datasource
-            lstfile=self.CreateLSTFileFromDatasourceEtc()
-
-            templateDirectory=Settings().Get("Template directory", default=".")
-            # Update the existing setup.bld file based on what the user filled in in the main dialog
-            if not self.UpdateSetupBld(self.TargetDirectoryPathname):
-                if not self.CopyTemplateFile("setup.bld template", "setup.bld", self.TargetDirectoryPathname, templateDirectory):
-                    Log(f"Could not create setup.bld using {templateDirectory=}")
-
-
-            # If there is an old file, rename it
-            if os.path.exists(oldname):
-
-                try:
-                    i=0
-                    # Look for an available new name
-                    while os.path.exists(newpname):
-                        i+=1
-                        newpname=os.path.join(self.TargetDirectoryPathname, f"{os.path.splitext(self.lstFilename)[0]}-old-{i}.LST")
-                    os.rename(oldname, newpname)
-                except Exception:
-                    LogError(f"OnSave fails when trying to rename {oldname} to {newpname}")
-                    Bailout(PermissionError, f"OnSave fails when trying to rename {oldname} to {newpname}", "LSTError")
-
-            self.SaveFile(lstfile, oldname)
-
-            if os.path.exists(newpname):
-                os.remove(newpname)
-            self.SaveFile(lstfile, newpname)
-            #End For debugging purposes!!!!!
-
-            self.MarkAsSaved()
-            self.RefreshWindow()
 
     #------------------
     # Create a new fanzine directory and LSTfile
