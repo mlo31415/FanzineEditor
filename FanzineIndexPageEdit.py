@@ -21,7 +21,7 @@ from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage
 from HelpersPackage import Bailout, IsInt, Int0, ZeroIfNone, MessageBox, RemoveScaryCharacters, SetReadOnlyFlag, ParmDict
 from HelpersPackage import  ComparePathsCanonical, FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders
-from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, InsertUsingFanacComments
+from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, InsertUsingFanacComments, TurnPythonListIntoWordList
 from PDFHelpers import GetPdfPageCount
 from Log import Log, LogError
 from Settings import Settings
@@ -1575,8 +1575,8 @@ class FanzineIndexPage(GridDataSource):
             return False
         output=temp
 
-        insert=f"<H2>{self.Locale}</H2>"
-        temp=InsertUsingFanacComments(output, "locale", insert)     #TODO: Handle Locale lists better
+        insert=f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
+        temp=InsertUsingFanacComments(output, "locale", insert)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url} failed: InsertUsingFanacComments('Locale')")
             return False
