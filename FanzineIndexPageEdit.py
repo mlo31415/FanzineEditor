@@ -214,46 +214,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         if len(files) == 0:     # Should never happen as there's no way to return from dlg w/o selecting pdfs or hitting cancel.  But just in case...
             return
 
-        # Copy the files from the source directory to the target directory if necessary.
-        # Rename them with "safe" names for use on fanac.org (and for Jack's SW) if necessary
-        newlyAddedFiles: list[str]=[]
-        with ProgressMsg(self, f"Loading..."):
-            for file in files:
-                # Because we need to remove periods from the filename, we need to temporarily split the extension off so we don't remove that very important period.
-                origfullpath, origfilename=os.path.split(file)         # Split to path and filename (including ext)
-                f, e=os.path.splitext(origfilename)                    # Remove the extension
-                safefilename=RemoveScaryCharacters(f)+e
-                safefilename=safefilename.replace("~", "_")     # Deal with a limitation of Jack's SW
-
-                newfilepathname=os.path.join(self.TargetDirectoryPathname, safefilename)
-                oldfilepathname=file
-                Log(f"CopySelectedFiles: Loading {oldfilepathname}  to  {newfilepathname}")
-                ProgressMessage(self).UpdateMessage(f"Loading {os.path.split(oldfilepathname)[1]}")
-                # There are two cases: This may be a copy between directories or a rename in the same directory
-                if ComparePathsCanonical(self.TargetDirectoryPathname, origfullpath):
-                    # It is in the right directory already.  Do we need to rename it?
-                    if safefilename == origfilename:
-                        Log(f"file {file} is just fine as it stands")
-                        newlyAddedFiles.append(safefilename)
-                        continue
-                    newfilepathname=os.path.join(self.TargetDirectoryPathname, safefilename)
-                    Log(f"shutil.move({file}, {newfilepathname}")
-                    try:
-                        shutil.move(file, newfilepathname)
-                        newlyAddedFiles.append(safefilename)
-                    except FileNotFoundError:
-                        LogError(f"FileNotFound: {file}")
-                else:
-                    # It's a copy (the normal case)
-                    try:
-                        shutil.copy(oldfilepathname, newfilepathname)
-                        newlyAddedFiles.append(safefilename)
-                    except FileNotFoundError:
-                        LogError(f"FileNotFound: {oldfilepathname}")
-
-        # The files are all now in the target directory and, if needed, renamed to safe names.
-        # We have a list of file names that are in the LSTfile's directory
-        # Start by removing any already-existing empty trailing rows
+        # We have a list of file names and need to add them to the fanzine index page
+        # Start by removing any already-existing empty trailing rows from the datasource
         while self.Datasource.Rows:
             last=self.Datasource.Rows.pop()
             if any([cell != "" for cell in last.Cells]):
@@ -261,11 +223,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
                 break
 
         # Sort the new files by name and add them to the rows at the bottom
-        newlyAddedFiles.sort()
-        nrows=self.Datasource.NumRows
-        self.Datasource.AppendEmptyRows(len(newlyAddedFiles))
-        for i, file in enumerate(newlyAddedFiles):
-            self.Datasource.Rows[nrows+i][0]=file
+        files.sort()
+        newrows=self.Datasource.AppendEmptyRows(len(files))
+        for i, file in enumerate(files):
+            newrows[i].FileSourcePath=files[i]
+            newrows[i][0]=os.path.basename(files[i])
+
 
         # Add a PDF column (if needed) and fill in the PDF column and page counts
         self.FillInPDFColumn()
@@ -288,7 +251,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
 
     #--------------------------
-    # Check the rows to see if one of any of the files are a pdf
+    # Check the rows to see if any of the files are a pdf
     # If a pdf is found possibly add a PDF column and fill the PDF column in for those rows.
     def FillInPagesColumn(self) -> None:                # FanzineIndexPageWindow(FanzineIndexPageEdit)
         iPages=self.Datasource.ColHeaderIndex("pages")
@@ -298,9 +261,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
                 # Col 0 always contains the filename. If it's a PDF, get its pagecount and fill in that cell
                 filename=row[0]
                 if filename.lower().endswith(".pdf"):
-                    pages=GetPdfPageCount(os.path.join(self.TargetDirectoryPathname, filename))
-                    if pages is not None:
-                        self.Datasource.Rows[i][iPages]=str(pages)
+                    if row.FileSourcePath != "":
+                        pages=GetPdfPageCount(row.FileSourcePath)
+                        if pages is not None:
+                            self.Datasource.Rows[i][iPages]=str(pages)
 
 
     #--------------------------------------------------
@@ -1265,6 +1229,7 @@ class FanzineIndexPageTableRow(GridDataRowClass):
 
     def __init__(self, coldefs: ColDefinitionsList, row: None | list[str]=None):
         GridDataRowClass.__init__(self)
+        self.FileSourcePath: str=""
         self._tableColdefs=coldefs
         if row is None:
             self._cells=[""]*len(self._tableColdefs)
