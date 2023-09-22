@@ -418,6 +418,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
             if not self.Datasource.PutFanzineIndexPage(self.url):
                 self.failure=True
                 return
+        self.MarkAsSaved()
 
 
 
