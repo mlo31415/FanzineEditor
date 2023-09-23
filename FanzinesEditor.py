@@ -95,7 +95,7 @@ def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear
 def GetFanzineList() -> list[str] | None:
     html=FTP().GetFileAsString("Fanzines-test", "Classic_Fanzines.html")
     if html is None:
-        LogError(f"Unable to download 'index.html' from '/Fanzines-test/{url}'")
+        LogError(f"Unable to download '/Fanzines-test/Classic_Fanzines.html'")
         return None
 
     soup=BeautifulSoup(html, 'html.parser')
