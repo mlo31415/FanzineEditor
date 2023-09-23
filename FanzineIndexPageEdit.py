@@ -413,12 +413,30 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
     #------------------
     # Save an LSTFile object to disk and maybe create a whole new directory
     def OnSave(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
-        with ProgressMsg(self.Parent, f"Uploading Fanzine Index Page: {self.url}"):
-            self.failure=False
-            if not self.Datasource.PutFanzineIndexPage(self.url):
-                self.failure=True
-                return
+        ProgressMessage(self).Show(f"Uploading Fanzine Index Page: {self.url}")
+        Log(f"Uploading Fanzine Index Page: {self.url}")
+        self.failure=False
+        if not self.Datasource.PutFanzineIndexPage(self.url):
+            self.failure=True
+            Log("Failed\n")
+            ProgressMessage(self).Close()
+            return
+        for row in self.Datasource.Rows:
+            if row.FileSourcePath != "":
+                ProgressMessage(self).UpdateMessage(f"Uploading file: {row.FileSourcePath}")
+                Log(f"Uploading file: {row.FileSourcePath}")
+                if not FTP().PutFile(row.FileSourcePath, f"/Fanzines-test/{self.url}/{row.Cells[1]}"):
+                    Log("Failed\n")
+                    self.failure=True
+                    ProgressMessage(self).Close()
+                    return
+                row.FileSourcePath=""
+
+        Log("All uploads succeeded.")
+
         self.MarkAsSaved()
+        ProgressMessage(self).Close()
+
 
 
     def UpdateNeedsSavingFlag(self):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
