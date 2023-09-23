@@ -137,10 +137,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         # On an old directory, we always have a target defined, so we can always add new issues
         self.bAddNewIssues.Enable(True)
 
-        # Whether or not the save button is enabled depends on what more we are in and what has been filled in.
-        self.bSave.Enable(False)
-        if self.tFanzineName.GetValue() and len(self.Datasource.Rows) > 0:
-            self.bSave.Enable()
 
 
     #------------------
@@ -412,7 +408,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
 
     #------------------
     # Save an LSTFile object to disk and maybe create a whole new directory
-    def OnSave(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
+    def OnUpload(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
         ProgressMessage(self).Show(f"Uploading Fanzine Index Page: {self.url}")
         Log(f"Uploading Fanzine Index Page: {self.url}")
         self.failure=False

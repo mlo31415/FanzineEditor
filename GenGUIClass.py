@@ -25,12 +25,12 @@ class FanzineIndexPageEdit ( wx.Frame ):
 		self.m_toolBarTop = self.CreateToolBar( wx.TB_HORIZONTAL, wx.ID_ANY )
 		self.bAddNewIssues = wx.Button( self.m_toolBarTop, wx.ID_ANY, u"Add New Issue(s)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_toolBarTop.AddControl( self.bAddNewIssues )
-		self.m_staticText14 = wx.StaticText( self.m_toolBarTop, wx.ID_ANY, u"    ", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText14 = wx.StaticText( self.m_toolBarTop, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText14.Wrap( -1 )
 
 		self.m_toolBarTop.AddControl( self.m_staticText14 )
-		self.bSave = wx.Button( self.m_toolBarTop, wx.ID_ANY, u"Save", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_toolBarTop.AddControl( self.bSave )
+		self.bUpload = wx.Button( self.m_toolBarTop, wx.ID_ANY, u"Upload", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_toolBarTop.AddControl( self.bUpload )
 		self.bExit = wx.Button( self.m_toolBarTop, wx.ID_ANY, u"Exit", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_toolBarTop.AddControl( self.bExit )
 		self.m_toolBarTop.Realize()
@@ -251,7 +251,7 @@ class FanzineIndexPageEdit ( wx.Frame ):
 		# Connect Events
 		self.Bind( wx.EVT_CLOSE, self.OnClose )
 		self.bAddNewIssues.Bind( wx.EVT_BUTTON, self.OnAddNewIssues )
-		self.bSave.Bind( wx.EVT_BUTTON, self.OnSave )
+		self.bUpload.Bind( wx.EVT_BUTTON, self.OnUpload )
 		self.bExit.Bind( wx.EVT_BUTTON, self.OnExitClicked )
 		self.tFanzineName.Bind( wx.EVT_CHAR, self.OnFanzineNameChar )
 		self.tFanzineName.Bind( wx.EVT_TEXT, self.OnFanzineName )
@@ -300,7 +300,7 @@ class FanzineIndexPageEdit ( wx.Frame ):
 	def OnAddNewIssues( self, event ):
 		event.Skip()
 
-	def OnSave( self, event ):
+	def OnUpload( self, event ):
 		event.Skip()
 
 	def OnExitClicked( self, event ):
@@ -558,8 +558,8 @@ class FanzinesGrid ( wx.Frame ):
 		self.bDeleteFanzine = wx.Button( self, wx.ID_ANY, u"Delete Fanzine", wx.DefaultPosition, wx.DefaultSize, 0 )
 		fgSizer7.Add( self.bDeleteFanzine, 0, wx.ALL, 5 )
 
-		self.bSave = wx.Button( self, wx.ID_ANY, u"Save", wx.DefaultPosition, wx.DefaultSize, 0 )
-		fgSizer7.Add( self.bSave, 0, wx.ALL, 5 )
+		self.bUpload = wx.Button( self, wx.ID_ANY, u"Upload", wx.DefaultPosition, wx.DefaultSize, 0 )
+		fgSizer7.Add( self.bUpload, 0, wx.ALL, 5 )
 
 		self.bExit = wx.Button( self, wx.ID_ANY, u"Exit", wx.DefaultPosition, wx.DefaultSize, 0 )
 		fgSizer7.Add( self.bExit, 0, wx.ALL, 5 )
