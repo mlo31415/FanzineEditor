@@ -92,7 +92,7 @@ def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear
 
 
 # Read the classic fanzine list on fanac.org and return a list of all *fanzine directory names*
-def GetFanzineList() -> list[str]:
+def GetFanzineList() -> list[str] | None:
     html=FTP().GetFileAsString("Fanzines-test", "Classic_Fanzines.html")
     if html is None:
         LogError(f"Unable to download 'index.html' from '/Fanzines-test/{url}'")
