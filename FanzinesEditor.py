@@ -115,13 +115,24 @@ def GetFanzineList() -> list[str] | None:
     # Split it into Zed-Nielsen_Hayden and Zed, the first being the directoy name and the second being the display name
     namelist: list[str]=[]
     for row in rowtable:
-        r1=row[1]
-        m=re.match(r'\s*LINK=\"([^/]*)/\s*(.*)\"\s*', r1)
-        if m is not None:
-            namelist.append(m.groups()[0])
-            #Log(str(row))
-        else:
+        if "<form action=" in row[0][:20]:    # I don't know where this is coming from (this shows up as the last row, but does not appear on the website)>
+            continue
+        cell3=row[3].strip()
+        # This cell is of one of two possible formats:
+        # (1) '<a href="Zed-Nielsen_Hayden/"><strong>Zed</strong></a>'
+        # This is the typical case with URL and text
+        # (2) '<a href="Zed/"><strong>Zed, The </strong></a><br/> Die Zeitschrift Fur Vollstandigen Unsinn'
+        # In aa few cases, the fanzine has a list of alternative names following.
+        m=re.match(r'<a href=[\'"]([^>]+?)\/[\'"]?>(.+)<\/a>(.*)$', cell3, flags=re.IGNORECASE)
+        if m is None:
             Log(f"GetFanzineList() Failure: {row}")
+            continue
+        url=m.groups()[0]
+        text=m.groups()[1]
+        other=m.groups()[2]
+        namelist.append(url)
+        #Log(str(row))
+
     return namelist
 
 
