@@ -92,7 +92,7 @@ def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear
 
 
 # Read the classic fanzine list on fanac.org and return a list of all *fanzine directory names*
-def GetFanzineList() -> list[str] | None:
+def GetFanzineList() -> list[tuple[str, str, str]] | None:
     html=FTP().GetFileAsString("Fanzines-test", "Classic_Fanzines.html")
     if html is None:
         LogError(f"Unable to download '/Fanzines-test/Classic_Fanzines.html'")
@@ -112,8 +112,8 @@ def GetFanzineList() -> list[str] | None:
         rowtable.append(cols)
 
     # Process the column 1, which is of the form  LINK="Zed-Nielsen_Hayden/ Zed"
-    # Split it into Zed-Nielsen_Hayden and Zed, the first being the directoy name and the second being the display name
-    namelist: list[str]=[]
+    # Split it into Zed-Nielsen_Hayden and Zed, the first being the directory name and the second being the display name
+    namelist: list[tuple[str, str, str]]=[]
     for row in rowtable:
         if "<form action=" in row[0][:20]:    # I don't know where this is coming from (this shows up as the last row, but does not appear on the website)>
             continue
@@ -130,7 +130,7 @@ def GetFanzineList() -> list[str] | None:
         url=m.groups()[0]
         text=m.groups()[1]
         other=m.groups()[2]
-        namelist.append(url)
+        namelist.append((url, text, other))
         #Log(str(row))
 
     return namelist
@@ -144,10 +144,11 @@ class FanzineEditor(FanzinesGrid):
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
 
         with ProgressMsg(None, "Downloading main fanzine page"):
-            self._fanzinesList=GetFanzineList()
-            if self._fanzinesList is None:
+            val=GetFanzineList()
+            if val is None:
                 return
-            self._fanzinesList.sort(key=lambda name: name.casefold())
+            self._fanzinesList: list[tuple[str, str, str]]=val
+            self._fanzinesList.sort(key=lambda name: name[0].casefold())
             self.Datasource.FanzineList=self._fanzinesList
 
         self._dataGrid.HideRowLabels()
