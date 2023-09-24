@@ -104,6 +104,8 @@ def GetFanzineList() -> list[str] | None:
     row=rows[0]
     rowtable: list[list[str]]=[]
     for row in rows[1:]:
+        if "<form action=" in str(row)[:50]:  # I don't know where this is coming from (this line shows up as the last row, but does not appear on the website)>
+            continue
         cols= [str(col) for col in row.children if col != "\n/n"]
         cols=[RemoveTopLevelHTMLTags(col) for col in cols]
         #Log(str(cols))
