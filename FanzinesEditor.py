@@ -281,7 +281,10 @@ class FanzineEditor(FanzinesGrid):
 
     #-------------------
     def OnGridCellRightClick( self, event ):       # FanzineEditor(FanzineGrid)
-        ClassicTableEntryDlg(self.Parent, self._fanzinesList[self.Datasource.NumCols+(event.Row-1)+event.Col-1])
+        cfl=self._fanzinesList[self.Datasource.NumCols+(event.Row-1)+event.Col-1]
+        with ClassicTableEntryDlg(self.Parent, cfl) as dlg:
+            if dlg.ShowModal() == wx.ID_OK:
+                self._fanzinesList[self.Datasource.NumCols+(event.Row-1)+event.Col-1]=cfl
 
 
     # ------------------

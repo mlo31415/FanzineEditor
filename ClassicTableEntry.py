@@ -9,8 +9,7 @@ class ClassicTableEntryDlg(ClassicTableEntryDialog):
     def __init__(self, parent, clf: ClassicFanzinesLine):
         ClassicTableEntryDialog.__init__(self, parent)
 
-        self._clf=ClassicFanzinesLine(clf)
-        self._inputCLF=clf
+        self._clf=clf
 
         self.tDisplayName.SetValue(self._clf._displayName)
         self.tDisplayNameSort.SetValue((self._clf._displayNameSort))
@@ -29,11 +28,10 @@ class ClassicTableEntryDlg(ClassicTableEntryDialog):
         self.Show(True)
 
     def OnCancel(self, event):
-        self.Destroy()
+        self.EndModal(ID_CANCEL)
 
     def OnOK(self, event):
-        self._inputCLF=self._clf
-        self.Destroy()
+        self.EndModal(ID_OK)
 
 
     def OnTextDisplayName(self, event):
