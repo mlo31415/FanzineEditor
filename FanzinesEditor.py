@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition
 from WxHelpers import OnCloseHandling, ProgressMsg
-from HelpersPackage import MessageBox, RemoveTopLevelHTMLTags
+from HelpersPackage import MessageBox, RemoveTopLevelHTMLTags, SearchExtractAndRemoveBoundedAll
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
@@ -22,6 +22,8 @@ from Settings import Settings
 from FanzineIndexPageEdit import FanzineIndexPageWindow
 from GenGUIClass import FanzinesGrid
 from GenLogDialogClass import LogDialog
+from ClassicTableEntry import ClassicTableEntryDlg
+from ClassicFanzinesLine import ClassicFanzinesLine
 
 
 def main():
@@ -91,8 +93,9 @@ def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear
         g_LogDialog.textLogWindow.AppendText(text)
 
 
+#==========================================================================================================
 # Read the classic fanzine list on fanac.org and return a list of all *fanzine directory names*
-def GetFanzineList() -> list[tuple[str, str, str]] | None:
+def GetFanzineList() -> list[ClassicFanzinesLine] | None:
     html=FTP().GetFileAsString("Fanzines-test", "Classic_Fanzines.html")
     if html is None:
         LogError(f"Unable to download '/Fanzines-test/Classic_Fanzines.html'")
@@ -104,38 +107,67 @@ def GetFanzineList() -> list[tuple[str, str, str]] | None:
     row=rows[0]
     rowtable: list[list[str]]=[]
     for row in rows[1:]:
-        if "<form action=" in str(row)[:50]:  # I don't know where this is coming from (this line shows up as the last row, but does not appear on the website)>
+        srow=str(row)
+        if "<form action=" in srow[:30]:  # I don't know where this line is coming from (it shows up as the last row, but does not appear on the website!)>
             continue
-        cols= [str(col) for col in row.children if col != "\n/n"]
-        cols=[RemoveTopLevelHTMLTags(col) for col in cols]
+
+        # Parse into rows by breaking on {tr}...</tr>
+        cols, srow=SearchExtractAndRemoveBoundedAll(srow, r"(<td)(.*?)<\/td>")
+
         #Log(str(cols))
         rowtable.append(cols)
 
-    # Process the column 1, which is of the form  LINK="Zed-Nielsen_Hayden/ Zed"
-    # Split it into Zed-Nielsen_Hayden and Zed, the first being the directory name and the second being the display name
-    namelist: list[tuple[str, str, str]]=[]
+    # Process each of the columns
+    namelist: list[ClassicFanzinesLine]=[]
     for row in rowtable:
-        if "<form action=" in row[0][:20]:    # I don't know where this is coming from (this shows up as the last row, but does not appear on the website)>
+        if "<form action=" in row[0]:    # I don't know where this is coming from (this shows up as the last row, but does not appear on the website)>
             continue
-        cell3=row[3].strip()
+
+        cfl=ClassicFanzinesLine()
+        # Cell 0
+        # This is the blue dot.  No information here, it seems.
+        str(row[0])
+        # Cell 1
+        # <td sorttable_customkey="1940S ONE SHOTS"><a href="1940s_One_Shots/"><strong>1940s One Shots</strong></a></td>
         # This cell is of one of two possible formats:
         # (1) '<a href="Zed-Nielsen_Hayden/"><strong>Zed</strong></a>'
         # This is the typical case with URL and text
         # (2) '<a href="Zed/"><strong>Zed, The </strong></a><br/> Die Zeitschrift Fur Vollstandigen Unsinn'
         # In aa few cases, the fanzine has a list of alternative names following.
-        m=re.match(r'<a href=[\'"]([^>]+?)\/[\'"]?>(.+)<\/a>(.*)$', cell3, flags=re.IGNORECASE)
+        m=re.search(r'<a href=[\'\"]?([^>]+?)/?[\'\"]?>(.+)</a>(.*)$', row[1].strip(), flags=re.IGNORECASE)
         if m is None:
             Log(f"GetFanzineList() Failure: {row}")
             continue
-        url=m.groups()[0]
-        text=m.groups()[1]
-        other=m.groups()[2]
-        namelist.append((url, text, other))
+
+        cfl._url=m.groups()[0]
+        cfl._displayName=m.groups()[1]
+        cfl._otherNames=m.groups()[2]
+        #TODO still need to get sort key
+
+        # Cell 2: type
+        # '<td sorttable_customkey="SPEER, JACK">Jack Speer'
+        str(row[2])
+
+        # Cell 3
+        # '<td sorttable_customkey="19390000">1939-1943'
+        str(row[3])
+
+        # Cell 4
+        # '<td>Fanzine'
+
+        # Cell 5
+        # '<td class="right" sorttable_customkey="00001">1 '
+
+        #Cell 6
+        # '<td sorttable_customkey="zzzz"><br/>'
+
+        namelist.append(cfl)
         #Log(str(row))
 
     return namelist
 
 
+#==========================================================================================================
 class FanzineEditor(FanzinesGrid):
     def __init__(self, parent):
         FanzinesGrid.__init__(self, parent)
@@ -145,10 +177,10 @@ class FanzineEditor(FanzinesGrid):
 
         with ProgressMsg(None, "Downloading main fanzine page"):
             val=GetFanzineList()
-            if val is None:
+            if val is None or len(val) == 0:
                 return
-            self._fanzinesList: list[tuple[str, str, str]]=val
-            self._fanzinesList.sort(key=lambda name: name[0].casefold())
+            self._fanzinesList: list[ClassicFanzinesLine]=val
+            self._fanzinesList.sort(key=lambda cfl: cfl.URL)
             self.Datasource.FanzineList=self._fanzinesList
 
         self._dataGrid.HideRowLabels()
@@ -223,7 +255,7 @@ class FanzineEditor(FanzinesGrid):
         return self._signature != self.Signature()
 
 
-    def OnSearchText(self, event):
+    def OnSearchText(self, event):       # FanzineEditor(FanzineGrid)
         searchtext=self.tSearch.GetValue()
         if searchtext != "":
             fanzinelist=[x for x in self._fanzinesList if searchtext.casefold() in x.casefold().replace("_", " ")]
@@ -231,20 +263,25 @@ class FanzineEditor(FanzinesGrid):
             self.RefreshWindow()
 
 
-    def OnClearSearch( self, event ):
+    def OnClearSearch( self, event ):       # FanzineEditor(FanzineGrid)
         self.Datasource.FanzineList=self._fanzinesList
         self.tSearch.SetValue("")
         self.RefreshWindow()
 
 
     #-------------------
-    def OnGridCellDoubleClick(self, event):        # DataGrid
+    def OnGridCellDoubleClick(self, event):       # FanzineEditor(FanzineGrid)
         #self.SaveClickLocation(vent)
         url=self._Datasource.Rows[event.Row][event.Col]
         fsw=FanzineIndexPageWindow(None, url)
         if fsw.failure:
             MessageBox(f"Unable to load {url}", Title="Loading Fanzine Index page", ignoredebugger=True)
             Log(f"FanzineIndexPageWindow('{url}') failed")
+
+
+    #-------------------
+    def OnGridCellRightClick( self, event ):       # FanzineEditor(FanzineGrid)
+        ClassicTableEntryDlg(self.Parent, self._fanzinesList[self.Datasource.NumCols+(event.Row-1)+event.Col-1])
 
 
     # ------------------
@@ -367,7 +404,7 @@ class FanzinesPage(GridDataSource):
     def FanzineList(self) -> list[str]:
         return self._fanzineList
     @FanzineList.setter
-    def FanzineList(self, val: list[str]):
+    def FanzineList(self, val: list[ClassicFanzinesLine]):
         self._fanzineList=val
         numrows=len(val)/self._numCols
         if len(val)%self._numCols != 0:
@@ -379,14 +416,14 @@ class FanzinesPage(GridDataSource):
             col=i%self._numCols
             if col == 0:
                 self._rows.append(self._gridDataRowClass(self._numCols*[""]))
-            self._rows[row][col]=val[i]
+            self._rows[row][col]=val[i].URL
 
 
 
     def __getitem__(self, index: int) -> FanzinesPageRow:        # FanzinesPage(GridDataSource)
         return self.Rows[index]
 
-    def __setitem__(self, index: int, val: FanzinesPageRow) -> None:        # FanzinesPage(GridDataSource)
+    def __setitem__(self, index: int, val: str) -> None:        # FanzinesPage(GridDataSource)
         self._fanzineList[index]=val
 
     def CanAddColumns(self) -> bool:        # FanzinesPage(GridDataSource)
