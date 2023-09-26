@@ -127,7 +127,15 @@ def GetFanzineList() -> list[ClassicFanzinesLine] | None:
         def RemoveClassRightLeft(s: str) -> str:
             # We need to deal with either kind of quote and also should not leave double spaces behind due to the removal.
             return re.sub(r"class=[\'\"](right|left)[\'\"]", "", s)
-        row=[RemoveClassRightLeft(x) for x in row]
+        # Do a strip() and then if the entry is nothing but whitespace and HTML that amounts to whitespace, remove it all
+        def DStrip(s: str) -> str:
+            s=s.strip()
+            ss=re.sub(r"/s|<br>|</br>|<br/>|<td>", "", s)
+            if len(ss) == 0:
+                return ""
+            return s
+
+        row=[DStrip(RemoveClassRightLeft(x)) for x in row]
 
         cfl=ClassicFanzinesLine()
         # Column 0
@@ -140,78 +148,84 @@ def GetFanzineList() -> list[ClassicFanzinesLine] | None:
         # This is the typical case with URL and text
         # (2) '<a href="Zed/"><strong>Zed, The </strong></a><br/> Die Zeitschrift Fur Vollstandigen Unsinn'
         # In aa few cases, the fanzine has a list of alternative names following.
-        m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]><a href=[\'\"]?([^>]+?)/?[\'\"]?>(.+)</a>(.*)$', row[1].strip(), flags=re.IGNORECASE)
-        if m is None:
-            Log(f"GetFanzineList() Failure: column 1 (Name and URL), {row[1]=}")
-            Log(f"                {row=}")
-            continue
+        if row[1] != "":
+            m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]><a href=[\'\"]?([^>]+?)/?[\'\"]?>(.+)</a>(.*)$', row[1], flags=re.IGNORECASE)
+            if m is None:
+                Log(f"GetFanzineList() Failure: column 1 (Name and URL), {row[1]=}")
+                Log(f"                {row=}")
+                continue
 
-        cfl.DisplayNameSort=m.groups()[0]
-        cfl.URL=m.groups()[1]
-        cfl.DisplayName=m.groups()[2]
-        cfl.OtherNames=m.groups()[3]
+            cfl.DisplayNameSort=m.groups()[0]
+            cfl.URL=m.groups()[1]
+            cfl.DisplayName=m.groups()[2]
+            cfl.OtherNames=m.groups()[3]
 
         # Column 2: Editor
         # '<td sorttable_customkey="SPEER, JACK">Jack Speer'
-        m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[2].strip(), flags=re.IGNORECASE)
-        if m is None:
-            Log(f"GetFanzineList() Failure: column 2 (Editors), {row[2]=}")
-            Log(f"                {row=}")
-            continue
-        cfl.EditorsSort=m.groups()[0]
-        cfl.Editors=m.groups()[1]
+        if row[2] != "":
+            m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[2], flags=re.IGNORECASE)
+            if m is None:
+                Log(f"GetFanzineList() Failure: column 2 (Editors), {row[2]=}")
+                Log(f"                {row=}")
+                continue
+            cfl.EditorsSort=m.groups()[0]
+            cfl.Editors=m.groups()[1]
 
         # Column 3: Dates
         # '<td sorttable_customkey="19390000">1939-1943'
-        m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[3].strip(), flags=re.IGNORECASE)
-        if m is None:
-            Log(f"GetFanzineList() Failure: column 3 (Dates), {row[3]=}")
-            Log(f"                {row=}")
-            continue
-        cfl.DatesSort=m.groups()[0]
-        cfl.Dates=m.groups()[1]
+        if row[3] != "":
+            m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[3], flags=re.IGNORECASE)
+            if m is None:
+                Log(f"GetFanzineList() Failure: column 3 (Dates), {row[3]=}")
+                Log(f"                {row=}")
+                continue
+            cfl.DatesSort=m.groups()[0]
+            cfl.Dates=m.groups()[1]
 
         # Column 4: Type
         # '<td>Fanzine'
-        m=re.search(r'<td>(.*)$', row[4].strip(), flags=re.IGNORECASE)
-        if m is None:
-            Log(f"GetFanzineList() Failure: column 4 (Type), {row[4]=}")
-            Log(f"                {row=}")
-            continue
-        cfl.Type=m.groups()[0]
+        if row[4] != "":
+            m=re.search(r'<td>(.*)$', row[4], flags=re.IGNORECASE)
+            if m is None:
+                Log(f"GetFanzineList() Failure: column 4 (Type), {row[4]=}")
+                Log(f"                {row=}")
+                continue
+            cfl.Type=m.groups()[0]
 
         # Column 5: Issues
         # '<td class="right" sorttable_customkey="00001">1 '
-        m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[5].strip(), flags=re.IGNORECASE)
-        if m is None:
-            Log(f"GetFanzineList() Failure: column 5 (Dates), {row[5]=}")
-            Log(f"                {row=}")
-            continue
-        cfl.IssuesSort=m.groups()[0]
-        cfl.Issues=m.groups()[1]
+        if row[5] != "":
+            m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[5], flags=re.IGNORECASE)
+            if m is None:
+                Log(f"GetFanzineList() Failure: column 5 (Dates), {row[5]=}")
+                Log(f"                {row=}")
+                continue
+            cfl.IssuesSort=m.groups()[0]
+            cfl.Issues=m.groups()[1]
 
         # Column 6: Flag
         # '<td sorttable_customkey="zzzz"><br/>'
-        m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[6].strip(), flags=re.IGNORECASE)
-        if m is not None:
-            cfl.FlagSort=m.groups()[0]
-            cfl.Flag=m.groups()[1]
-        else:
-            m=re.search(r'<x class="complete">Complete</x>', row[6].strip(), flags=re.IGNORECASE)
+        if row[6] != "":
+            m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[6], flags=re.IGNORECASE)
             if m is not None:
-                cfl.Flag="Complete"
+                cfl.FlagSort=m.groups()[0]
+                cfl.Flag=m.groups()[1]
             else:
-                m=re.search(r'<x class="updated">Updated</x>', row[6].strip(), flags=re.IGNORECASE)
+                m=re.search(r'<x class="complete">Complete</x>', row[6], flags=re.IGNORECASE)
                 if m is not None:
-                    cfl.Flag="Updated"
+                    cfl.Flag="Complete"
                 else:
-                    m=re.search(r'<x class="new">New</x>', row[6].strip(), flags=re.IGNORECASE)
+                    m=re.search(r'<x class="updated">Updated</x>', row[6], flags=re.IGNORECASE)
                     if m is not None:
-                        cfl.Flag="New"
+                        cfl.Flag="Updated"
                     else:
-                        Log(f"GetFanzineList() Failure: column 6 (Flag), {row[6]=}")
-                        Log(f"                {row=}")
-                        continue
+                        m=re.search(r'<x class="new">New</x>', row[6], flags=re.IGNORECASE)
+                        if m is not None:
+                            cfl.Flag="New"
+                        else:
+                            Log(f"GetFanzineList() Failure: column 6 (Flag), {row[6]=}")
+                            Log(f"                {row=}")
+                            continue
 
 
 
