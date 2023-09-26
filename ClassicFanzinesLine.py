@@ -41,7 +41,7 @@ class ClassicFanzinesLine:
         return self._displayName
     @DisplayName.setter
     def DisplayName(self, val: str):
-        self.v=val
+        self._displayName=val
 
     @property
     def URL(self) -> str:
