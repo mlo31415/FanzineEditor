@@ -63,7 +63,7 @@ class ClassicTableEntryDlg(ClassicTableEntryDialog):
         return
 
     def OnTextDatesSort(self, event):
-        self._clf._editors=self.tEditors.GetValue()
+        self._clf._datesSort=self.tDatesSort.GetValue()
         return
 
     def OnTextType(self, event):
