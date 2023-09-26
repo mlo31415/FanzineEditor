@@ -11,19 +11,19 @@ class ClassicTableEntryDlg(ClassicTableEntryDialog):
 
         self._clf=clf
 
-        self.tDisplayName.SetValue(self._clf._displayName)
-        self.tDisplayNameSort.SetValue((self._clf._displayNameSort))
-        self.tURL.SetValue(self._clf._url)
-        self.tOtherNames.SetValue(self._clf._otherNames)
-        self.tEditors.SetValue(self._clf._editors)
-        self.tEditorsSort.SetValue(self._clf._editorsSort)
-        self.tDates.SetValue(self._clf._dates)
-        self.tDatesSort.SetValue(self._clf._datesSort)
-        self.tType.SetValue(self._clf._editors)
-        self.tIssues.SetValue(self._clf._editorsSort)
-        self.tIssuesSort.SetValue(self._clf._issues)
-        self.tFlags.SetValue(self._clf._flag)
-        self.tFlagsSort.SetValue(self._clf._flagSort)
+        self.tDisplayName.SetValue(self._clf.DisplayName)
+        self.tDisplayNameSort.SetValue((self._clf.DisplayNameSort))
+        self.tURL.SetValue(self._clf.URL)
+        self.tOtherNames.SetValue(self._clf.OtherNames)
+        self.tEditors.SetValue(self._clf.Editors)
+        self.tEditorsSort.SetValue(self._clf.EditorsSort)
+        self.tDates.SetValue(self._clf.Dates)
+        self.tDatesSort.SetValue(self._clf.DatesSort)
+        self.tType.SetValue(self._clf.Type)
+        self.tIssues.SetValue(self._clf.Issues)
+        self.tIssuesSort.SetValue(self._clf.IssuesSort)
+        self.tFlags.SetValue(self._clf.Flag)
+        self.tFlagsSort.SetValue(self._clf.FlagSort)
 
         self.Show(True)
 
