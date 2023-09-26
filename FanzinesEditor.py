@@ -327,7 +327,7 @@ class FanzineEditor(FanzinesGrid):
     def OnSearchText(self, event):       # FanzineEditor(FanzineGrid)
         searchtext=self.tSearch.GetValue()
         if searchtext != "":
-            fanzinelist=[x for x in self._fanzinesList if searchtext.casefold() in x.casefold().replace("_", " ")]
+            fanzinelist=[x for x in self._fanzinesList if searchtext.casefold() in x.URL.casefold().replace("_", " ")]
             self.Datasource.FanzineList=fanzinelist
             self.RefreshWindow()
 
