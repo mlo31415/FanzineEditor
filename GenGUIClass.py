@@ -756,10 +756,10 @@ class ClassicTableEntryDialog ( wx.Dialog ):
 
 		gSizer5 = wx.GridSizer( 0, 2, 0, 0 )
 
-		self.m_button11 = wx.Button( self, wx.ID_ANY, u"OK", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_button11 = wx.Button( self, wx.ID_OK, u"OK", wx.DefaultPosition, wx.DefaultSize, 0 )
 		gSizer5.Add( self.m_button11, 0, wx.ALIGN_RIGHT|wx.ALL, 5 )
 
-		self.m_button12 = wx.Button( self, wx.ID_ANY, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_button12 = wx.Button( self, wx.ID_CANCEL, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0 )
 		gSizer5.Add( self.m_button12, 0, wx.ALL, 5 )
 
 
