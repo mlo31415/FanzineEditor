@@ -193,13 +193,28 @@ def GetFanzineList() -> list[ClassicFanzinesLine] | None:
         # Column 6: Flag
         # '<td sorttable_customkey="zzzz"><br/>'
         m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[6].strip(), flags=re.IGNORECASE)
-        if m is None:
-            Log(f"GetFanzineList() Failure: column 6 (Flag), {row[6]=}")
-            Log(f"                {row=}")
-            continue
+        if m is not None:
+            cfl.FlagSort=m.groups()[0]
+            cfl.Flag=m.groups()[1]
+        else:
+            m=re.search(r'<x class="complete">Complete</x>', row[6].strip(), flags=re.IGNORECASE)
+            if m is not None:
+                cfl.Flag="Complete"
+            else:
+                m=re.search(r'<x class="updated">Updated</x>', row[6].strip(), flags=re.IGNORECASE)
+                if m is not None:
+                    cfl.Flag="Updated"
+                else:
+                    m=re.search(r'<x class="new">New</x>', row[6].strip(), flags=re.IGNORECASE)
+                    if m is not None:
+                        cfl.Flag="New"
+                    else:
+                        Log(f"GetFanzineList() Failure: column 6 (Flag), {row[6]=}")
+                        Log(f"                {row=}")
+                        continue
 
-        cfl.FlagSort=m.groups()[0]
-        cfl.Flag=m.groups()[1]
+
+
 
         namelist.append(cfl)
         #Log(str(row))
