@@ -198,7 +198,8 @@ def GetFanzineList() -> list[ClassicFanzinesLine] | None:
             Log(f"                {row=}")
             continue
 
-        cfl.Flag=m.groups()[0]
+        cfl.FlagSort=m.groups()[0]
+        cfl.Flag=m.groups()[1]
 
         namelist.append(cfl)
         #Log(str(row))
