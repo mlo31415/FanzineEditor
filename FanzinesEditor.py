@@ -124,41 +124,41 @@ def GetFanzineList() -> list[ClassicFanzinesLine] | None:
             continue
 
         cfl=ClassicFanzinesLine()
-        # Cell 0
+        # Column 0
         # This is the blue dot.  No information here, it seems.
-        str(row[0])
-        # Cell 1
+
+        # Column 1
         # <td sorttable_customkey="1940S ONE SHOTS"><a href="1940s_One_Shots/"><strong>1940s One Shots</strong></a></td>
         # This cell is of one of two possible formats:
         # (1) '<a href="Zed-Nielsen_Hayden/"><strong>Zed</strong></a>'
         # This is the typical case with URL and text
         # (2) '<a href="Zed/"><strong>Zed, The </strong></a><br/> Die Zeitschrift Fur Vollstandigen Unsinn'
         # In aa few cases, the fanzine has a list of alternative names following.
-        m=re.search(r'<a href=[\'\"]?([^>]+?)/?[\'\"]?>(.+)</a>(.*)$', row[1].strip(), flags=re.IGNORECASE)
+        m=re.search(r'<td sorttable_customkey=[\'\"](.*?)[\'\"]><a href=[\'\"]?([^>]+?)/?[\'\"]?>(.+)</a>(.*)$', row[1].strip(), flags=re.IGNORECASE)
         if m is None:
             Log(f"GetFanzineList() Failure: {row}")
             continue
 
-        cfl._url=m.groups()[0]
-        cfl._displayName=m.groups()[1]
-        cfl._otherNames=m.groups()[2]
-        #TODO still need to get sort key
+        cfl.DisplayNameSort=m.groups()[0]
+        cfl.URL=m.groups()[1]
+        cfl.DisplayName=m.groups()[2]
+        cfl.OtherNames=m.groups()[3]
 
-        # Cell 2: type
+        # Column 2: Editor
         # '<td sorttable_customkey="SPEER, JACK">Jack Speer'
         str(row[2])
 
-        # Cell 3
+        # Column Dates
         # '<td sorttable_customkey="19390000">1939-1943'
         str(row[3])
 
-        # Cell 4
+        # Column Type
         # '<td>Fanzine'
 
-        # Cell 5
+        # Column Issues
         # '<td class="right" sorttable_customkey="00001">1 '
 
-        #Cell 6
+        # Column Flag
         # '<td sorttable_customkey="zzzz"><br/>'
 
         namelist.append(cfl)
@@ -281,10 +281,10 @@ class FanzineEditor(FanzinesGrid):
 
     #-------------------
     def OnGridCellRightClick( self, event ):       # FanzineEditor(FanzineGrid)
-        cfl=self._fanzinesList[self.Datasource.NumCols+(event.Row-1)+event.Col-1]
+        cfl=self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]
         with ClassicTableEntryDlg(self.Parent, cfl) as dlg:
             if dlg.ShowModal() == wx.ID_OK:
-                self._fanzinesList[self.Datasource.NumCols+(event.Row-1)+event.Col-1]=cfl
+                self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]=cfl
 
 
     # ------------------

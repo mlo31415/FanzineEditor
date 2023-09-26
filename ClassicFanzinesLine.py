@@ -35,6 +35,95 @@ class ClassicFanzinesLine:
         self._flagSort: str=""
 
 
+
+    @property
+    def DisplayName(self) -> str:
+        return self._displayName
+    @DisplayName.setter
+    def DisplayName(self, val: str):
+        self.v=val
+
     @property
     def URL(self) -> str:
         return self._url
+    @URL.setter
+    def URL(self, val: str):
+        self._url=val
+
+    @property
+    def OtherNames(self) -> str:
+        return self._otherNames
+    @OtherNames.setter
+    def OtherNames(self, val: str):
+        self._otherNames=val
+
+    @property
+    def DisplayNameSort(self) -> str:
+        return self._displayNameSort
+    @DisplayNameSort.setter
+    def DisplayNameSort(self, val: str):
+        self._displayNameSort=val
+
+    @property
+    def Editors(self) -> str:
+        return self._editors
+    @Editors.setter
+    def Editors(self, val: str):
+        self._editors=val
+
+    @property
+    def EditorsSort(self) -> str:
+        return self._editorsSort
+    @EditorsSort.setter
+    def EditorsSort(self, val: str):
+        self._editorsSort=val
+
+    @property
+    def Dates(self) -> str:
+        return self._dates
+    @Dates.setter
+    def Dates(self, val: str):
+        self._dates=val
+
+    @property
+    def DatesSort(self) -> str:
+        return self._datesSort
+    @DatesSort.setter
+    def DatesSort(self, val: str):
+        self._datesSort=val
+
+    @property
+    def Type(self) -> str:
+        return self._type
+    @Type.setter
+    def Type(self, val: str):
+        self._type=val
+
+    @property
+    def Issues(self) -> str:
+        return self._issues
+    @Issues.setter
+    def Issues(self, val: str):
+        self._issues=val
+
+    @property
+    def IssuesSort(self) -> str:
+        return self._issuesSort
+    @IssuesSort.setter
+    def IssuesSort(self, val: str):
+        self._issuesSort=val
+
+    @property
+    def Flag(self) -> str:
+        return self._flag
+    @Flag.setter
+    def Flag(self, val: str):
+        self._flag=val
+
+    @property
+    def FlagSort(self) -> str:
+        return self._flagSort
+    @FlagSort.setter
+    def FlagSort(self, val: str):
+        self._flagSort=val
+
