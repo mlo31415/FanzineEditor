@@ -37,17 +37,17 @@ class FanzineIndexPageEdit ( wx.Frame ):
 
 		bSizerMain = wx.BoxSizer( wx.VERTICAL )
 
-		fgSizer4 = wx.FlexGridSizer( 2, 8, 0, 0 )
+		fgSizer4 = wx.FlexGridSizer( 3, 8, 0, 0 )
 		fgSizer4.SetFlexibleDirection( wx.BOTH )
 		fgSizer4.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		self.m_staticText4 = wx.StaticText( self, wx.ID_ANY, u"Fanzine Name", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText4 = wx.StaticText( self, wx.ID_ANY, u"Fanzine Name:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText4.Wrap( -1 )
 
 		self.m_staticText4.SetMinSize( wx.Size( 200,-1 ) )
 		self.m_staticText4.SetMaxSize( wx.Size( -1,50 ) )
 
-		fgSizer4.Add( self.m_staticText4, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.FIXED_MINSIZE, 5 )
+		fgSizer4.Add( self.m_staticText4, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL|wx.FIXED_MINSIZE, 5 )
 
 		self.tFanzineName = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 200,-1 ), 0 )
 		self.tFanzineName.SetToolTip( u"The name of the fanzine serires." )
@@ -55,13 +55,13 @@ class FanzineIndexPageEdit ( wx.Frame ):
 
 		fgSizer4.Add( self.tFanzineName, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.FIXED_MINSIZE, 0 )
 
-		self.m_staticText5 = wx.StaticText( self, wx.ID_ANY, u"Editor(s)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText5 = wx.StaticText( self, wx.ID_ANY, u"Editor(s):", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText5.Wrap( -1 )
 
 		self.m_staticText5.SetMinSize( wx.Size( 200,-1 ) )
 		self.m_staticText5.SetMaxSize( wx.Size( -1,50 ) )
 
-		fgSizer4.Add( self.m_staticText5, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.FIXED_MINSIZE, 5 )
+		fgSizer4.Add( self.m_staticText5, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL|wx.FIXED_MINSIZE, 5 )
 
 		self.tEditors = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.tEditors.SetToolTip( u"A list of editors separated by commans." )
@@ -69,13 +69,13 @@ class FanzineIndexPageEdit ( wx.Frame ):
 
 		fgSizer4.Add( self.tEditors, 0, wx.ALL, 5 )
 
-		self.m_staticText6 = wx.StaticText( self, wx.ID_ANY, u"Dates", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText6 = wx.StaticText( self, wx.ID_ANY, u"Dates:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText6.Wrap( -1 )
 
 		self.m_staticText6.SetMinSize( wx.Size( 200,-1 ) )
 		self.m_staticText6.SetMaxSize( wx.Size( -1,50 ) )
 
-		fgSizer4.Add( self.m_staticText6, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.FIXED_MINSIZE, 5 )
+		fgSizer4.Add( self.m_staticText6, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL|wx.FIXED_MINSIZE, 5 )
 
 		self.tDates = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.tDates.SetToolTip( u"The date range for this fanzine, years only. E.g., 1965-1974" )
@@ -107,6 +107,24 @@ class FanzineIndexPageEdit ( wx.Frame ):
 		self.cbAlphabetizeIndividually.SetToolTip( u"Do we want to treat the issues in this page as independent fanzines rather than issues of this page?" )
 
 		fgSizer4.Add( self.cbAlphabetizeIndividually, 0, wx.ALL, 5 )
+
+		self.m_staticText38 = wx.StaticText( self, wx.ID_ANY, u"Server Directory:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText38.Wrap( -1 )
+
+		fgSizer4.Add( self.m_staticText38, 0, wx.ALIGN_RIGHT|wx.ALL, 5 )
+
+		self.tServerDirectory = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.tServerDirectory.SetMinSize( wx.Size( 200,-1 ) )
+
+		fgSizer4.Add( self.tServerDirectory, 0, wx.ALL, 5 )
+
+		self.m_staticText39 = wx.StaticText( self, wx.ID_ANY, u"Local Directory:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText39.Wrap( -1 )
+
+		fgSizer4.Add( self.m_staticText39, 0, wx.ALIGN_RIGHT|wx.ALL, 5 )
+
+		self.tLocalDirectory = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		fgSizer4.Add( self.tLocalDirectory, 0, wx.ALL, 5 )
 
 
 		bSizerMain.Add( fgSizer4, 0, wx.EXPAND, 5 )
