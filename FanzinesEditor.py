@@ -338,9 +338,15 @@ class FanzineEditorWindow(FanzinesGridGen):
         self.RefreshWindow()
 
 
+    def OnAddNewFanzine(self, event):       # FanzineEditor(FanzineGrid)
+        fsw=FanzineIndexPageWindow(None)
+        if fsw.failure:
+            MessageBox(f"Unable to load new fanzine window", Title="Loading Fanzine Index page", ignoredebugger=True)
+            Log(f"FanzineIndexPageWindow('') failed")
+
+
     #-------------------
     def OnGridCellDoubleClick(self, event):       # FanzineEditor(FanzineGrid)
-        #self.SaveClickLocation(vent)
         url=self._Datasource.Rows[event.Row][event.Col]
         fsw=FanzineIndexPageWindow(None, url)
         if fsw.failure:
