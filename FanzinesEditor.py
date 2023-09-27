@@ -20,7 +20,7 @@ from Log import Log as RealLog
 from Settings import Settings
 
 from FanzineIndexPageEdit import FanzineIndexPageWindow
-from GenGUIClass import FanzinesGrid
+from GenGUIClass import FanzinesGridGen
 from GenLogDialogClass import LogDialog
 from ClassicTableEntry import ClassicTableEntryDlg
 from ClassicFanzinesLine import ClassicFanzinesLine
@@ -237,9 +237,9 @@ def GetFanzineList() -> list[ClassicFanzinesLine] | None:
 
 
 #==========================================================================================================
-class FanzineEditor(FanzinesGrid):
+class FanzineEditor(FanzinesGridGen):
     def __init__(self, parent):
-        FanzinesGrid.__init__(self, parent)
+        FanzinesGridGen.__init__(self, parent)
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzinesPage()      # Note that this is an empty instance

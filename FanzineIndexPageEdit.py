@@ -9,7 +9,7 @@ import re
 from bs4 import BeautifulSoup
 import bs4
 
-from GenGUIClass import FanzineIndexPageEdit
+from GenGUIClass import FanzineIndexPageEditGen
 from FTP import FTP
 
 from NewFanzineDialog import NewFanzineWindow
@@ -51,9 +51,9 @@ gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
 ])
 
 
-class FanzineIndexPageWindow(FanzineIndexPageEdit):
+class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def __init__(self, parent, url: str=""):
-        FanzineIndexPageEdit.__init__(self, parent)
+        FanzineIndexPageEditGen.__init__(self, parent)
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzineIndexPage()

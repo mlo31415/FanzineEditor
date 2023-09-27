@@ -1,13 +1,13 @@
-from GenGUIClass import ClassicTableEntryDialog
+from GenGUIClass import ClassicTableEntryDialogGen
 from ClassicFanzinesLine import ClassicFanzinesLine
 
 from wx._core import wxAssertionError
 from wx import ID_CANCEL, ID_OK
 from Log import Log
 
-class ClassicTableEntryDlg(ClassicTableEntryDialog):
+class ClassicTableEntryDlg(ClassicTableEntryDialogGen):
     def __init__(self, parent, clf: ClassicFanzinesLine):
-        ClassicTableEntryDialog.__init__(self, parent)
+        ClassicTableEntryDialogGen.__init__(self, parent)
 
         self._clf=clf
 

@@ -1,18 +1,18 @@
 import os
 import ctypes
 
-from GenGUIClass import NewFanzineDialog
+from GenGUIClass import NewFanzineDialogGen
 from HelpersPackage import FanzineNameToDirName
 from WxHelpers import AddChar
 
-class NewFanzineWindow(NewFanzineDialog):
+class NewFanzineWindow(NewFanzineDialogGen):
 
     def __init__(self, parent, rootDirectory: str):
         self._directory: str=""
         self._fanzineName=""
         self._output: str=""
         self._rootDirectory: str=rootDirectory
-        NewFanzineDialog.__init__(self, parent)
+        NewFanzineDialogGen.__init__(self, parent)
 
     @property
     def Directory(self) -> str:

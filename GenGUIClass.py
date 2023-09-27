@@ -12,10 +12,10 @@ import wx.xrc
 import wx.grid
 
 ###########################################################################
-## Class FanzineIndexPageEdit
+## Class FanzineIndexPageEditGen
 ###########################################################################
 
-class FanzineIndexPageEdit ( wx.Frame ):
+class FanzineIndexPageEditGen ( wx.Frame ):
 
 	def __init__( self, parent ):
 		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 1000,772 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
@@ -261,7 +261,7 @@ class FanzineIndexPageEdit ( wx.Frame ):
 		self.m_menuItemAddLink = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Add a Link", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemAddLink )
 
-		self.Bind( wx.EVT_RIGHT_DOWN, self.FanzineIndexPageEditOnContextMenu )
+		self.Bind( wx.EVT_RIGHT_DOWN, self.FanzineIndexPageEditGenOnContextMenu )
 
 
 		self.Centre( wx.BOTH )
@@ -429,7 +429,7 @@ class FanzineIndexPageEdit ( wx.Frame ):
 	def OnPopupAddLink( self, event ):
 		event.Skip()
 
-	def FanzineIndexPageEditOnContextMenu( self, event ):
+	def FanzineIndexPageEditGenOnContextMenu( self, event ):
 		self.PopupMenu( self.m_GridPopup, event.GetPosition() )
 
 
@@ -460,10 +460,10 @@ class LogDialog ( wx.Dialog ):
 
 
 ###########################################################################
-## Class NewFanzineDialog
+## Class NewFanzineDialogGen
 ###########################################################################
 
-class NewFanzineDialog ( wx.Dialog ):
+class NewFanzineDialogGen ( wx.Dialog ):
 
 	def __init__( self, parent ):
 		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Create a New Fanzine Directory", pos = wx.DefaultPosition, size = wx.Size( 435,152 ), style = wx.DEFAULT_DIALOG_STYLE )
@@ -536,10 +536,10 @@ class NewFanzineDialog ( wx.Dialog ):
 
 
 ###########################################################################
-## Class FanzinesGrid
+## Class FanzinesGridGen
 ###########################################################################
 
-class FanzinesGrid ( wx.Frame ):
+class FanzinesGridGen ( wx.Frame ):
 
 	def __init__( self, parent ):
 		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 1037,502 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
@@ -644,10 +644,10 @@ class FanzinesGrid ( wx.Frame ):
 
 
 ###########################################################################
-## Class ClassicTableEntryDialog
+## Class ClassicTableEntryDialogGen
 ###########################################################################
 
-class ClassicTableEntryDialog ( wx.Dialog ):
+class ClassicTableEntryDialogGen ( wx.Dialog ):
 
 	def __init__( self, parent ):
 		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Classic Fanzines Entry", pos = wx.DefaultPosition, size = wx.Size( 549,353 ), style = wx.DEFAULT_DIALOG_STYLE )
