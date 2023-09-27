@@ -74,7 +74,7 @@ def main():
         g_LogDialog=None
 
     # Initialize the GUI
-    FanzineEditor(None)
+    FanzineEditorWindow(None)
 
     # Run the event loop
     app.MainLoop()
@@ -237,7 +237,7 @@ def GetFanzineList() -> list[ClassicFanzinesLine] | None:
 
 
 #==========================================================================================================
-class FanzineEditor(FanzinesGridGen):
+class FanzineEditorWindow(FanzinesGridGen):
     def __init__(self, parent):
         FanzinesGridGen.__init__(self, parent)
 
