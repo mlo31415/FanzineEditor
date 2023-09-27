@@ -92,6 +92,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEdit):
         if self.Datasource.FanzineType in self.tFanzineType.Items:
             self.tFanzineType.SetSelection(self.tFanzineType.Items.index(self.Datasource.FanzineType))
         self.tLocaleText.SetValue(self.Datasource.Locale)
+
+        # The server directory is not editable when it already exists.
+        # If the input parameter url is empty, then we're creating a new fanzine entry and the url can and must be edited.
+        if self.url != "":
+            self.tServerDirectory.SetValue(self.url)
+            self.tServerDirectory.Disable()
+
         
         # Now load the fanzine issue data
         self._dataGrid.HideRowLabels()
