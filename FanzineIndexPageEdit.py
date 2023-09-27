@@ -55,12 +55,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def __init__(self, parent, url: str=""):
         FanzineIndexPageEditGen.__init__(self, parent)
 
+        self.failure=True
+
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzineIndexPage()
 
-        self.url=url
+        self.IsNewDirectory=url == ""  # Are we creating a new directory or editing an existing one?
 
-        self.IsNewDirectory=False   # Are we creating a new directory? (Alternative is that we're editing an old one.)
+        self.url=url
 
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
@@ -73,44 +75,41 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if tlws:
             self.SetSize(tlws)
 
-        self.Datasource.targetDirectory=""
-
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
 
-        # Load the fanzine index page
-        with ProgressMsg(parent, f"Downloading Fanzine Index Page: {url}"):
-            self.failure=False
-            if not self.Datasource.GetFanzineIndexPage(url):
-                self.failure=True
-                return
+        if not self.IsNewDirectory:
+            # Load the fanzine index page
+            with ProgressMsg(parent, f"Downloading Fanzine Index Page: {url}"):
+                self.failure=False
+                if not self.Datasource.GetFanzineIndexPage(url):
+                    self.failure=True
+                    return
 
-        # Add the various values into the dialog
-        self.tCredits.SetValue(self.Datasource.Credits)
-        self.tDates.SetValue(self.Datasource.Dates)
-        self.tEditors.SetValue(", ".join(self.Datasource.Editors))
-        self.tFanzineName.SetValue(self.Datasource.FanzineName)
-        if self.Datasource.FanzineType in self.tFanzineType.Items:
-            self.tFanzineType.SetSelection(self.tFanzineType.Items.index(self.Datasource.FanzineType))
-        self.tLocaleText.SetValue(self.Datasource.Locale)
+            # Add the various values into the dialog
+            self.tCredits.SetValue(self.Datasource.Credits)
+            self.tDates.SetValue(self.Datasource.Dates)
+            self.tEditors.SetValue(", ".join(self.Datasource.Editors))
+            self.tFanzineName.SetValue(self.Datasource.FanzineName)
+            if self.Datasource.FanzineType in self.tFanzineType.Items:
+                self.tFanzineType.SetSelection(self.tFanzineType.Items.index(self.Datasource.FanzineType))
+            self.tLocaleText.SetValue(self.Datasource.Locale)
 
-        # The server directory is not editable when it already exists.
-        # If the input parameter url is empty, then we're creating a new fanzine entry and the url can and must be edited.
-        if self.url != "":
-            self.tServerDirectory.SetValue(self.url)
-            self.tServerDirectory.Disable()
+            # The server directory is not editable when it already exists.
+            # If the input parameter url is empty, then we're creating a new fanzine entry and the url can and must be edited.
+            if self.url != "":
+                self.tServerDirectory.SetValue(self.url)
+                self.tServerDirectory.Disable()
 
-        
-        # Now load the fanzine issue data
-        self._dataGrid.HideRowLabels()
+            # Now load the fanzine issue data
+            self._dataGrid.HideRowLabels()
 
-        self._dataGrid.NumCols=self.Datasource.NumCols
-        self._dataGrid.AppendRows(self.Datasource.NumRows)
-        # for i in range(self.Datasource.NumCols):
-        #     self.wxGrid._colDefs.append(ColDefinition("", IsEditable="no"))
+            self._dataGrid.NumCols=self.Datasource.NumCols
+            self._dataGrid.AppendRows(self.Datasource.NumRows)
 
         self._dataGrid.RefreshWxGridFromDatasource()
         self.MarkAsSaved()
         self.RefreshWindow()
+        self.failure=False
 
         self.Show(True)
 
@@ -387,8 +386,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if dlg.Directory != "":
 
             self.ClearMainWindow()
-
-            self.Datasource.TargetDirectory=dlg.Directory
 
             self.tFanzineName.SetValue(dlg.FanzineName)
 
