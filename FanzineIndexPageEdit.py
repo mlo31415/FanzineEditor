@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Optional
 import os
-import shutil
 import wx
 import wx.grid
 import re
@@ -10,7 +9,6 @@ import re
 from bs4 import BeautifulSoup
 import bs4
 
-import HelpersPackage
 from GenGUIClass import FanzineIndexPageEdit
 from FTP import FTP
 
@@ -18,8 +16,8 @@ from NewFanzineDialog import NewFanzineWindow
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass
 from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage
-from HelpersPackage import Bailout, IsInt, Int0, ZeroIfNone, MessageBox, RemoveScaryCharacters, SetReadOnlyFlag, ParmDict
-from HelpersPackage import  ComparePathsCanonical, FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
+from HelpersPackage import Bailout, IsInt, Int0, ZeroIfNone
+from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, InsertUsingFanacComments, TurnPythonListIntoWordList
 from PDFHelpers import GetPdfPageCount
