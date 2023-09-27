@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition
 from WxHelpers import OnCloseHandling, ProgressMsg
-from HelpersPackage import MessageBox, RemoveTopLevelHTMLTags, SearchExtractAndRemoveBoundedAll
+from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
