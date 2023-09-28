@@ -436,7 +436,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         Log("All uploads succeeded.")
 
         self.MarkAsSaved()
-        self.tServerDirectory.Disable()     # Once a new fanzine has been uploaded, the server directory is no longer changeable
+
+        # Once a new fanzine has been uploaded, the server directory is no longer changeable
+        self.tServerDirectory.Disable()
+        self.IsNewDirectory=False
+
         ProgressMessage(self).Close()
 
 
