@@ -93,8 +93,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 gStdColHeaders["Pages"],
                 gStdColHeaders["Notes"]
             ])
+
         else:
-            # This is not a new diretcory
+            # This is not a new directory
             # Load the fanzine index page
             with ProgressMsg(parent, f"Downloading Fanzine Index Page: {url}"):
                 self.failure=False
@@ -122,6 +123,23 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             self._dataGrid.NumCols=self.Datasource.NumCols
             self._dataGrid.AppendRows(self.Datasource.NumRows)
+
+        # Read in the table of local directory to server directory equivalences
+        l2slines: list[str]=[]
+        with open("LocalToServer Conversion.txt", "r") as f:
+            l2sLines=f.readlines()
+        self.serverNameList: list[str]=[]
+        self.localNameList: list[str]=[]
+        for line in l2sLines:
+            line=line.split()
+            if len(line) == 2:
+                self.localNameList.append(line[0])
+                self.serverNameList.append(line[1])
+
+        # Try to fill in the local directory
+        if self.tServerDirectory.GetValue() in self.serverNameList:
+            self.tLocalDirectory.SetValue(self.localNameList[self.serverNameList.index(self.tServerDirectory.GetValue())])
+
 
         self._dataGrid.RefreshWxGridFromDatasource()
         self.MarkAsSaved()
@@ -422,6 +440,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             s=s+" *"        # Append a change marker if needed
         self.SetTitle(s)
 
+
     def UpdateEnabledStatus(self):
         # The server directory can be edited iff this is a new directory
         self.tServerDirectory.Enabled=self.IsNewDirectory
@@ -436,6 +455,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if len(self.Datasource.Rows) == 0:
             enable=False
         self.bUpload.Enabled=enable
+
+        # The local directory text box is editable in a new directory, but not in an existing one
+        self.tLocalDirectory.Enabled=len(self.tLocalDirectory.GetValue()) == 0 or self.IsNewDirectory
+
 
 
 
