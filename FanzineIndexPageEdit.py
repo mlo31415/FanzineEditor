@@ -69,10 +69,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.LocalDirectoryRoot=Settings().Get("Local Directory Root", ".")
 
         # Position the window on the screen it was on before
-        tlwp=Settings().Get("Top Level Window Position")
+        tlwp=Settings("FanzineEditor positions.json").Get("Index Page Window Position")
         if tlwp:
             self.SetPosition(tlwp)
-        tlws=Settings().Get("Top Level Windows Size")
+        tlws=Settings("FanzineEditor positions.json").Get("Index Page Window Size")
         if tlws:
             self.SetSize(tlws)
 
@@ -177,9 +177,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # Save the window's position
         pos=self.GetPosition()
-        Settings().Put("Top Level Window Position", (pos.x, pos.y))
+        Settings("FanzineEditor positions.json").Put("Index Page Window Position", (pos.x, pos.y))
         size=self.GetSize()
-        Settings().Put("Top Level Windows Size", (size.width, size.height))
+        Settings("FanzineEditor positions.json").Put("Index Page Window Size", (size.width, size.height))
 
         self.Destroy()
 

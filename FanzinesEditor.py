@@ -52,6 +52,8 @@ def main():
     Log(f"Settings().Load({os.path.join(homedir, 'FanzineEditor settings.json')})")
     Settings().Load(os.path.join(homedir, "FanzineEditor settings.json"), MustExist=True)
     Log(Settings().Dump())
+    Settings("FanzineEditor positions.json").Load(os.path.join(homedir, "FanzineEditor positions.json"), MustExist=True)
+    Log(Settings().Dump())
 
     # Set the debug/production mode
     global g_debug
@@ -256,10 +258,10 @@ class FanzineEditorWindow(FanzinesGridGen):
         self._dataGrid.HideColLabels()
 
         # Position the window on the screen it was on before
-        tlwp=Settings().Get("Top Level Window Position")
+        tlwp=Settings("FanzineEditor positions.json").Get("Top Level Window Position")
         if tlwp:
             self.SetPosition(tlwp)
-        tlws=Settings().Get("Top Level Windows Size")
+        tlws=Settings("FanzineEditor positions.json").Get("Top Level Window Size")
         if tlws:
             self.SetSize(tlws)
 
@@ -288,9 +290,9 @@ class FanzineEditorWindow(FanzinesGridGen):
 
         # Save the window's position
         pos=self.GetPosition()
-        Settings().Put("Top Level Window Position", (pos.x, pos.y))
+        Settings("FanzineEditor positions.json").Put("Top Level Window Position", (pos.x, pos.y))
         size=self.GetSize()
-        Settings().Put("Top Level Windows Size", (size.width, size.height))
+        Settings("FanzineEditor positions.json").Put("Top Level Window Size", (size.width, size.height))
 
         self.Destroy()
         LogClose()
