@@ -78,7 +78,23 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
 
-        if not self.IsNewDirectory:
+        if self.IsNewDirectory:
+            # New directory: Do basic setup.
+            # Create default column headers
+            self._Datasource.ColDefs=ColDefinitionsList([
+                gStdColHeaders["Filename"],
+                gStdColHeaders["Issue"],
+                gStdColHeaders["Whole"],
+                gStdColHeaders["Vol"],
+                gStdColHeaders["Number"],
+                gStdColHeaders["Month"],
+                gStdColHeaders["Day"],
+                gStdColHeaders["Year"],
+                gStdColHeaders["Pages"],
+                gStdColHeaders["Notes"]
+            ])
+        else:
+            # This is not a new diretcory
             # Load the fanzine index page
             with ProgressMsg(parent, f"Downloading Fanzine Index Page: {url}"):
                 self.failure=False
