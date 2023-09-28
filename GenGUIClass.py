@@ -278,6 +278,8 @@ class FanzineIndexPageEditGen ( wx.Frame ):
 		self.tFanzineType.Bind( wx.EVT_CHOICE, self.OnFanzineType )
 		self.cbComplete.Bind( wx.EVT_CHECKBOX, self.OnCheckComplete )
 		self.cbAlphabetizeIndividually.Bind( wx.EVT_CHECKBOX, self.OnCheckAlphabetizeIndividually )
+		self.tServerDirectory.Bind( wx.EVT_TEXT, self.OnServerDirectory )
+		self.tLocalDirectory.Bind( wx.EVT_TEXT, self.OnLocalDirectory )
 		self.tTopComments.Bind( wx.EVT_TEXT, self.OnTopComments )
 		self.tLocaleText.Bind( wx.EVT_TEXT, self.OnTextLocale )
 		self.tCredits.Bind( wx.EVT_TEXT, self.OnCredits )
@@ -343,6 +345,12 @@ class FanzineIndexPageEditGen ( wx.Frame ):
 		event.Skip()
 
 	def OnCheckAlphabetizeIndividually( self, event ):
+		event.Skip()
+
+	def OnServerDirectory( self, event ):
+		event.Skip()
+
+	def OnLocalDirectory( self, event ):
 		event.Skip()
 
 	def OnTopComments( self, event ):
