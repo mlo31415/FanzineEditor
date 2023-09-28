@@ -393,40 +393,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.MarkAsSaved()
 
 
-    # ------------------
-    # Create a new, empty LST file
-    def OnCreateNewFanzineDir(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
-        if not self.OKToClose(event):
-            return
-
-        dlg=NewFanzineWindow(None, self.RootDirectoryPath)
-        dlg.ShowModal()
-        dlg.Destroy()
-        if dlg.Directory != "":
-
-            self.ClearMainWindow()
-
-            self.tFanzineName.SetValue(dlg.FanzineName)
-
-            self.tCredits.SetValue(self.Datasource.Credits.strip())
-
-            # Create default column headers
-            self._Datasource.ColDefs=ColDefinitionsList([
-                gStdColHeaders["Filename"],
-                gStdColHeaders["Issue"],
-                gStdColHeaders["Whole"],
-                gStdColHeaders["Vol"],
-                gStdColHeaders["Number"],
-                gStdColHeaders["Month"],
-                gStdColHeaders["Day"],
-                gStdColHeaders["Year"],
-                gStdColHeaders["Pages"],
-                gStdColHeaders["Notes"]
-            ])
-
-            self.UpdateNeedsSavingFlag()
-            self.RefreshWindow()
-
     #------------------
     # Upload the current FanzineIndexPage (including any added fanzines) to the server
     def OnUpload(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
