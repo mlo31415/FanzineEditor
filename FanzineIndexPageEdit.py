@@ -171,16 +171,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if irow < 0 or irow >= self.Datasource.NumRows:
             return
 
-
-        # The coloring depends on the contents of the cell *pair* self.Datasource.Rows[irow][0:1]
-        # We will turn the contents of those cells into LST format and back again.  If they pass unchanged, then we color them white
-        # If they change (other than trivial whitespace) we color them pink
-        cells=self.Datasource.Rows[irow][0:2]
-
-        # Both empty is just fine.
-        if cells[0] == "" and cells[1] == "":
-            return
-
         return
 
 
@@ -449,8 +439,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
 
-
-
     def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self.UpdateNeedsSavingFlag()
         self.UpdateEnabledStatus()
@@ -475,7 +463,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         return self._signature != self.Signature()
 
 
-    # This method updates the local directory name by computing it from the fanzine name.  It only applies when creating a new LST file
+    # This method updates the local directory name by computing it from the fanzine name.  It only applies when creating a new fanzine index page
     def OnFanzineNameChar(self, event):
         event.Skip()
         return
@@ -947,7 +935,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # Sometimes the actual apa mailing name will be the text of a hyperlink
             mailingPat=f"({patapas})\s+([0-9]+[a-zA-Z]?)"  # Matches APA 123X
 
-            # First look for a mailing name inside a hyperlink and, if found, remove the hyperlink (we'll add them back when we save the LST file)
+            # First look for a mailing name inside a hyperlink and, if found, remove the hyperlink
             note=RemoveHyperlinkContainingPattern(note, mailingPat, repeat=True, flags=re.IGNORECASE)
 
             while True:
