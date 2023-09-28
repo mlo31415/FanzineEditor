@@ -437,7 +437,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tServerDirectory.Enabled=self.IsNewDirectory
 
         def IsEmpty(s: str) -> bool:
-            return s.strip() != ""
+            return s.strip() == ""
 
         # The Upload button is enabled iff certain text boxes have content  and there's at least one fanzine
         enable=True
@@ -477,6 +477,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     # This method updates the local directory name by computing it from the fanzine name.  It only applies when creating a new LST file
     def OnFanzineNameChar(self, event):
+        event.Skip()
         return
         # # The only time we update the local directory
         # fname=AddChar(self.tFanzineName.GetValue(), event.GetKeyCode())
