@@ -412,7 +412,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.RefreshWindow()
 
     #------------------
-    # Save an LSTFile object to disk and maybe create a whole new directory
+    # Upload the current FanzineIndexPage (including any added fanzines) to the server
     def OnUpload(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
         ProgressMessage(self).Show(f"Uploading Fanzine Index Page: {self.url}")
         Log(f"Uploading Fanzine Index Page: {self.url}")
@@ -436,6 +436,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         Log("All uploads succeeded.")
 
         self.MarkAsSaved()
+        self.tServerDirectory.Disable()     # Once a new fanzine has been uploaded, the server directory is no longer changeable
         ProgressMessage(self).Close()
 
 
@@ -482,6 +483,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def OnFanzineName(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
         self.Datasource.FanzineName=self.tFanzineName.GetValue()
         self.RefreshWindow(DontRefreshGrid=True)
+
+
+    # This event can only happen when creating a new fanzine. For all existing fanzines, the text box is not enabled.
+    def OnServerDirectory( self, event ):
+        # Check to see if this already exists.
+        return
+
+
+    def OnLocalDirectory( self, event ):
+        return
 
 
     def OnEditors(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEdit)
