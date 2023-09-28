@@ -138,7 +138,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.cbAlphabetizeIndividually.Enabled=True
         self.wxGrid.Enabled=True
 
-        self.tFanzineName.SetEditable(False)
+        if not self.IsNewDirectory:
+            self.tFanzineName.SetEditable(False)
+
         # On an old directory, we always have a target defined, so we can always add new issues
         self.bAddNewIssues.Enable(True)
 
