@@ -366,7 +366,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     # ------------------
-    # Initialize the main window to empty
+    # Initialize an existing, initializedm main window to empty
     # This also initiazes the datasource
     def ClearMainWindow(self):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
 
