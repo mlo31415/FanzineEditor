@@ -208,7 +208,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if not self.NeedsSaving():
             return True
 
-        if not OnCloseHandling(event, self.NeedsSaving(), "The LST file has been updated and not yet saved. Dispose anyway?"):
+        if not OnCloseHandling(event, self.NeedsSaving(), "The changes have not been uploaded and will be lost if you exit. Quit anyway?"):
             self.MarkAsSaved()  # The contents have been declared doomed, so mark it as saved so as not to trigger any more queries.
             return True
 
