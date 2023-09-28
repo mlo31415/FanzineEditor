@@ -47,7 +47,7 @@
             <property name="minimum_size"></property>
             <property name="name">FanzineIndexPageEditGen</property>
             <property name="pos"></property>
-            <property name="size">1000,772</property>
+            <property name="size">1129,772</property>
             <property name="style">wxDEFAULT_FRAME_STYLE</property>
             <property name="subclass"></property>
             <property name="title"></property>
@@ -625,7 +625,7 @@
                                 <property name="maxlength"></property>
                                 <property name="min_size"></property>
                                 <property name="minimize_button">0</property>
-                                <property name="minimum_size">200,-1</property>
+                                <property name="minimum_size">250,-1</property>
                                 <property name="moveable">1</property>
                                 <property name="name">tEditors</property>
                                 <property name="pane_border">1</property>
@@ -715,7 +715,7 @@
                         </object>
                         <object class="sizeritem" expanded="0">
                             <property name="border">0</property>
-                            <property name="flag">wxALIGN_CENTER_VERTICAL|wxALL|wxFIXED_MINSIZE</property>
+                            <property name="flag">wxALIGN_CENTER_VERTICAL|wxALIGN_LEFT</property>
                             <property name="proportion">0</property>
                             <object class="wxTextCtrl" expanded="0">
                                 <property name="BottomDockable">1</property>
@@ -751,7 +751,7 @@
                                 <property name="maxlength"></property>
                                 <property name="min_size"></property>
                                 <property name="minimize_button">0</property>
-                                <property name="minimum_size">200,-1</property>
+                                <property name="minimum_size">150,-1</property>
                                 <property name="moveable">1</property>
                                 <property name="name">tDates</property>
                                 <property name="pane_border">1</property>
@@ -841,7 +841,7 @@
                         </object>
                         <object class="sizeritem" expanded="0">
                             <property name="border">0</property>
-                            <property name="flag">wxALIGN_CENTER_VERTICAL|wxALL|wxFIXED_MINSIZE</property>
+                            <property name="flag">wxALIGN_CENTER_VERTICAL|wxALL</property>
                             <property name="proportion">0</property>
                             <object class="wxChoice" expanded="0">
                                 <property name="BottomDockable">1</property>
@@ -877,7 +877,7 @@
                                 <property name="maximum_size"></property>
                                 <property name="min_size"></property>
                                 <property name="minimize_button">0</property>
-                                <property name="minimum_size">200,-1</property>
+                                <property name="minimum_size">-1,-1</property>
                                 <property name="moveable">0</property>
                                 <property name="name">tFanzineType</property>
                                 <property name="pane_border">1</property>
@@ -1133,7 +1133,7 @@
                                 <property name="maxlength"></property>
                                 <property name="min_size"></property>
                                 <property name="minimize_button">0</property>
-                                <property name="minimum_size">200,-1</property>
+                                <property name="minimum_size">250,-1</property>
                                 <property name="moveable">1</property>
                                 <property name="name">tServerDirectory</property>
                                 <property name="pane_border">1</property>
@@ -1161,7 +1161,7 @@
                         </object>
                         <object class="sizeritem" expanded="0">
                             <property name="border">5</property>
-                            <property name="flag">wxALIGN_RIGHT|wxALL</property>
+                            <property name="flag">wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</property>
                             <property name="proportion">0</property>
                             <object class="wxStaticText" expanded="0">
                                 <property name="BottomDockable">1</property>
@@ -1222,7 +1222,7 @@
                         </object>
                         <object class="sizeritem" expanded="0">
                             <property name="border">5</property>
-                            <property name="flag">wxALL</property>
+                            <property name="flag">wxALIGN_CENTER_VERTICAL|wxALIGN_LEFT</property>
                             <property name="proportion">0</property>
                             <object class="wxTextCtrl" expanded="0">
                                 <property name="BottomDockable">1</property>
@@ -1258,7 +1258,7 @@
                                 <property name="maxlength"></property>
                                 <property name="min_size"></property>
                                 <property name="minimize_button">0</property>
-                                <property name="minimum_size"></property>
+                                <property name="minimum_size">150,-1</property>
                                 <property name="moveable">1</property>
                                 <property name="name">tLocalDirectory</property>
                                 <property name="pane_border">1</property>
