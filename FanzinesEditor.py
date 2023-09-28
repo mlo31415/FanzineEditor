@@ -106,9 +106,8 @@ def GetFanzineList() -> list[ClassicFanzinesLine] | None:
     soup=BeautifulSoup(html, 'html.parser')
     table=soup.find_all("table", class_="sortable")[0]
     rows=table.find_all_next("tr")
-    row=rows[0]
     rowtable: list[list[str]]=[]
-    for row in rows[1:]:
+    for row in rows[1:]:    # row[0] is the column headers, and for this fanzine the columns are hard-coded and they are ignored.
         srow=str(row)
         if "<form action=" in srow[:30]:  # I don't know where this line is coming from (it shows up as the last row, but does not appear on the website!)>
             continue
