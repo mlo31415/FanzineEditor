@@ -420,9 +420,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.MarkAsSaved()
 
         # Once a new fanzine has been uploaded, the server directory is no longer changeable
-        self.tServerDirectory.Disable()
         self.IsNewDirectory=False
 
+        self.UpdateEnabledStatus()
         ProgressMessage(self).Close()
 
 
@@ -433,9 +433,28 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             s=s+" *"        # Append a change marker if needed
         self.SetTitle(s)
 
+    def UpdateEnabledStatus(self):
+        # The server directory can be edited iff this is a new directory
+        self.tServerDirectory.Enabled=self.IsNewDirectory
+
+        def IsEmpty(s: str) -> bool:
+            return s.strip() != ""
+
+        # The Upload button is enabled iff certain text boxes have content  and there's at least one fanzine
+        enable=True
+        if IsEmpty(self.tServerDirectory.GetValue()) or IsEmpty(self.tFanzineName.GetValue()) or IsEmpty(self.tLocalDirectory.GetValue()):
+            enable=False
+        if len(self.Datasource.Rows) == 0:
+            enable=False
+        self.bUpload.Enabled=enable
+
+
+
+
 
     def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self.UpdateNeedsSavingFlag()
+        self.UpdateEnabledStatus()
 
         if not DontRefreshGrid:
             self._dataGrid.RefreshWxGridFromDatasource()
