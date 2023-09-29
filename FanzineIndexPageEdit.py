@@ -122,7 +122,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self._dataGrid.HideRowLabels()
 
             self._dataGrid.NumCols=self.Datasource.NumCols
-            self._dataGrid.AppendRows(self.Datasource.NumRows)
+            if self._dataGrid.NumRows > self.Datasource.NumRows:
+                self._dataGrid.DeleteRows(self.Datasource.NumRows, self._dataGrid.NumRows-self.Datasource.NumRows)
+            else:
+                self._dataGrid.AppendRows(self.Datasource.NumRows)
 
         # Read in the table of local directory to server directory equivalences
         l2slines: list[str]=[]
