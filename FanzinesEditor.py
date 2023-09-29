@@ -344,15 +344,19 @@ class FanzineEditorWindow(FanzinesGridGen):
         if fsw.failure:
             MessageBox(f"Unable to load new fanzine window", Title="Loading Fanzine Index page", ignoredebugger=True)
             Log(f"FanzineIndexPageWindow('') failed")
+        # Update ClassicFanzine row
 
 
     #-------------------
     def OnGridCellDoubleClick(self, event):       # FanzineEditor(FanzineGrid)
         url=self._Datasource.Rows[event.Row][event.Col]
-        fsw=FanzineIndexPageWindow(None, url)
-        if fsw.failure:
-            MessageBox(f"Unable to load {url}", Title="Loading Fanzine Index page", ignoredebugger=True)
-            Log(f"FanzineIndexPageWindow('{url}') failed")
+        with FanzineIndexPageWindow(None, url) as fsw:
+            if fsw.failure:
+                MessageBox(f"Unable to load {url}", Title="Loading Fanzine Index page", ignoredebugger=True)
+                Log(f"FanzineIndexPageWindow('{url}') failed")
+            fsw.ShowModal()
+            i=0
+        # Update ClassicFanzine row
 
 
     #-------------------

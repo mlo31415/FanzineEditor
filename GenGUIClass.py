@@ -15,14 +15,16 @@ import wx.grid
 ## Class FanzineIndexPageEditGen
 ###########################################################################
 
-class FanzineIndexPageEditGen ( wx.Frame ):
+class FanzineIndexPageEditGen ( wx.Dialog ):
 
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 1129,772 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE )
 
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 
-		self.m_toolBarTop = self.CreateToolBar( wx.TB_HORIZONTAL, wx.ID_ANY )
+		bSizer5 = wx.BoxSizer( wx.VERTICAL )
+
+		self.m_toolBarTop = wx.ToolBar( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TB_HORIZONTAL )
 		self.bAddNewIssues = wx.Button( self.m_toolBarTop, wx.ID_ANY, u"Add New Issue(s)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_toolBarTop.AddControl( self.bAddNewIssues )
 		self.m_staticText14 = wx.StaticText( self.m_toolBarTop, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -34,6 +36,8 @@ class FanzineIndexPageEditGen ( wx.Frame ):
 		self.bExit = wx.Button( self.m_toolBarTop, wx.ID_ANY, u"Exit", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_toolBarTop.AddControl( self.bExit )
 		self.m_toolBarTop.Realize()
+
+		bSizer5.Add( self.m_toolBarTop, 0, wx.EXPAND, 5 )
 
 		bSizerMain = wx.BoxSizer( wx.VERTICAL )
 
@@ -207,8 +211,12 @@ class FanzineIndexPageEditGen ( wx.Frame ):
 		bSizerMain.Add( theIssueGrid, 1, wx.EXPAND, 5 )
 
 
-		self.SetSizer( bSizerMain )
+		bSizer5.Add( bSizerMain, 1, wx.EXPAND, 5 )
+
+
+		self.SetSizer( bSizer5 )
 		self.Layout()
+		bSizer5.Fit( self )
 		self.m_GridPopup = wx.Menu()
 		self.m_menuItemPopupCopy = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Copy", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupCopy )
@@ -267,7 +275,6 @@ class FanzineIndexPageEditGen ( wx.Frame ):
 		self.Centre( wx.BOTH )
 
 		# Connect Events
-		self.Bind( wx.EVT_CLOSE, self.OnClose )
 		self.bAddNewIssues.Bind( wx.EVT_BUTTON, self.OnAddNewIssues )
 		self.bUpload.Bind( wx.EVT_BUTTON, self.OnUpload )
 		self.bExit.Bind( wx.EVT_BUTTON, self.OnExitClicked )
@@ -314,9 +321,6 @@ class FanzineIndexPageEditGen ( wx.Frame ):
 
 
 	# Virtual event handlers, override them in your derived class
-	def OnClose( self, event ):
-		event.Skip()
-
 	def OnAddNewIssues( self, event ):
 		event.Skip()
 
