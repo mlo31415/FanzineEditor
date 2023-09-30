@@ -10,6 +10,8 @@ from bs4 import BeautifulSoup
 import bs4
 
 from GenGUIClass import FanzineIndexPageEditGen
+from ClassicFanzinesLine import ClassicFanzinesLine
+
 from FTP import FTP
 
 from NewFanzineDialog import NewFanzineWindow
@@ -56,6 +58,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         FanzineIndexPageEditGen.__init__(self, parent)
 
         self.failure=True
+        self.CFL: ClassicFanzinesLine|None=None      # Used to return information to the fanzine list editor
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzineIndexPage()
@@ -202,6 +205,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def OnClose(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         if not self.OKToClose(event):
             return
+
+        # Save the fanzine's values to return to the main fanzines page.
+        cfl=ClassicFanzinesLine()
+        cfl.Issues=self.Datasource.NumRows
+        cfl.Editors=self.tEditors.GetValue()
+        cfl.DisplayName=self.tFanzineName.GetValue()
+        cfl.OtherNames="??"
+        cfl.Dates=self.tDates.GetValue()
+        cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
+        self.CFL=cfl
 
         # Save the window's position
         pos=self.GetPosition()

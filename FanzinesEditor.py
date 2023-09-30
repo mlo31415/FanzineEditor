@@ -14,7 +14,8 @@ from bs4 import BeautifulSoup
 
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition
 from WxHelpers import OnCloseHandling, ProgressMsg
-from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll
+from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll, Int0, SortPersonsName, FindAnyBracketedText
+from HelpersPackage import CompressAllWhitespace
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
@@ -354,9 +355,36 @@ class FanzineEditorWindow(FanzinesGridGen):
             if fsw.failure:
                 MessageBox(f"Unable to load {url}", Title="Loading Fanzine Index page", ignoredebugger=True)
                 Log(f"FanzineIndexPageWindow('{url}') failed")
+                return
             fsw.ShowModal()
-            i=0
-        # Update ClassicFanzine row
+            if fsw.CFL is not None:
+                cfl: ClassicFanzinesLine=self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]
+                # Copy the new vales in
+                if cfl.Editors != fsw.CFL.Editors:
+                    cfl.Editors=fsw.CFL.Editors
+                    eds=cfl.Editors
+                    eds=re.split(r"<br/>|,", eds)
+                    cfl.EditorsSort=SortPersonsName(eds[0]).upper()
+
+                if cfl.Dates != fsw.CFL.Dates:
+                    cfl.Dates=fsw.CFL.Dates
+                    cfl.DatesSort=(fsw.CFL.Dates+"0000")[0:4]+"0000"
+
+                if cfl.Issues != fsw.CFL.Issues:
+                    cfl.Issues=fsw.CFL.Issues
+                    cfl.IssuesSort=f"{Int0(cfl.Issues):0{5}}"
+
+                if cfl.DisplayName!= fsw.CFL.DisplayName:
+                    cfl.DisplayName=fsw.CFL.DisplayName
+                    pre, _, mid, post=FindAnyBracketedText(cfl.DisplayName)
+                    cfl.DisplayNameSort=f"{pre} {mid} {post}".strip().upper()
+
+                if cfl.Flag != fsw.CFL.Flag:
+                    cfl.Flag=fsw.CFL.Flag
+                    s=CompressAllWhitespace(cfl.Flag)
+                    if s == " ":
+                        cfl.FlagSort="zzzz"
+
 
 
     #-------------------
