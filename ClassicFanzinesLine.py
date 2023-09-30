@@ -6,7 +6,7 @@ class ClassicFanzinesLine:
         if type(clf) is ClassicFanzinesLine:
             self._displayName: str=clf._displayName
             self._url: str=clf._url
-            self._otherNames: str=clf._otherNames
+            self._otherNames: str=clf._otherNames       # Alternate names for this fanzine
             self._displayNameSort: str=clf._displayNameSort
             self._editors: str=clf._editors
             self._editorsSort: str=clf._editorsSort
