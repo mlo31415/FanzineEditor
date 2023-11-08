@@ -18,7 +18,7 @@ import wx.grid
 class FanzineIndexPageEditGen ( wx.Dialog ):
 
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.DefaultSize, style = wx.DEFAULT_DIALOG_STYLE )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 1126,3509 ), style = wx.DEFAULT_DIALOG_STYLE )
 
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 
@@ -110,28 +110,35 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		fgSizer4.Add( self.cbAlphabetizeIndividually, 0, wx.ALL, 5 )
 
+
+		bSizerMain.Add( fgSizer4, 0, wx.EXPAND, 5 )
+
+		fgSizer6 = wx.FlexGridSizer( 1, 4, 0, 0 )
+		fgSizer6.SetFlexibleDirection( wx.BOTH )
+		fgSizer6.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
 		self.m_staticText38 = wx.StaticText( self, wx.ID_ANY, u"Server Directory:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText38.Wrap( -1 )
 
-		fgSizer4.Add( self.m_staticText38, 0, wx.ALIGN_RIGHT|wx.ALL, 5 )
+		fgSizer6.Add( self.m_staticText38, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5 )
 
 		self.tServerDirectory = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.tServerDirectory.SetMinSize( wx.Size( 250,-1 ) )
 
-		fgSizer4.Add( self.tServerDirectory, 0, wx.ALL, 5 )
+		fgSizer6.Add( self.tServerDirectory, 0, wx.ALL, 5 )
 
 		self.m_staticText39 = wx.StaticText( self, wx.ID_ANY, u"Local Directory:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText39.Wrap( -1 )
 
-		fgSizer4.Add( self.m_staticText39, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5 )
+		fgSizer6.Add( self.m_staticText39, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5 )
 
 		self.tLocalDirectory = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.tLocalDirectory.SetMinSize( wx.Size( 150,-1 ) )
 
-		fgSizer4.Add( self.tLocalDirectory, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, 5 )
+		fgSizer6.Add( self.tLocalDirectory, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, 5 )
 
 
-		bSizerMain.Add( fgSizer4, 0, wx.EXPAND, 5 )
+		bSizerMain.Add( fgSizer6, 0, wx.EXPAND, 5 )
 
 		fgSizerComments = wx.FlexGridSizer( 4, 2, 0, 0 )
 		fgSizerComments.AddGrowableCol( 1 )
@@ -167,7 +174,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		fgSizerComments.Add( self.m_staticText9, 0, wx.ALIGN_RIGHT|wx.ALL, 5 )
 
-		self.tCredits = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.tCredits = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE )
 		self.tCredits.SetToolTip( u"A free-form list of people who have contributed scans to this fanzine series." )
 		self.tCredits.SetMinSize( wx.Size( -1,30 ) )
 		self.tCredits.SetMaxSize( wx.Size( -1,30 ) )
@@ -216,7 +223,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		self.SetSizer( bSizer5 )
 		self.Layout()
-		bSizer5.Fit( self )
 		self.m_GridPopup = wx.Menu()
 		self.m_menuItemPopupCopy = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Copy", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupCopy )
