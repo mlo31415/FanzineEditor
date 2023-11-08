@@ -50,8 +50,8 @@ def main():
     Log(f"{sys.executable=}")
 
     # Load the global settings dictionary
-    Log(f"Settings().Load({os.path.join(homedir, 'FanzineEditor settings.json')})")
-    Settings().Load(os.path.join(homedir, "FanzineEditor settings.json"), MustExist=True)
+    Log(f"Settings().Load({os.path.join(homedir, 'FanzineEditor settings.txt')})")
+    Settings().Load(os.path.join(homedir, "FanzineEditor settings.txt"), MustExist=True)
     Log(Settings().Dump())
     Settings("FanzineEditor positions.json").Load(os.path.join(homedir, "FanzineEditor positions.json"), MustExist=True)
     Log(Settings().Dump())
