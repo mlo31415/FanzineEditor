@@ -98,10 +98,17 @@ def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear
 
 #==========================================================================================================
 # Read the classic fanzine list on fanac.org and return a list of all *fanzine directory names*
-def GetFanzineList() -> list[ClassicFanzinesLine] | None:
-    html=FTP().GetFileAsString("Fanzines-test", "Classic_Fanzines.html")
+def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
+    testServerDirectory=Settings().Get("Test server directory")
+    html=None
+    if testServerDirectory != "":
+        # If there is a test directory, try loading from there, first
+        html=FTP().GetFileAsString(testServerDirectory, "Classic_Fanzines.html")
     if html is None:
-        LogError(f"Unable to download '/Fanzines-test/Classic_Fanzines.html'")
+        # If that failed (or there wasn't one) load from the default
+        html=FTP().GetFileAsString("fanzines", "Classic_Fanzines.html")
+    if html is None:
+        LogError(f"Unable to download 'Classic_Fanzines.html'")
         return None
 
     soup=BeautifulSoup(html, 'html.parser')
@@ -247,7 +254,7 @@ class FanzineEditorWindow(FanzinesGridGen):
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
 
         with ProgressMsg(None, "Downloading main fanzine page"):
-            val=GetFanzineList()
+            val=GetFanzinesList()
             if val is None or len(val) == 0:
                 return
             self._fanzinesList: list[ClassicFanzinesLine]=val

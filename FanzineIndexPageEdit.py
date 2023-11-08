@@ -1272,9 +1272,19 @@ class FanzineIndexPage(GridDataSource):
 
     # Read a fanzine index page fanac.org/fanzines/URL and fill in the class
     def GetFanzineIndexPage(self, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
-        html=FTP().GetFileAsString("/Fanzines-test/"+url, "index.html")
+        testServerDirectory=Settings().Get("Test server directory")
+        html=None
+        if testServerDirectory != "":
+            # If there is a test directory, try loading from there, first
+            html=FTP().GetFileAsString(f"/{testServerDirectory}/{url}", "index.html")
         if html is None:
-            LogError(f"Unable to download 'index.html' from '/Fanzines-test/{url}'")
+            # If that failed (or there wasn't one) load from the default
+            html=FTP().GetFileAsString(f"/fanzines/{url}", "index.html")
+        if html is None:
+            LogError(f"Unable to download '{url}'")
+            return False
+        if html is None:
+            LogError(f"Unable to download 'index.html' from '{url}'")
             return False
 
         # This is the tag that makes a new-style page.  The version number may somday be significant
