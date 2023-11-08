@@ -1404,10 +1404,10 @@ class FanzineIndexPage(GridDataSource):
     def PutFanzineIndexPage(self, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
 
         output=""
-        if not os.path.exists("Fanzine Page Template.html"):
-            LogError(f"PutFanzineIndexPage() can't load ';'Fanzine Page Template.html' at {os.path.curdir}")
+        if not os.path.exists("Template - Fanzine Index Page.html"):
+            LogError(f"PutFanzineIndexPage() can't load ';'Template - Fanzine Index Page.html' at {os.path.curdir}")
             return False
-        with open("Fanzine Page Template.html") as f:
+        with open("Template - Fanzine Index Page.html") as f:
             output=f.read()
 
         insert=f"{self.FanzineName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
