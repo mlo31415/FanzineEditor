@@ -1471,7 +1471,7 @@ class FanzineIndexPage(GridDataSource):
         if len(temp) > 0:
             output=temp
 
-        FTP().PutFileAsString("/Fanzines-test/"+url, "index-new.html", output)
+        FTP().PutFileAsString("/Fanzines-test/"+url, "index.html", output, create=True)
         return True
 
 
