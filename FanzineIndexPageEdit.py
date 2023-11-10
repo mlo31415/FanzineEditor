@@ -1517,6 +1517,11 @@ class FanzineIndexPage(GridDataSource):
             return False
         output=temp
 
+        fanacKeywords=""
+        if self.AlphabetizeIndividually:
+            fanacKeywords+="Alphabetize individually"
+        output=output+f"<!-- Fanac-keywords: {fanacKeywords} -->"
+
         # Now interpret the table to generate the column headers and data rows
         # The 1st col is the URL and it gets mixed with ther 2nd to form an Href.
         insert="\n<TR>\n"
