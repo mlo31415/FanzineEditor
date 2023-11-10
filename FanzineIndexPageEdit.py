@@ -19,7 +19,8 @@ from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage
 from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders
-from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, InsertUsingFanacComments, ExtractUsingFanacComments, TurnPythonListIntoWordList
+from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList
+from HelpersPackage import InsertInvisibleTextUsingFanacComments, InsertHTMLUsingFanacComments, ExtractHTMLUsingFanacComments, ExtractInvisibleTextUsingFanacComments
 from PDFHelpers import GetPdfPageCount
 from Log import Log, LogError
 from Settings import Settings
@@ -112,6 +113,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if self.Datasource.FanzineType in self.tFanzineType.Items:
                 self.tFanzineType.SetSelection(self.tFanzineType.Items.index(self.Datasource.FanzineType))
             self.tLocaleText.SetValue(self.Datasource.Locale)
+
+            self.cbComplete.SetValue(self.Datasource.Complete)
+            self.cbAlphabetizeIndividually.SetValue(self.Datasource.AlphabetizeIndividually)
 
             # The server directory is not editable when it already exists.
             # If the input parameter url is empty, then we're creating a new fanzine entry and the url can and must be edited.
@@ -1419,9 +1423,9 @@ class FanzineIndexPage(GridDataSource):
     def GetFanzineIndexPageNew(self, html: str, version: str) -> bool:
 
         # f"{self.FanzineName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
-        topstuff=ExtractUsingFanacComments(html, "header")
+        topstuff=ExtractHTMLUsingFanacComments(html, "header")
         if topstuff == "":
-            LogError(f"GetFanzineIndexPageNew() failed: ExtractUsingFanacComments('header')")
+            LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('header')")
             return False
         # Interpret the header
         topstuff=topstuff.replace("<BR>", "\n").replace("<H2>", "\n").replace("\n\n", "\n").split("\n")
@@ -1434,23 +1438,25 @@ class FanzineIndexPage(GridDataSource):
         self.FanzineType=topstuff[3]
 
         # f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
-        locale=ExtractUsingFanacComments(html, "locale")
+        locale=ExtractHTMLUsingFanacComments(html, "locale")
         if locale == "":
-            LogError(f"GetFanzineIndexPageNew() failed: ExtractUsingFanacComments('Locale')")
+            LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('Locale')")
             return False
         # Interpret the locale
         self.Locale=locale
 
-        keywords=ExtractUsingFanacComments(html, "fanac-keywords").split(",")
+        keywords=ExtractInvisibleTextUsingFanacComments(html, "fanac-keywords").split(",")
         keywords=[x.strip() for x in keywords]
         for keyword in keywords:
             if keyword == "Alphabetize individually":
                 self.AlphabetizeIndividually=True
+            if keyword == "Complete":
+                self.Complete=True
 
         # Now interpret the table to generate the column headers and data rows
-        headers=ExtractUsingFanacComments(html, "table-headers")
+        headers=ExtractHTMLUsingFanacComments(html, "table-headers")
         if headers == "":
-            LogError(f"GetFanzineIndexPageNew() failed: ExtractUsingFanacComments('table-headers')")
+            LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('table-headers')")
             return False
         # Interpret the column headers
         # f "\n<TR>\n<TH>{self.ColHeaders[1]}</TH>\n"...insert+=f"<TH>{header}</TH>\n" (repeats)..."</TR>\n"
@@ -1461,19 +1467,10 @@ class FanzineIndexPage(GridDataSource):
         self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", "yes")])+self._colDefs
 
         # Now the rows
-        # insert=""
-        # for row in self.Rows:
-        #     if row.IsEmptyRow():
-        #         continue
-        #     insert+="\n<TR>"
-        #     insert+=f"\n<TD><a href='{row.Cells[0]}'>{row.Cells[1]}</A></TD>\n"
-        #     for cell in row.Cells[2:]:
-        #         insert+=f"<TD CLASS='left'>{cell}</TD>\n"
-        #     insert+="</TR>\n"
-        rows=ExtractUsingFanacComments(html, "table-rows")
+        rows=ExtractHTMLUsingFanacComments(html, "table-rows")
         rows=re.findall(r"<TR>(.+?)</TR>", rows, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
         if rows == "":
-            LogError(f"GetFanzineIndexPageNew() failed: ExtractUsingFanacComments('table-rows')")
+            LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('table-rows')")
             return False
         # Interpret the rows
         for row in rows:
@@ -1490,7 +1487,7 @@ class FanzineIndexPage(GridDataSource):
             row=[RemoveAllHTMLLikeTags(str(x)) for x in cols]
             self.Rows.append(FanzineIndexPageTableRow(self._colDefs, row) )
 
-        self.Credits=ExtractUsingFanacComments(html, "scan").strip()
+        self.Credits=ExtractHTMLUsingFanacComments(html, "scan").strip()
 
         Log(f"GetFanzinePageNew():")
         Log(f"     {self.Credits=}")
@@ -1515,25 +1512,29 @@ class FanzineIndexPage(GridDataSource):
             output=f.read()
 
         insert=f"{self.FanzineName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
-        temp=InsertUsingFanacComments(output, "header", insert)
+        temp=InsertHTMLUsingFanacComments(output, "header", insert)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('header')")
             return False
         output=temp
 
         insert=f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
-        temp=InsertUsingFanacComments(output, "locale", insert)
+        temp=InsertHTMLUsingFanacComments(output, "locale", insert)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('Locale')")
             return False
         output=temp
 
-        fanacKeywords=""
+        keywords=""
         if self.AlphabetizeIndividually:
-            fanacKeywords+="Alphabetize individually"
-        temp=InsertUsingFanacComments(output, "fanac-keywords", fanacKeywords)
+            keywords+="Alphabetize individually"
+        if self.Complete:
+            if keywords != "":
+                keywords+=", "
+            keywords+="Complete"
+        temp=InsertInvisibleTextUsingFanacComments(output, "keywords", keywords)
         if temp == "":
-            LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('fanac-keywords')")
+            LogError(f"PutFanzineIndexPage({url}) failed: InsertInvisibleTextUsingFanacComments('fanac-keywords')")
             return False
         output=temp
 
@@ -1547,7 +1548,7 @@ class FanzineIndexPage(GridDataSource):
         for header in self.ColHeaders[2:]:
             insert+=f"<TH>{header}</TH>\n"
         insert+="</TR>\n"
-        temp=InsertUsingFanacComments(output, "table-headers", insert)
+        temp=InsertHTMLUsingFanacComments(output, "table-headers", insert)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('table-headers')")
             return False
@@ -1563,13 +1564,13 @@ class FanzineIndexPage(GridDataSource):
             for cell in row.Cells[2:]:
                 insert+=f"<TD CLASS='left'>{cell}</TD>\n"
             insert+="</TR>\n"
-        temp=InsertUsingFanacComments(output, "table-rows", insert)
+        temp=InsertHTMLUsingFanacComments(output, "table-rows", insert)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('table-rows')")
             return False
         output=temp
 
-        temp=InsertUsingFanacComments(output, "scan", self.Credits)
+        temp=InsertHTMLUsingFanacComments(output, "scan", self.Credits)
         # Different test because we don't always have a credit in the file.
         if len(temp) > 0:
             output=temp
