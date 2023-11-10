@@ -1445,7 +1445,7 @@ class FanzineIndexPage(GridDataSource):
         # Interpret the locale
         self.Locale=locale
 
-        keywords=ExtractInvisibleTextUsingFanacComments(html, "fanac-keywords").split(",")
+        keywords=ExtractInvisibleTextUsingFanacComments(html, "keywords").split(",")
         keywords=[x.strip() for x in keywords]
         for keyword in keywords:
             if keyword == "Alphabetize individually":
