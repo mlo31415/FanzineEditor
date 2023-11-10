@@ -1328,7 +1328,7 @@ class FanzineIndexPage(GridDataSource):
             _, localeStuff=SearchAndReplace(r"(</?fanac-type>)", localeStuff, "")
             _, locale=SearchAndReplace(r"(</?h2/?>)", localeStuff, "")
 
-
+        # Check for the al[phabetize individually flag
         m=re.search(r"<!-- Fanac-keywords: (.*?) -->", body[0], flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
         if m is not None:
             if len(m.groups()[0]) > 10:     # Arbitrary, since the keyword should be "Alphabetize individually", but has been added by hand so might be mosta nyhting
@@ -1441,6 +1441,12 @@ class FanzineIndexPage(GridDataSource):
         # Interpret the locale
         self.Locale=locale
 
+        keywords=ExtractUsingFanacComments(html, "fanac-keywords").split(",")
+        keywords=[x.strip() for x in keywords]
+        for keyword in keywords:
+            if keyword == "Alphabetize individually":
+                self.AlphabetizeIndividually=True
+
         # Now interpret the table to generate the column headers and data rows
         headers=ExtractUsingFanacComments(html, "table-headers")
         if headers == "":
@@ -1525,7 +1531,11 @@ class FanzineIndexPage(GridDataSource):
         fanacKeywords=""
         if self.AlphabetizeIndividually:
             fanacKeywords+="Alphabetize individually"
-        output=output+f"<!-- Fanac-keywords: {fanacKeywords} -->"
+        temp=InsertUsingFanacComments(output, "fanac-keywords", fanacKeywords)
+        if temp == "":
+            LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('fanac-keywords')")
+            return False
+        output=temp
 
         # Now interpret the table to generate the column headers and data rows
         # The 1st col is the URL and it gets mixed with ther 2nd to form an Href.
