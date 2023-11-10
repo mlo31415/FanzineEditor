@@ -1200,6 +1200,21 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         return all([cell == "" for cell in self._cells])
 
 
+
+#*******************************************
+# Take a list of column names and generate a list of ColDefs
+def ColNamesToColDefs(headers: list[str]) -> ColDefinitionsList:
+    colDefs: ColDefinitionsList=ColDefinitionsList([])
+    for header in headers:
+        # First cannonicize the header
+        header=CanonicizeColumnHeaders(header)
+        scd=ColDefinition(f"({header})", Type="str", Width=75)  # The default when it's unrecognizable
+        if header in gStdColHeaders:
+            scd=gStdColHeaders[gStdColHeaders.index(header)]
+        colDefs.append(scd)
+    return colDefs
+
+
 #####################################################################################################
 #####################################################################################################
 
