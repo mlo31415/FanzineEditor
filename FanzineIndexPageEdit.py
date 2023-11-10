@@ -14,14 +14,12 @@ from ClassicFanzinesLine import ClassicFanzinesLine
 
 from FTP import FTP
 
-from NewFanzineDialog import NewFanzineWindow
-
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass
 from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage
-from HelpersPackage import Bailout, IsInt, Int0, ZeroIfNone
+from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders
-from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, InsertUsingFanacComments, TurnPythonListIntoWordList
+from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, InsertUsingFanacComments, ExtractUsingFanacComments, TurnPythonListIntoWordList
 from PDFHelpers import GetPdfPageCount
 from Log import Log, LogError
 from Settings import Settings
@@ -1307,8 +1305,9 @@ class FanzineIndexPage(GridDataSource):
         m=re.search(r"<!-- fanac fanzine index page V([0-9]+\.[0-9]+)-->", html, flags=re.IGNORECASE|re.MULTILINE)
         if m is None:
             return self.GetFanzineIndexPageOld(html)
+        version=m.groups()[0]
+        return self.GetFanzineIndexPageNew(html, version)
 
-        return self.GetFanzineIndexPageNew(html)
 
     def GetFanzineIndexPageOld(self, html: str) -> bool:  # FanzineIndexPage(GridDataSource)
 
@@ -1360,20 +1359,10 @@ class FanzineIndexPage(GridDataSource):
         # self.rows=rows
         # self.cols=headers
         # And construct the grid
-        self._colDefs: ColDefinitionsList=ColDefinitionsList([])
-        for header in headers:
-            # First cannonicize the header
-            header=CanonicizeColumnHeaders(header)
-            scd=ColDefinition(f"({header})", Type="str", Width=75)  # The default when it's unrecognizable
-            if header in gStdColHeaders:
-                scd=gStdColHeaders[gStdColHeaders.index(header)]
-            self._colDefs.append(scd)
-
+        self._colDefs=ColNamesToColDefs(headers)
         # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
-        # The first step is to prepend a URL column to the start before the Issue column
-        temp=ColDefinitionsList([ColDefinition("URL", 100, "URL", "yes")])
-        temp.append(self._colDefs)
-        self._colDefs=temp
+        # We prepend a URL column before the Issue column
+        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", "yes")]).append(self._colDefs)
 
         rows: list[list[str]]=[]
         if len(theRows) > 1:
@@ -1406,7 +1395,7 @@ class FanzineIndexPage(GridDataSource):
                 credits=lasttext[0]
 
 
-        Log(f"GetFanzinePage({url}):")
+        Log(f"GetFanzinePageOld():")
         Log(f"     {credits=}")
         Log(f"     {dates=}")
         Log(f"     {editors=}")
@@ -1422,11 +1411,89 @@ class FanzineIndexPage(GridDataSource):
 
         return True
 
-    def GetFanzineIndexPageNew(self, html: str ) -> bool:
-        return False
+    def GetFanzineIndexPageNew(self, html: str, version: str) -> bool:
+
+        # f"{self.FanzineName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
+        topstuff=ExtractUsingFanacComments(html, "header")
+        if topstuff == "":
+            LogError(f"GetFanzineIndexPageNew() failed: ExtractUsingFanacComments('header')")
+            return False
+        # Interpret the header
+        topstuff=topstuff.replace("<BR>", "\n").replace("<H2>", "\n").replace("\n\n", "\n").split("\n")
+        if len(topstuff) != 4:
+            Log(f"GetFanzineIndexPageNew() {len(topstuff)=}  {topstuff=}")
+            return False
+        self.FanzineName=topstuff[0]
+        self.Editors=topstuff[1]
+        self.Dates=topstuff[2]
+        self.FanzineType=topstuff[3]
+
+        # f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
+        locale=ExtractUsingFanacComments(html, "locale")
+        if locale == "":
+            LogError(f"GetFanzineIndexPageNew() failed: ExtractUsingFanacComments('Locale')")
+            return False
+        # Interpret the locale
+        self.Locale=locale
+
+        # Now interpret the table to generate the column headers and data rows
+        headers=ExtractUsingFanacComments(html, "table-headers")
+        if headers == "":
+            LogError(f"GetFanzineIndexPageNew() failed: ExtractUsingFanacComments('table-headers')")
+            return False
+        # Interpret the column headers
+        # f "\n<TR>\n<TH>{self.ColHeaders[1]}</TH>\n"...insert+=f"<TH>{header}</TH>\n" (repeats)..."</TR>\n"
+        headers=re.findall(r"<TH>(.+?)</TH>", headers, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
+        self._colDefs=ColNamesToColDefs(headers)
+        # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
+        # We prepend a URL column before the Issue column
+        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", "yes")])+self._colDefs
+
+        # Now the rows
+        # insert=""
+        # for row in self.Rows:
+        #     if row.IsEmptyRow():
+        #         continue
+        #     insert+="\n<TR>"
+        #     insert+=f"\n<TD><a href='{row.Cells[0]}'>{row.Cells[1]}</A></TD>\n"
+        #     for cell in row.Cells[2:]:
+        #         insert+=f"<TD CLASS='left'>{cell}</TD>\n"
+        #     insert+="</TR>\n"
+        rows=ExtractUsingFanacComments(html, "table-rows")
+        rows=re.findall(r"<TR>(.+?)</TR>", rows, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
+        if rows == "":
+            LogError(f"GetFanzineIndexPageNew() failed: ExtractUsingFanacComments('table-rows')")
+            return False
+        # Interpret the rows
+        for row in rows:
+            row=re.findall(r"<TD(:?.*?)>(.*?)</TD>", row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
+            cols=[x[1] for x in row]
+            # We treat column 0 specially, extracting its hyperref and turning it into two
+            cols0=str(cols[0])
+            _, url, text, _=FindLinkInString(cols0)
+            if url == "" and text == "":
+                cols=["", cols0].extend(cols[1:])
+            else:
+                cols=[url, text]+cols[1:]
+
+            row=[RemoveAllHTMLLikeTags(str(x)) for x in cols]
+            self.Rows.append(FanzineIndexPageTableRow(self._colDefs, row) )
+
+        self.Credits=ExtractUsingFanacComments(html, "scan").strip()
+
+        Log(f"GetFanzinePageNew():")
+        Log(f"     {self.Credits=}")
+        Log(f"     {self.Dates=}")
+        Log(f"     {self.Editors=}")
+        Log(f"     {self.FanzineType=}")
+        Log(f"     {self.Locale=}")
+        Log(f"     {self.FanzineName=}")
 
 
-    # Read a fanzine index page fanac.org/fanzines/URL and fill in the class
+        return True
+
+
+    # Using the fanzine index page template, create a page and upload it.
     def PutFanzineIndexPage(self, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
 
         output=""
@@ -1439,14 +1506,14 @@ class FanzineIndexPage(GridDataSource):
         insert=f"{self.FanzineName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
         temp=InsertUsingFanacComments(output, "header", insert)
         if temp == "":
-            LogError(f"PutFanzineIndexPage({url} failed: InsertUsingFanacComments('header')")
+            LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('header')")
             return False
         output=temp
 
         insert=f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
         temp=InsertUsingFanacComments(output, "locale", insert)
         if temp == "":
-            LogError(f"PutFanzineIndexPage({url} failed: InsertUsingFanacComments('Locale')")
+            LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('Locale')")
             return False
         output=temp
 
@@ -1454,7 +1521,7 @@ class FanzineIndexPage(GridDataSource):
         # The 1st col is the URL and it gets mixed with ther 2nd to form an Href.
         insert="\n<TR>\n"
         if len(self.ColHeaders) < 2:
-            LogError(f"PutFanzineIndexPage({url} failed: {len(self.ColHeaders)=}")
+            LogError(f"PutFanzineIndexPage({url}) failed: {len(self.ColHeaders)=}")
             return False
         insert+=f"<TH>{self.ColHeaders[1]}</TH>\n"
         for header in self.ColHeaders[2:]:
@@ -1462,7 +1529,7 @@ class FanzineIndexPage(GridDataSource):
         insert+="</TR>\n"
         temp=InsertUsingFanacComments(output, "table-headers", insert)
         if temp == "":
-            LogError(f"PutFanzineIndexPage({url} failed: InsertUsingFanacComments('table-headers')")
+            LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('table-headers')")
             return False
         output=temp
 
@@ -1478,7 +1545,7 @@ class FanzineIndexPage(GridDataSource):
             insert+="</TR>\n"
         temp=InsertUsingFanacComments(output, "table-rows", insert)
         if temp == "":
-            LogError(f"PutFanzineIndexPage({url} failed: InsertUsingFanacComments('table-rows')")
+            LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('table-rows')")
             return False
         output=temp
 
