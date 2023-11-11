@@ -1442,8 +1442,8 @@ class FanzineIndexPage(GridDataSource):
         if locale == "":
             LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('Locale')")
             return False
-        # Interpret the locale
-        self.Locale=locale.replace("<h2>", "").replace("</h2>", "").replace("<H2>", "").replace("</H2>", "").strip()
+        # Remove the <h2>s that tend to decorate it
+        self.Locale=re.sub(r"</?h2>", "", locale, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE).strip()
 
         keywords=ExtractInvisibleTextUsingFanacComments(html, "keywords").split(",")
         keywords=[x.strip() for x in keywords]
