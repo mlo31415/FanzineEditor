@@ -222,7 +222,7 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
             else:
                 m=re.search(r'<x class="complete">Complete</x>', row[6], flags=re.IGNORECASE)
                 if m is not None:
-                    cfl.Flag="Complete"
+                    cfl._complete=True
                 else:
                     m=re.search(r'<x class="updated">Updated</x>', row[6], flags=re.IGNORECASE)
                     if m is not None:
@@ -254,10 +254,10 @@ class FanzineEditorWindow(FanzinesGridGen):
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
 
         with ProgressMsg(None, "Downloading main fanzine page"):
-            val=GetFanzinesList()
-            if val is None or len(val) == 0:
+            cfllist=GetFanzinesList()
+            if cfllist is None or len(cfllist) == 0:
                 return
-            self._fanzinesList: list[ClassicFanzinesLine]=val
+            self._fanzinesList: list[ClassicFanzinesLine]=cfllist
             self._fanzinesList.sort(key=lambda cfl: cfl.URL)
             self.Datasource.FanzineList=self._fanzinesList
 
@@ -358,7 +358,11 @@ class FanzineEditorWindow(FanzinesGridGen):
     #-------------------
     def OnGridCellDoubleClick(self, event):       # FanzineEditor(FanzineGrid)
         url=self._Datasource.Rows[event.Row][event.Col]
-        with FanzineIndexPageWindow(None, url) as fsw:
+        lookup=[(i, x) for i, x in enumerate(self._Datasource.FanzineList) if x.URL == url]
+        cfl=None
+        if len(lookup) > 0:
+            cfl=lookup[0][1]
+        with FanzineIndexPageWindow(None, url, cfl) as fsw:
             if fsw.failure:
                 MessageBox(f"Unable to load {url}", Title="Loading Fanzine Index page", ignoredebugger=True)
                 Log(f"FanzineIndexPageWindow('{url}') failed")
@@ -391,6 +395,9 @@ class FanzineEditorWindow(FanzinesGridGen):
                     s=CompressAllWhitespace(cfl.Flag)
                     if s == " ":
                         cfl.FlagSort="zzzz"
+                if cfl.Complete != fsw.CFL.Complete:        # TODO, how do we handle multiple flags?
+                    cfl.Complete=fsw.CFL.Complete
+                    cfl.FlagSort="zzzz"
 
 
 

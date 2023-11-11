@@ -53,11 +53,11 @@ gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
 
 
 class FanzineIndexPageWindow(FanzineIndexPageEditGen):
-    def __init__(self, parent, url: str=""):
+    def __init__(self, parent, url: str="", cfl: ClassicFanzinesLine=None):
         FanzineIndexPageEditGen.__init__(self, parent)
 
         self.failure=True
-        self.CFL: ClassicFanzinesLine|None=None      # Used to return information to the fanzine list editor
+        self.CFL: ClassicFanzinesLine|None=cfl      # Used to communicate with the fanzine list editor
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzineIndexPage()
@@ -216,6 +216,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.OtherNames="??"
         cfl.Dates=self.tDates.GetValue()
         cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
+        cfl.Complete=self.cbComplete.GetValue()
         self.CFL=cfl
 
         # Save the window's position
