@@ -588,7 +588,7 @@ class FanzinesGridGen ( wx.Frame ):
 
 		fgSizer7.Add( self.m_staticText13, 0, wx.ALL, 5 )
 
-		self.bAddNewFanzine = wx.Button( self, wx.ID_ANY, u"Add New Fanzine", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.bAddNewFanzine = wx.Button( self, wx.ID_ANY, u"Add New Fanzine Index Page", wx.DefaultPosition, wx.DefaultSize, 0 )
 		fgSizer7.Add( self.bAddNewFanzine, 0, wx.ALL, 5 )
 
 		self.bDeleteFanzine = wx.Button( self, wx.ID_ANY, u"Delete Fanzine", wx.DefaultPosition, wx.DefaultSize, 0 )
