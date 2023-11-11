@@ -12,7 +12,7 @@ import re
 from FTP import FTP
 from bs4 import BeautifulSoup
 
-from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition
+from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMsg
 from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll, Int0, SortPersonsName, FindAnyBracketedText
 from HelpersPackage import CompressAllWhitespace
@@ -491,7 +491,7 @@ class FanzinesPage(GridDataSource):
         self._numCols=5
         self._colDefs: ColDefinitionsList=ColDefinitionsList([])
         for i in range(self._numCols):
-            self._colDefs.append(ColDefinition("", IsEditable="no"))
+            self._colDefs.append(ColDefinition("", IsEditable=IsEditable.Yes))
         self._rows: list[FanzinesPageRow]=[]
         self._gridDataRowClass=FanzinesPageRow
 

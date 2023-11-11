@@ -14,7 +14,7 @@ from ClassicFanzinesLine import ClassicFanzinesLine
 
 from FTP import FTP
 
-from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass
+from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage
 from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
@@ -1375,7 +1375,7 @@ class FanzineIndexPage(GridDataSource):
         self._colDefs=ColNamesToColDefs(headers)
         # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
         # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
-        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", "no")]).append(self._colDefs)
+        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.No)]).append(self._colDefs)
 
         rows: list[list[str]]=[]
         if len(theRows) > 1:
@@ -1469,7 +1469,7 @@ class FanzineIndexPage(GridDataSource):
         self._colDefs=ColNamesToColDefs(headers)
         # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
         # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
-        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", "no")])+self._colDefs
+        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.No)])+self._colDefs
 
         # Now the rows
         rows=ExtractHTMLUsingFanacComments(html, "table-rows")
