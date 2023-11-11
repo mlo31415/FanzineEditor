@@ -433,7 +433,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if row.FileSourcePath != "":
                 ProgressMessage(self).UpdateMessage(f"Uploading file: {row.FileSourcePath}")
                 Log(f"Uploading file: {row.FileSourcePath}")
-                if not FTP().PutFile(row.FileSourcePath, f"/Fanzines-test/{self.url}/{row.Cells[1]}"):
+                if not FTP().PutFile(row.FileSourcePath, f"/Fanzines-test/{self.url}/{row.Cells[0]}"):
                     Log("Failed\n")
                     self.failure=True
                     ProgressMessage(self).Close()
