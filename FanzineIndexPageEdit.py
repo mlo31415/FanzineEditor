@@ -1249,6 +1249,7 @@ class FanzineIndexPage(GridDataSource):
         s+=hash(self._specialTextColor)+self._colDefs.Signature()
         return s
 
+
     # Inherited from GridDataSource
     @property
     def Rows(self) -> list[FanzineIndexPageTableRow]:        # FanzineIndexPage(GridDataSource)
@@ -1256,6 +1257,7 @@ class FanzineIndexPage(GridDataSource):
     @Rows.setter
     def Rows(self, rows: list) -> None:        # FanzineIndexPage(GridDataSource)
         self._fanzineList=rows
+
 
     @property
     def NumRows(self) -> int:        # FanzineIndexPage(GridDataSource)
@@ -1275,13 +1277,16 @@ class FanzineIndexPage(GridDataSource):
     def SpecialTextColor(self, val: Optional[Color]) -> None:        # FanzineIndexPage(GridDataSource)
         self._specialTextColor=val
 
+
     def CanAddColumns(self) -> bool:        # FanzineIndexPage(GridDataSource)
         return True
+
 
     def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        # FanzineIndexPage(GridDataSource)
         for i in range(num):
             ftr=FanzineIndexPageTableRow(self._colDefs)
             self._fanzineList.insert(insertat+i, ftr)
+
 
     def SelectNonNavigableStrings(self, soupstuff) -> list:        # FanzineIndexPage(GridDataSource)
         return [x for x in soupstuff if type(x) is not bs4.element.NavigableString]
@@ -1314,7 +1319,6 @@ class FanzineIndexPage(GridDataSource):
 
 
     def GetFanzineIndexPageOld(self, html: str) -> bool:  # FanzineIndexPage(GridDataSource)
-
         soup=BeautifulSoup(html, 'html.parser')
         body=soup.findAll("body")
         bodytext=str(body)
@@ -1370,8 +1374,8 @@ class FanzineIndexPage(GridDataSource):
         # And construct the grid
         self._colDefs=ColNamesToColDefs(headers)
         # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
-        # We prepend a URL column before the Issue column
-        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", "yes")]).append(self._colDefs)
+        # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
+        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", "no")]).append(self._colDefs)
 
         rows: list[list[str]]=[]
         if len(theRows) > 1:
@@ -1420,6 +1424,7 @@ class FanzineIndexPage(GridDataSource):
 
         return True
 
+
     def GetFanzineIndexPageNew(self, html: str, version: str) -> bool:
 
         # f"{self.FanzineName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
@@ -1463,8 +1468,8 @@ class FanzineIndexPage(GridDataSource):
         headers=re.findall(r"<TH>(.+?)</TH>", headers, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
         self._colDefs=ColNamesToColDefs(headers)
         # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
-        # We prepend a URL column before the Issue column
-        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", "yes")])+self._colDefs
+        # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
+        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", "no")])+self._colDefs
 
         # Now the rows
         rows=ExtractHTMLUsingFanacComments(html, "table-rows")
@@ -1496,7 +1501,6 @@ class FanzineIndexPage(GridDataSource):
         Log(f"     {self.FanzineType=}")
         Log(f"     {self.Locale=}")
         Log(f"     {self.FanzineName=}")
-
 
         return True
 
