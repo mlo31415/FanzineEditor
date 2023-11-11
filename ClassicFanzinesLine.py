@@ -129,3 +129,10 @@ class ClassicFanzinesLine:
     def FlagSort(self, val: str):
         self._flagSort=val
 
+
+    @property
+    def Complete(self) -> bool:
+        return self._complete
+    @Complete.setter
+    def Complete(self, val: bool):
+        self._complete=val
