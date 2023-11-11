@@ -1428,7 +1428,7 @@ class FanzineIndexPage(GridDataSource):
             LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('header')")
             return False
         # Interpret the header
-        topstuff=topstuff.replace("<BR>", "\n").replace("<H2>", "\n").replace("\n\n", "\n").split("\n")
+        topstuff=re.sub(r"(\r|\n|<\\?(br|h2)>)+", "\n", topstuff, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE).split("\n")
         if len(topstuff) != 4:
             Log(f"GetFanzineIndexPageNew() {len(topstuff)=}  {topstuff=}")
             return False
