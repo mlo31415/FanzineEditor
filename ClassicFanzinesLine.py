@@ -17,6 +17,7 @@ class ClassicFanzinesLine:
             self._issuesSort: str=clf._issuesSort
             self._flag: str=clf._flag
             self._flagSort: str=clf._flagSort
+            self._complete: bool=clf._complete
             return
 
         # Otherwise, just fill it with empty strings
@@ -33,6 +34,7 @@ class ClassicFanzinesLine:
         self._issuesSort: str=""
         self._flag: str=""
         self._flagSort: str=""
+        self._complete=False
 
 
 
