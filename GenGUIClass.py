@@ -560,45 +560,57 @@ class NewFanzineDialogGen ( wx.Dialog ):
 class FanzinesGridGen ( wx.Frame ):
 
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 1037,502 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Fanzines Editor", pos = wx.DefaultPosition, size = wx.Size( 1037,502 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 
 		bSizer3 = wx.BoxSizer( wx.VERTICAL )
 
-		fgSizer7 = wx.FlexGridSizer( 1, 8, 0, 0 )
+		fgSizer7 = wx.FlexGridSizer( 2, 1, 0, 0 )
 		fgSizer7.SetFlexibleDirection( wx.BOTH )
 		fgSizer7.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		fgSizer71 = wx.FlexGridSizer( 0, 4, 0, 0 )
+		fgSizer71.SetFlexibleDirection( wx.BOTH )
+		fgSizer71.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
 		self.m_staticText12 = wx.StaticText( self, wx.ID_ANY, u"Search:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText12.Wrap( -1 )
 
-		fgSizer7.Add( self.m_staticText12, 0, wx.ALL, 5 )
+		self.m_staticText12.SetFont( wx.Font( 12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, "Arial" ) )
+
+		fgSizer71.Add( self.m_staticText12, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
 		self.tSearch = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		fgSizer7.Add( self.tSearch, 0, wx.ALL, 5 )
+		fgSizer71.Add( self.tSearch, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
 		self.bClearSearch = wx.Button( self, wx.ID_ANY, u"X", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.bClearSearch.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOW ) )
 		self.bClearSearch.SetMaxSize( wx.Size( 20,20 ) )
 
-		fgSizer7.Add( self.bClearSearch, 0, wx.ALL, 5 )
+		fgSizer71.Add( self.bClearSearch, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
-		self.m_staticText13 = wx.StaticText( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText13.Wrap( -1 )
 
-		fgSizer7.Add( self.m_staticText13, 0, wx.ALL, 5 )
+		fgSizer7.Add( fgSizer71, 0, wx.EXPAND, 5 )
 
-		self.bAddNewFanzine = wx.Button( self, wx.ID_ANY, u"Add New Fanzine Index Page", wx.DefaultPosition, wx.DefaultSize, 0 )
-		fgSizer7.Add( self.bAddNewFanzine, 0, wx.ALL, 5 )
-
-		self.bDeleteFanzine = wx.Button( self, wx.ID_ANY, u"Delete Fanzine", wx.DefaultPosition, wx.DefaultSize, 0 )
-		fgSizer7.Add( self.bDeleteFanzine, 0, wx.ALL, 5 )
-
-		self.bUpload = wx.Button( self, wx.ID_ANY, u"Upload", wx.DefaultPosition, wx.DefaultSize, 0 )
-		fgSizer7.Add( self.bUpload, 0, wx.ALL, 5 )
+		fgSizer8 = wx.FlexGridSizer( 0, 4, 0, 0 )
+		fgSizer8.SetFlexibleDirection( wx.BOTH )
+		fgSizer8.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
 		self.bExit = wx.Button( self, wx.ID_ANY, u"Exit", wx.DefaultPosition, wx.DefaultSize, 0 )
-		fgSizer7.Add( self.bExit, 0, wx.ALL, 5 )
+		fgSizer8.Add( self.bExit, 0, wx.ALL, 5 )
+
+		self.bUpload = wx.Button( self, wx.ID_ANY, u"Upload", wx.DefaultPosition, wx.DefaultSize, 0 )
+		fgSizer8.Add( self.bUpload, 0, wx.ALL, 5 )
+
+		self.bAddNewFanzine = wx.Button( self, wx.ID_ANY, u"Add New Fanzine", wx.DefaultPosition, wx.DefaultSize, 0 )
+		fgSizer8.Add( self.bAddNewFanzine, 0, wx.ALL, 5 )
+
+		self.bDeleteFanzine = wx.Button( self, wx.ID_ANY, u"Delete Fanzine", wx.DefaultPosition, wx.DefaultSize, 0 )
+		fgSizer8.Add( self.bDeleteFanzine, 0, wx.ALL, 5 )
+
+
+		fgSizer7.Add( fgSizer8, 1, wx.EXPAND, 5 )
 
 
 		bSizer3.Add( fgSizer7, 0, wx.EXPAND, 5 )
@@ -636,8 +648,8 @@ class FanzinesGridGen ( wx.Frame ):
 		# Connect Events
 		self.tSearch.Bind( wx.EVT_TEXT, self.OnSearchText )
 		self.bClearSearch.Bind( wx.EVT_BUTTON, self.OnClearSearch )
-		self.bAddNewFanzine.Bind( wx.EVT_BUTTON, self.OnAddNewFanzine )
 		self.bExit.Bind( wx.EVT_BUTTON, self.OnClose )
+		self.bAddNewFanzine.Bind( wx.EVT_BUTTON, self.OnAddNewFanzine )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnGridCellDoubleClick )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self.OnGridCellRightClick )
 
@@ -652,10 +664,10 @@ class FanzinesGridGen ( wx.Frame ):
 	def OnClearSearch( self, event ):
 		event.Skip()
 
-	def OnAddNewFanzine( self, event ):
+	def OnClose( self, event ):
 		event.Skip()
 
-	def OnClose( self, event ):
+	def OnAddNewFanzine( self, event ):
 		event.Skip()
 
 	def OnGridCellDoubleClick( self, event ):
