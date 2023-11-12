@@ -307,7 +307,7 @@ class FanzineEditorWindow(FanzinesGridGen):
 
 
     def UpdateNeedsSavingFlag(self):       # FanzineEditor(FanzineGrid)
-        s="Editing "
+        s="Editing Fanzines "
         if self.NeedsSaving():
             s=s+" *"        # Add on a change marker if needed
         self.SetTitle(s)
