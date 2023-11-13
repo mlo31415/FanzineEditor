@@ -281,9 +281,10 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.Centre( wx.BOTH )
 
 		# Connect Events
+		self.Bind( wx.EVT_CLOSE, self.OnClose )
 		self.bAddNewIssues.Bind( wx.EVT_BUTTON, self.OnAddNewIssues )
 		self.bUpload.Bind( wx.EVT_BUTTON, self.OnUpload )
-		self.bExit.Bind( wx.EVT_BUTTON, self.OnExitClicked )
+		self.bExit.Bind( wx.EVT_BUTTON, self.OnClose )
 		self.tFanzineName.Bind( wx.EVT_CHAR, self.OnFanzineNameChar )
 		self.tFanzineName.Bind( wx.EVT_TEXT, self.OnFanzineName )
 		self.tEditors.Bind( wx.EVT_TEXT, self.OnEditors )
@@ -327,14 +328,15 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 
 	# Virtual event handlers, override them in your derived class
+	def OnClose( self, event ):
+		event.Skip()
+
 	def OnAddNewIssues( self, event ):
 		event.Skip()
 
 	def OnUpload( self, event ):
 		event.Skip()
 
-	def OnExitClicked( self, event ):
-		event.Skip()
 
 	def OnFanzineNameChar( self, event ):
 		event.Skip()
