@@ -202,9 +202,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         return
 
 
-    def OnExitClicked(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
-        self.OnClose(event)
-
 
     def OnClose(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         if not self.OKToClose(event):
