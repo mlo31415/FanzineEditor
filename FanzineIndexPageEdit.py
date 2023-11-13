@@ -1432,8 +1432,7 @@ class FanzineIndexPage(GridDataSource):
         # Interpret the header
         topstuff=re.sub(r"(\r|\n|<\\?(br|h2)>)+", "\n", topstuff, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE).split("\n")
         if len(topstuff) != 4:
-            Log(f"GetFanzineIndexPageNew() {len(topstuff)=}  {topstuff=}")
-            return False
+            topstuff+=["","","",""]
         self.FanzineName=topstuff[0]
         self.Editors=topstuff[1]
         self.Dates=topstuff[2]
