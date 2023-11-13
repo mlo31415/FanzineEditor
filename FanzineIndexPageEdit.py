@@ -445,6 +445,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.Dates=self.tDates.GetValue()
         cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
         cfl.Complete=self.cbComplete.GetValue()
+        if cfl.URL == "":
+            cfl.URL=self.tServerDirectory.GetValue()
         self.CFL=cfl
 
         self.MarkAsSaved()
