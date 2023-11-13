@@ -432,6 +432,17 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         Log("All uploads succeeded.")
 
+        # Save the fanzine's uploaded values to return to the main fanzines page.
+        cfl=ClassicFanzinesLine()
+        cfl.Issues=self.Datasource.NumRows
+        cfl.Editors=self.tEditors.GetValue()
+        cfl.DisplayName=self.tFanzineName.GetValue()
+        cfl.OtherNames="??"
+        cfl.Dates=self.tDates.GetValue()
+        cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
+        cfl.Complete=self.cbComplete.GetValue()
+        self.CFL=cfl
+
         self.MarkAsSaved()
 
         # Once a new fanzine has been uploaded, the server directory is no longer changeable
