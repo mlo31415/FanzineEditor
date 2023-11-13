@@ -416,6 +416,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         ProgressMessage(self).Show(f"Uploading Fanzine Index Page: {self.url}")
         Log(f"Uploading Fanzine Index Page: {self.url}")
         self.failure=False
+        if self.url == "":
+            self.url=self.tServerDirectory.GetValue()
         if not self.Datasource.PutFanzineIndexPage(self.url):
             self.failure=True
             Log("Failed\n")
