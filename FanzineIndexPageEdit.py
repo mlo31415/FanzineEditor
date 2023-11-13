@@ -208,17 +208,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if not self.OKToClose(event):
             return
 
-        # Save the fanzine's values to return to the main fanzines page.
-        cfl=ClassicFanzinesLine()
-        cfl.Issues=self.Datasource.NumRows
-        cfl.Editors=self.tEditors.GetValue()
-        cfl.DisplayName=self.tFanzineName.GetValue()
-        cfl.OtherNames="??"
-        cfl.Dates=self.tDates.GetValue()
-        cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
-        cfl.Complete=self.cbComplete.GetValue()
-        self.CFL=cfl
-
         # Save the window's position
         pos=self.GetPosition()
         Settings("FanzineEditor positions.json").Put("Index Page Window Position", (pos.x, pos.y))
