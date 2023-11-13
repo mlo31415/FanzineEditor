@@ -352,7 +352,17 @@ class FanzineEditorWindow(FanzinesGridGen):
         if fsw.failure:
             MessageBox(f"Unable to load new fanzine window", Title="Loading Fanzine Index page", ignoredebugger=True)
             Log(f"FanzineIndexPageWindow('') failed")
+
         # Update ClassicFanzine row
+        if fsw.CFL is None:
+            # Nothing got uploaded, so no change is needed.
+            return
+
+        # A new fanzine has been added.
+        self._fanzinesList.append(fsw.CFL)
+        self._fanzinesList.sort(key=lambda cfl: cfl.URL)
+        self.Datasource.FanzineList=self._fanzinesList
+        self.RefreshWindow()
 
 
     #-------------------
@@ -368,6 +378,8 @@ class FanzineEditorWindow(FanzinesGridGen):
                 Log(f"FanzineIndexPageWindow('{url}') failed")
                 return
             fsw.ShowModal()
+
+            # The edit may have updated some of the parameters used in the classic fanzines listing.
             if fsw.CFL is not None:
                 cfl: ClassicFanzinesLine=self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]
                 # Copy the new vales in

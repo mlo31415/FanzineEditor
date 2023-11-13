@@ -57,7 +57,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         FanzineIndexPageEditGen.__init__(self, parent)
 
         self.failure=True
-        self.CFL: ClassicFanzinesLine|None=cfl      # Used to communicate with the fanzine list editor
+
+        # Used to communicate with the fanzine list editor.  It is set to None, but is filled in with a CFL when something is uploaded.
+        self.CFL: ClassicFanzinesLine|None=None
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzineIndexPage()
