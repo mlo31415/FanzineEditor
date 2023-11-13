@@ -1303,9 +1303,6 @@ class FanzineIndexPage(GridDataSource):
             # If that failed (or there wasn't one) load from the default
             html=FTP().GetFileAsString(f"/fanzines/{url}", "index.html")
         if html is None:
-            LogError(f"Unable to download '{url}'")
-            return False
-        if html is None:
             LogError(f"Unable to download 'index.html' from '{url}'")
             return False
 
