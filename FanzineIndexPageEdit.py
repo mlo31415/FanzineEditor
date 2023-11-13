@@ -213,7 +213,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         size=self.GetSize()
         Settings("FanzineEditor positions.json").Put("Index Page Window Size", (size.width, size.height))
 
-        self.Destroy()
+        self.EndModal(wx.OK)
+
 
 
     # The user has requested that the dialog be closed or wiped and reloaded.
