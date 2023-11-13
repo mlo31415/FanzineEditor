@@ -258,7 +258,7 @@ class FanzineEditorWindow(FanzinesGridGen):
             if cfllist is None or len(cfllist) == 0:
                 return
             self._fanzinesList: list[ClassicFanzinesLine]=cfllist
-            self._fanzinesList.sort(key=lambda cfl: cfl.URL)
+            self._fanzinesList.sort(key=lambda cfl: cfl.URL.casefold())
             self.Datasource.FanzineList=self._fanzinesList
 
         self._dataGrid.HideRowLabels()
@@ -360,7 +360,7 @@ class FanzineEditorWindow(FanzinesGridGen):
 
         # A new fanzine has been added.
         self._fanzinesList.append(fsw.CFL)
-        self._fanzinesList.sort(key=lambda cfl: cfl.URL)
+        self._fanzinesList.sort(key=lambda cfl: cfl.URL.casefold())
         self.Datasource.FanzineList=self._fanzinesList
         self.RefreshWindow()
 
