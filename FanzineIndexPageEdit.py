@@ -1506,7 +1506,7 @@ class FanzineIndexPage(GridDataSource):
 
         output=""
         if not os.path.exists("Template - Fanzine Index Page.html"):
-            LogError(f"PutFanzineIndexPage() can't load ';'Template - Fanzine Index Page.html' at {os.path.curdir}")
+            LogError(f"PutFanzineIndexPage() can't find ';'Template - Fanzine Index Page.html' at {os.path.curdir}")
             return False
         with open("Template - Fanzine Index Page.html") as f:
             output=f.read()
