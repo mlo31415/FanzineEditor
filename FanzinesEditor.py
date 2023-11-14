@@ -445,7 +445,10 @@ class FanzineEditorWindow(FanzinesGridGen):
             row+=f'<TD sorttable_customkey="{fanzine.DatesSort}">{fanzine.Dates}</TD>\n'
             row+=f'<TD>{fanzine.Type}</TD>\n'
             row+=f'<TD CLASS="right" sorttable_customkey="{fanzine.IssuesSort}">{fanzine.Issues}</TD>\n'
-            row+=f'<TD><X CLASS="complete">{fanzine.Flag}</X></TD>\n'
+            if fanzine.Flag == "":
+                row+=f'<TD sorttable_customkey="zzzz"><BR></TD>'
+            else:
+                row+=f'<TD><X CLASS="complete">{fanzine.Flag}</X></TD>\n'
             row+=f'</TR>\n'
             insert+=row
 
