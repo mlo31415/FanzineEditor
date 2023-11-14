@@ -231,12 +231,6 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
                         m=re.search(r'<x class="new">New</x>', row[6], flags=re.IGNORECASE)
                         if m is not None:
                             cfl.Flag="New"
-                        else:
-                            Log(f"GetFanzineList() Failure: column 6 (Flag), {row[6]=}")
-                            Log(f"                {row=}")
-                            continue
-
-
 
 
         namelist.append(cfl)
