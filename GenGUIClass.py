@@ -651,6 +651,7 @@ class FanzinesGridGen ( wx.Frame ):
 		self.tSearch.Bind( wx.EVT_TEXT, self.OnSearchText )
 		self.bClearSearch.Bind( wx.EVT_BUTTON, self.OnClearSearch )
 		self.bExit.Bind( wx.EVT_BUTTON, self.OnClose )
+		self.bUpload.Bind( wx.EVT_BUTTON, self.OnUploadPressed )
 		self.bAddNewFanzine.Bind( wx.EVT_BUTTON, self.OnAddNewFanzine )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnGridCellDoubleClick )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self.OnGridCellRightClick )
@@ -667,6 +668,9 @@ class FanzinesGridGen ( wx.Frame ):
 		event.Skip()
 
 	def OnClose( self, event ):
+		event.Skip()
+
+	def OnUploadPressed( self, event ):
 		event.Skip()
 
 	def OnAddNewFanzine( self, event ):
