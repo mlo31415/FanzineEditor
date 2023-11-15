@@ -1,4 +1,5 @@
 import re
+from unidecode import unidecode
 
 from HelpersPackage import SortPersonsName, Int0, FindAnyBracketedText
 
@@ -52,7 +53,7 @@ class ClassicFanzinesLine:
     @property
     def DisplayNameSort(self) -> str:
         pre, _, mid, post=FindAnyBracketedText(self.DisplayName)
-        return f"{pre} {mid} {post}".strip().upper()
+        return unidecode(f"{pre} {mid} {post}".strip().casefold())
     @DisplayNameSort.setter
     def DisplayNameSort(self, val: str):
         assert False
