@@ -1,6 +1,6 @@
 import re
 
-from HelpersPackage import SortPersonsName, Int0, FindAnyBracketedText, CompressAllWhitespace
+from HelpersPackage import SortPersonsName, Int0, FindAnyBracketedText
 
 #==========================================================================================================
 # A class to holdthe information in a single like of the classic Fanzines page
@@ -132,22 +132,12 @@ class ClassicFanzinesLine:
 
     @property
     def Flag(self) -> str:
+        if self.Complete:
+            return "Complete"
         return self._flag
     @Flag.setter
     def Flag(self, val: str):
         self._flag=val
-
-    @property
-    def FlagSort(self) -> str:
-        fs="zzzz"
-        if self.Flag:
-            fs=CompressAllWhitespace(self.Flag)
-        elif self.Complete:
-            fs="Complete"
-        return fs
-    @FlagSort.setter
-    def FlagSort(self, val: str):
-        assert False
 
 
     @property
