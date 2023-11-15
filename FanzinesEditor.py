@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMsg
 from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll
-from HelpersPackage import InsertHTMLUsingFanacComments
+from HelpersPackage import InsertHTMLUsingFanacComments, UnicodeToHtml, StripSpecificTag
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
@@ -166,7 +166,7 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
                 continue
 
             cfl.URL=m.groups()[1]
-            cfl.DisplayName=m.groups()[2]
+            cfl.DisplayName=StripSpecificTag(m.groups()[2], "strong", CaseSensitive=False)
             cfl.OtherNames=m.groups()[3]
 
         # Column 2: Editor
@@ -422,7 +422,7 @@ class FanzineEditorWindow(FanzinesGridGen):
             # <!-- fanac.table end -->
             row='<TR VALIGN="top">\n'
             row+='<TD><IMG SRC="blue.gif" HEIGHT="14" WIDTH="21" ALT="[BB]"></TD>\n'
-            row+=f'<TD sorttable_customkey="{fanzine.DisplayNameSort}"><A HREF="{fanzine.URL}/"><STRONG>{fanzine.DisplayName}</STRONG></A></TD>'
+            row+=f'<TD sorttable_customkey="{fanzine.DisplayNameSort}"><A HREF="{fanzine.URL}/"><STRONG>{UnicodeToHtml(fanzine.DisplayName)}</STRONG></A></TD>'
             row+=f'<TD sorttable_customkey="{fanzine.EditorsSort}">{fanzine.Editors}</TD>\n'
             row+=f'<TD sorttable_customkey="{fanzine.DatesSort}">{fanzine.Dates}</TD>\n'
             row+=f'<TD>{fanzine.Type}</TD>\n'
