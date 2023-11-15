@@ -14,8 +14,8 @@ from bs4 import BeautifulSoup
 
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMsg
-from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll, Int0, SortPersonsName, FindAnyBracketedText
-from HelpersPackage import CompressAllWhitespace, InsertHTMLUsingFanacComments
+from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll
+from HelpersPackage import InsertHTMLUsingFanacComments
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
@@ -31,10 +31,6 @@ def main():
     # Initialize wx
     app=wx.App(False)
 
-    # Set up LogDialog
-    global g_LogDialog
-    g_LogDialog=LogDialog(None)
-    g_LogDialog.Show()
 
     if sys.gettrace() is None:
         # We are not running under the debugger
@@ -42,6 +38,16 @@ def main():
     else:
         # We are debugging.
         homedir=os.getcwd()
+
+    # Set up LogDialog
+    # global g_LogDialog
+    # g_LogDialog=LogDialog(None)
+    # g_LogDialog.Show()
+
+    # showLogWindow=Settings().Get("Show log window", False)
+    # if showLogWindow:
+    #     g_LogDialog.Destroy()
+    #     g_LogDialog=None
 
     LogOpen(os.path.join(homedir, "Log -- FanzineEditor.txt"), os.path.join(homedir, "Log (Errors) -- FanzineEditor.txt"))
     Log(f"Open Logfile {os.path.join(homedir, 'Log -- FanzineEditor.txt')}")
@@ -70,10 +76,6 @@ def main():
         Log("Main: OpenConnection('FTP Credentials.json' failed")
         exit(0)
 
-    showLogWindow=Settings().Get("Show log window", False)
-    if not showLogWindow:
-        g_LogDialog.Destroy()
-        g_LogDialog=None
 
     # Initialize the GUI
     FanzineEditorWindow(None)
