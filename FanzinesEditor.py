@@ -212,7 +212,11 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
         if row[6] != "":
             m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[6], flags=re.IGNORECASE)
             if m is not None:
-                cfl.Flag=m.groups()[1]
+                flag=m.groups()[1].lower()
+                if flag == "<br>" or flag == "<br/>":
+                    cfl.Flag=""
+                else:
+                    cfl.Flag=m.groups()[1]
             else:
                 m=re.search(r'<x class="complete">Complete</x>', row[6], flags=re.IGNORECASE)
                 if m is not None:
