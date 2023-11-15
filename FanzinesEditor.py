@@ -432,7 +432,7 @@ class FanzineEditorWindow(FanzinesGridGen):
             elif fanzine.Complete:
                 row+=f'<TD><X CLASS="complete">Complete</X></TD>\n'
             else:
-                row+=f'<TD><X CLASS="update">{fanzine.Flag}</X></TD>\n'
+                row+=f'<TD><X CLASS="updated">{fanzine.Flag}</X></TD>\n'
             row+=f'</TR>\n'
             insert+=row
 
