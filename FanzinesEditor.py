@@ -23,7 +23,6 @@ from Settings import Settings
 from FanzineIndexPageEdit import FanzineIndexPageWindow
 from GenGUIClass import FanzinesGridGen
 from GenLogDialogClass import LogDialog
-from ClassicTableEntry import ClassicTableEntryDlg
 from ClassicFanzinesLine import ClassicFanzinesLine
 
 
@@ -405,13 +404,6 @@ class FanzineEditorWindow(FanzinesGridGen):
                     cfl.Complete=fsw.CFL.Complete
                     cfl.FlagSort="zzzz"
 
-
-    #-------------------
-    def OnGridCellRightClick( self, event ):       # FanzineEditor(FanzineGrid)
-        cfl=self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]
-        with ClassicTableEntryDlg(self.Parent, cfl) as dlg:
-            if dlg.ShowModal() == wx.ID_OK:
-                self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]=cfl
 
     #-------------------
     # Upload the fanzines list to the classic fanzine page
