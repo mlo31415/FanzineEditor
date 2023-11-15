@@ -1,3 +1,7 @@
+import re
+
+from HelpersPackage import SortPersonsName, Int0, FindAnyBracketedText, CompressAllWhitespace
+
 #==========================================================================================================
 # A class to holdthe information in a single like of the classic Fanzines page
 class ClassicFanzinesLine:
@@ -46,6 +50,14 @@ class ClassicFanzinesLine:
         self._displayName=val
 
     @property
+    def DisplayNameSort(self) -> str:
+        pre, _, mid, post=FindAnyBracketedText(self.DisplayName)
+        return f"{pre} {mid} {post}".strip().upper()
+    @DisplayNameSort.setter
+    def DisplayNameSort(self, val: str):
+        assert False
+
+    @property
     def URL(self) -> str:
         return self._url
     @URL.setter
@@ -60,13 +72,6 @@ class ClassicFanzinesLine:
         self._otherNames=val
 
     @property
-    def DisplayNameSort(self) -> str:
-        return self._displayNameSort
-    @DisplayNameSort.setter
-    def DisplayNameSort(self, val: str):
-        self._displayNameSort=val
-
-    @property
     def Editors(self) -> str:
         return self._editors
     @Editors.setter
@@ -75,10 +80,12 @@ class ClassicFanzinesLine:
 
     @property
     def EditorsSort(self) -> str:
-        return self._editorsSort
+        eds=re.split(r"<br/?>|,", self.Editors)
+        # Sort based on the 1st editor's last name all caps.
+        return SortPersonsName(eds[0]).upper()
     @EditorsSort.setter
     def EditorsSort(self, val: str):
-        self._editorsSort=val
+        assert False
 
     @property
     def Dates(self) -> str:
@@ -89,10 +96,18 @@ class ClassicFanzinesLine:
 
     @property
     def DatesSort(self) -> str:
-        return self._datesSort
+        # Sort based on 1st 4-digit year.  We need to find the year, as sometimes odd stuff gets entered!
+        m=re.search(r"((?:19|20)[0-9][0-9])", self.Dates, 1)
+        if m is None:
+            # Can't find a fulll year.  Try replacing "?" with "0"
+            d=self.Dates.replace("?", "0")
+            m=re.search(r"((?:19|20)[0-9][0-9])", d, 1)
+            if m is None:
+                return "zzzz"
+        return (m.groups()[0]+"0000")[0:4]
     @DatesSort.setter
     def DatesSort(self, val: str):
-        self._datesSort=val
+        assert False
 
     @property
     def Type(self) -> str:
@@ -110,10 +125,10 @@ class ClassicFanzinesLine:
 
     @property
     def IssuesSort(self) -> str:
-        return self._issuesSort
+        return f"{Int0(self.Issues):0{5}}"
     @IssuesSort.setter
     def IssuesSort(self, val: str):
-        self._issuesSort=val
+        assert False
 
     @property
     def Flag(self) -> str:
@@ -124,10 +139,15 @@ class ClassicFanzinesLine:
 
     @property
     def FlagSort(self) -> str:
-        return self._flagSort
+        fs="zzzz"
+        if self.Flag:
+            fs=CompressAllWhitespace(self.Flag)
+        elif self.Complete:
+            fs="Complete"
+        return fs
     @FlagSort.setter
     def FlagSort(self, val: str):
-        self._flagSort=val
+        assert False
 
 
     @property

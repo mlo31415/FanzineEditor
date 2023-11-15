@@ -163,7 +163,6 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
                 Log(f"                {row=}")
                 continue
 
-            cfl.DisplayNameSort=m.groups()[0]
             cfl.URL=m.groups()[1]
             cfl.DisplayName=m.groups()[2]
             cfl.OtherNames=m.groups()[3]
@@ -176,7 +175,6 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
                 Log(f"GetFanzineList() Failure: column 2 (Editors), {row[2]=}")
                 Log(f"                {row=}")
                 continue
-            cfl.EditorsSort=m.groups()[0]
             cfl.Editors=m.groups()[1]
 
         # Column 3: Dates
@@ -187,7 +185,6 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
                 Log(f"GetFanzineList() Failure: column 3 (Dates), {row[3]=}")
                 Log(f"                {row=}")
                 continue
-            cfl.DatesSort=m.groups()[0]
             cfl.Dates=m.groups()[1]
 
         # Column 4: Type
@@ -208,7 +205,6 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
                 Log(f"GetFanzineList() Failure: column 5 (Dates), {row[5]=}")
                 Log(f"                {row=}")
                 continue
-            cfl.IssuesSort=m.groups()[0]
             cfl.Issues=m.groups()[1]
 
         # Column 6: Flag
@@ -216,7 +212,6 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
         if row[6] != "":
             m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[6], flags=re.IGNORECASE)
             if m is not None:
-                cfl.FlagSort=m.groups()[0]
                 cfl.Flag=m.groups()[1]
             else:
                 m=re.search(r'<x class="complete">Complete</x>', row[6], flags=re.IGNORECASE)
@@ -378,32 +373,21 @@ class FanzineEditorWindow(FanzinesGridGen):
                 # Copy the new vales in
                 if cfl.Editors != fsw.CFL.Editors:
                     cfl.Editors=fsw.CFL.Editors
-                    eds=cfl.Editors
-                    eds=re.split(r"<br/>|,", eds)
-                    cfl.EditorsSort=SortPersonsName(eds[0]).upper()
 
                 if cfl.Dates != fsw.CFL.Dates:
                     cfl.Dates=fsw.CFL.Dates
-                    cfl.DatesSort=(fsw.CFL.Dates+"0000")[0:4]+"0000"
 
                 if cfl.Issues != fsw.CFL.Issues:
                     cfl.Issues=fsw.CFL.Issues
-                    cfl.IssuesSort=f"{Int0(cfl.Issues):0{5}}"
 
                 if cfl.DisplayName!= fsw.CFL.DisplayName:
                     cfl.DisplayName=fsw.CFL.DisplayName
-                    pre, _, mid, post=FindAnyBracketedText(cfl.DisplayName)
-                    cfl.DisplayNameSort=f"{pre} {mid} {post}".strip().upper()
 
                 if cfl.Flag != fsw.CFL.Flag:
                     cfl.Flag=fsw.CFL.Flag
-                    s=CompressAllWhitespace(cfl.Flag)
-                    if s == " ":
-                        cfl.FlagSort="zzzz"
+
                 if cfl.Complete != fsw.CFL.Complete:        # TODO, how do we handle multiple flags?
                     cfl.Complete=fsw.CFL.Complete
-                    cfl.FlagSort="zzzz"
-
 
     #-------------------
     # Upload the fanzines list to the classic fanzine page
