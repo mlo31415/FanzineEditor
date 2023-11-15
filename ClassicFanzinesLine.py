@@ -83,7 +83,8 @@ class ClassicFanzinesLine:
     def EditorsSort(self) -> str:
         eds=re.split(r"<br/?>|,", self.Editors)
         # Sort based on the 1st editor's last name all caps.
-        return SortPersonsName(eds[0]).upper()
+        ed=unidecode(eds[0].casefold())
+        return SortPersonsName(ed)
     @EditorsSort.setter
     def EditorsSort(self, val: str):
         assert False
