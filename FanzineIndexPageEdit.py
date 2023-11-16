@@ -1231,7 +1231,7 @@ class FanzineIndexPage(GridDataSource):
         self.TopComments: list[str]=[]
         self.Locale: list[str]=[]
         self.FanzineName: str=""
-        self.Editors: str=""
+        self._Editors: str=""
         self.Dates: str=""
         self.FanzineType: str=""
         self.Complete=False     # Is this fanzine series complete?
@@ -1421,6 +1421,19 @@ class FanzineIndexPage(GridDataSource):
         self.FanzineName=fanzinename
 
         return True
+
+
+    @property
+    def Editors(self):
+        return self._Editors
+    @Editors.setter
+    def Editors(self, val):
+        if type(val) is list:
+            if len(val) == 1:
+                val=val[0]
+            else:
+                val=", ".join(val)
+        self._Editors=val
 
 
     def GetFanzineIndexPageNew(self, html: str, version: str) -> bool:
