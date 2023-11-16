@@ -156,7 +156,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow()
         self.failure=False
 
-        self.ShowModal()
 
 
     @property
