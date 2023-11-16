@@ -1373,7 +1373,8 @@ class FanzineIndexPage(GridDataSource):
         self._colDefs=ColNamesToColDefs(headers)
         # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
         # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
-        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.No)]).append(self._colDefs)
+        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.No)])
+        self._colDefs.append(ColNamesToColDefs(headers))
 
         rows: list[list[str]]=[]
         if len(theRows) > 1:
