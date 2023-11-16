@@ -1370,7 +1370,6 @@ class FanzineIndexPage(GridDataSource):
         # self.rows=rows
         # self.cols=headers
         # And construct the grid
-        self._colDefs=ColNamesToColDefs(headers)
         # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
         # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
         self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.No)])
