@@ -1240,7 +1240,9 @@ class FanzineIndexPage(GridDataSource):
 
 
     def Signature(self) -> int:        # FanzineIndexPage(GridDataSource)
-        s=self._colDefs.Signature()
+        s=0
+        if self._colDefs is not None:
+            s+=self._colDefs.Signature()
         s+=hash(f"{self._name.strip()};{' '.join(self.TopComments).strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{' '.join(self.TopComments).strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{self.FanzineName};{self.Editors};{self.Dates};{self.FanzineType};{self.Credits};{self.Complete}{self.AlphabetizeIndividually}")
