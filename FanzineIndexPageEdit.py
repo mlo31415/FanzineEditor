@@ -1335,7 +1335,7 @@ class FanzineIndexPage(GridDataSource):
             _, locale=SearchAndReplace(r"(</?h2/?>)", localeStuff, "")
 
         # Check for the al[phabetize individually flag
-        m=re.search(r"<!-- Fanac-keywords: (.*?) -->", body[0], flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
+        m=re.search(r"<!-- Fanac-keywords: (.*?) -->", str(body[0]), flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
         if m is not None:
             if len(m.groups()[0]) > 10:     # Arbitrary, since the keyword should be "Alphabetize individually", but has been added by hand so might be mosta nyhting
                 self.AlphabetizeIndividually=True
