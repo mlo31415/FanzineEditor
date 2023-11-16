@@ -449,7 +449,8 @@ class FanzineEditorWindow(FanzinesGridGen):
             return False
         output=temp
 
-        FTP().PutFileAsString("/Fanzines-test/", "Classic_Fanzines.html", output, create=True)
+        with ProgressMsg(None, f"Uploading 'Classic_Fanzines.html'"):
+            FTP().PutFileAsString("/Fanzines-test/", "Classic_Fanzines.html", output, create=True)
 
 
     # ------------------
