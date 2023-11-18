@@ -5,12 +5,13 @@ import os
 import wx
 import wx.grid
 import re
+from datetime import datetime
 
 from bs4 import BeautifulSoup
 import bs4
 
 from GenGUIClass import FanzineIndexPageEditGen
-from ClassicFanzinesLine import ClassicFanzinesLine
+from ClassicFanzinesLine import ClassicFanzinesLine, Updated
 
 from FTP import FTP
 
@@ -21,6 +22,7 @@ from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndex
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList
 from HelpersPackage import InsertInvisibleTextUsingFanacComments, InsertHTMLUsingFanacComments, ExtractHTMLUsingFanacComments, ExtractInvisibleTextUsingFanacComments
+from HelpersPackage import  InsertInvisibleTextInsideFanacComment, ExtractInvisibleTextInsideFanacComment
 from PDFHelpers import GetPdfPageCount
 from Log import Log, LogError
 from Settings import Settings
@@ -444,6 +446,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.Complete=self.cbComplete.GetValue()
         if cfl.URL == "":
             cfl.URL=self.tServerDirectory.GetValue()
+        cfl.LastUpdate=datetime.now()
         self.CFL=cfl
 
         self.MarkAsSaved()
@@ -1236,6 +1239,7 @@ class FanzineIndexPage(GridDataSource):
         self.Complete=False     # Is this fanzine series complete?
         self.AlphabetizeIndividually=False      # Treat all issues as part of main series
         self.Credits=""         # Who is to be credited for this affair?
+        self.Updated: Updated=Updated(None)
 
 
     def Signature(self) -> int:        # FanzineIndexPage(GridDataSource)
@@ -1276,6 +1280,10 @@ class FanzineIndexPage(GridDataSource):
     @SpecialTextColor.setter
     def SpecialTextColor(self, val: Optional[Color]) -> None:        # FanzineIndexPage(GridDataSource)
         self._specialTextColor=val
+
+
+    def __str__(self) -> str:
+        return str(self.Updated)
 
 
     def CanAddColumns(self) -> bool:        # FanzineIndexPage(GridDataSource)
@@ -1480,6 +1488,8 @@ class FanzineIndexPage(GridDataSource):
         # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
         self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.No)])+self._colDefs
 
+        self.Updated=ExtractInvisibleTextInsideFanacComment(html, "updated")
+
         # Now the rows
         rows=ExtractHTMLUsingFanacComments(html, "table-rows")
         rows=re.findall(r"<TR>(.+?)</TR>", rows, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
@@ -1550,6 +1560,9 @@ class FanzineIndexPage(GridDataSource):
             LogError(f"PutFanzineIndexPage({url}) failed: InsertInvisibleTextUsingFanacComments('fanac-keywords')")
             return False
         output=temp
+
+        # Insert an invisible updated datetime
+        output=InsertInvisibleTextInsideFanacComment(output, "updated", f"{Updated().Now()}")
 
         # Now interpret the table to generate the column headers and data rows
         # The 1st col is the URL and it gets mixed with ther 2nd to form an Href.

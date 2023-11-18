@@ -7,20 +7,19 @@ import wx
 import wx.grid
 import sys
 import re
-import datetime
 
 from FTP import FTP
 from bs4 import BeautifulSoup
 
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMsg
-from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll
+from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll, ExtractInvisibleTextInsideFanacComment
 from HelpersPackage import InsertHTMLUsingFanacComments, UnicodeToHtml, StripSpecificTag
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
 
-from FanzineIndexPageEdit import FanzineIndexPageWindow
+from FanzineIndexPageEdit import FanzineIndexPageWindow, Updated
 from GenGUIClass import FanzinesGridGen
 from GenLogDialogClass import LogDialog
 from ClassicFanzinesLine import ClassicFanzinesLine
@@ -122,10 +121,10 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
             continue
 
         # Parse into rows by breaking on {tr}...</tr>
-        cols, srow=SearchExtractAndRemoveBoundedAll(srow, r"(<td)(.*?)<\/td>")
+        row, srow=SearchExtractAndRemoveBoundedAll(srow, r"(<td)(.*?)<\/td>")
 
         #Log(str(cols))
-        rowtable.append(cols)
+        rowtable.append(row)
 
     # Process each of the columns
     namelist: list[ClassicFanzinesLine]=[]
@@ -232,11 +231,81 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
                         if m is not None:
                             cfl.Flag="New"
 
+        # Look for an invisible Updated flag somwehere in the row
+        updated=Updated(ExtractInvisibleTextInsideFanacComment(str(row), "updated"))
+        cfl.LastUpdate=updated
+
 
         namelist.append(cfl)
         #Log(str(row))
 
     return namelist
+
+
+def PutFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
+    output=""
+    if not os.path.exists("Template - Classic_Fanzines.html"):
+        LogError(f"PutFanzineIndexPage() can't find 'Template - Classic_Fanzines.html' at {os.path.curdir}")
+        return False
+    with open("Template - Classic_Fanzines.html") as f:
+        output=f.read()
+
+    insert=""
+    for fanzine in fanzinesList:
+        # <!-- fanac.table start -->
+        # <TR VALIGN="top">
+        # <TD><IMG SRC="blue.gif" HEIGHT="14" WIDTH="21" ALT="[BB]"></TD>
+        # <!-- LINK="Aberration/ Aberration" -->
+        # <!-- TYPE="Genzine" -->
+        # <TD sorttable_customkey="ABERRATION"><A HREF="Aberration/"><STRONG>Aberration</STRONG></A></TD>
+        # <TD sorttable_customkey="MOOMAW, KENT">Kent Moomaw</TD>
+        # <TD sorttable_customkey="19570000">1957-1957</TD>
+        # <TD>Genzine</TD>
+        # <TD CLASS="right" sorttable_customkey="00003">3 </TD>
+        # <TD><X CLASS="complete">Complete</X></TD>
+        # </TR>
+        # <!-- fanac.table end -->
+        row='<TR VALIGN="top">\n'
+        row+='<TD><IMG SRC="blue.gif" HEIGHT="14" WIDTH="21" ALT="[BB]"></TD>\n'
+        row+=f'<TD sorttable_customkey="{fanzine.DisplayNameSort}"><A HREF="{fanzine.URL}/"><STRONG>{UnicodeToHtml(fanzine.DisplayName)}</STRONG></A></TD>'
+        row+=f'<TD sorttable_customkey="{fanzine.EditorsSort}">{UnicodeToHtml(fanzine.Editors)}</TD>\n'
+        row+=f'<TD sorttable_customkey="{fanzine.DatesSort}">{fanzine.Dates}</TD>\n'
+        row+=f'<TD>{fanzine.Type}</TD>\n'
+        row+=f'<TD CLASS="right" sorttable_customkey="{fanzine.IssuesSort}">{fanzine.Issues}</TD>\n'
+
+        flagged=fanzine.Complete or fanzine.UpdatedFlag
+        if not flagged:
+            row+=f'<TD sorttable_customkey="zzzz"><BR></TD>'
+        elif fanzine.Complete and not fanzine.UpdatedFlag:
+            row+=f'<TD><X CLASS="complete">Complete</X></TD>\n'
+        elif not fanzine.Complete and fanzine.UpdatedFlag:
+            row+=f'<TD><X CLASS="updated">Updated</X></TD>\n'
+        else:
+            row+=f'<TD><X CLASS="complete">Updated/Complete</X></TD>\n'
+
+        flu=""
+        if fanzine.LastUpdate is not None:
+            flu=str(fanzine.LastUpdate)
+        row+=f'<!-- fanac-updated {flu} -->\n'
+
+        row+=f'</TR>\n'
+        insert+=row
+
+    temp=InsertHTMLUsingFanacComments(output, "table", insert)
+    if temp == "":
+        LogError(f"Could not InsertUsingFanacComments('table')")
+        return False
+    output=temp
+
+    insert=f"Updated {Updated().Now()}"
+    temp=InsertHTMLUsingFanacComments(output, "updated", insert)
+    if temp == "":
+        LogError(f"Could not InsertUsingFanacComments('updated')")
+        return False
+    output=temp
+
+    with ProgressMsg(None, f"Uploading 'Classic_Fanzines.html'"):
+        FTP().PutFileAsString("/Fanzines-test/", "Classic_Fanzines.html", output, create=True)
 
 
 #==========================================================================================================
@@ -389,68 +458,17 @@ class FanzineEditorWindow(FanzinesGridGen):
                 if cfl.DisplayName!= fsw.CFL.DisplayName:
                     cfl.DisplayName=fsw.CFL.DisplayName
 
-                if cfl.Flag != fsw.CFL.Flag:
-                    cfl.Flag=fsw.CFL.Flag
-
-                if cfl.Complete != fsw.CFL.Complete:        # TODO, how do we handle multiple flags?
+                if cfl.Complete != fsw.CFL.Complete:
                     cfl.Complete=fsw.CFL.Complete
+
+                if cfl.LastUpdate != fsw.CFL.LastUpdate:
+                    cfl.LastUpdate=fsw.CFL.LastUpdate
 
     #-------------------
     # Upload the fanzines list to the classic fanzine page
     def OnUploadPressed( self, event ):       # FanzineEditor(FanzineGrid)
-        output=""
-        if not os.path.exists("Template - Classic_Fanzines.html"):
-            LogError(f"PutFanzineIndexPage() can't find 'Template - Classic_Fanzines.html' at {os.path.curdir}")
-            return False
-        with open("Template - Classic_Fanzines.html") as f:
-            output=f.read()
+        PutFanzineList(self._fanzinesList)
 
-        insert=""
-        for fanzine in self._fanzinesList:
-            # <!-- fanac.table start -->
-            # <TR VALIGN="top">
-            # <TD><IMG SRC="blue.gif" HEIGHT="14" WIDTH="21" ALT="[BB]"></TD>
-            # <!-- LINK="Aberration/ Aberration" -->
-            # <!-- TYPE="Genzine" -->
-            # <TD sorttable_customkey="ABERRATION"><A HREF="Aberration/"><STRONG>Aberration</STRONG></A></TD>
-            # <TD sorttable_customkey="MOOMAW, KENT">Kent Moomaw</TD>
-            # <TD sorttable_customkey="19570000">1957-1957</TD>
-            # <TD>Genzine</TD>
-            # <TD CLASS="right" sorttable_customkey="00003">3 </TD>
-            # <TD><X CLASS="complete">Complete</X></TD>
-            # </TR>
-            # <!-- fanac.table end -->
-            row='<TR VALIGN="top">\n'
-            row+='<TD><IMG SRC="blue.gif" HEIGHT="14" WIDTH="21" ALT="[BB]"></TD>\n'
-            row+=f'<TD sorttable_customkey="{fanzine.DisplayNameSort}"><A HREF="{fanzine.URL}/"><STRONG>{UnicodeToHtml(fanzine.DisplayName)}</STRONG></A></TD>'
-            row+=f'<TD sorttable_customkey="{fanzine.EditorsSort}">{UnicodeToHtml(fanzine.Editors)}</TD>\n'
-            row+=f'<TD sorttable_customkey="{fanzine.DatesSort}">{fanzine.Dates}</TD>\n'
-            row+=f'<TD>{fanzine.Type}</TD>\n'
-            row+=f'<TD CLASS="right" sorttable_customkey="{fanzine.IssuesSort}">{fanzine.Issues}</TD>\n'
-            if fanzine.Flag == "":
-                row+=f'<TD sorttable_customkey="zzzz"><BR></TD>'
-            elif fanzine.Complete:
-                row+=f'<TD><X CLASS="complete">Complete</X></TD>\n'
-            else:
-                row+=f'<TD><X CLASS="updated">{fanzine.Flag}</X></TD>\n'
-            row+=f'</TR>\n'
-            insert+=row
-
-        temp=InsertHTMLUsingFanacComments(output, "table", insert)
-        if temp == "":
-            LogError(f"Could not InsertUsingFanacComments('table')")
-            return False
-        output=temp
-
-        insert=f"Updated {datetime.datetime.now():%B %d, %Y}"
-        temp=InsertHTMLUsingFanacComments(output, "updated", insert)
-        if temp == "":
-            LogError(f"Could not InsertUsingFanacComments('updated')")
-            return False
-        output=temp
-
-        with ProgressMsg(None, f"Uploading 'Classic_Fanzines.html'"):
-            FTP().PutFileAsString("/Fanzines-test/", "Classic_Fanzines.html", output, create=True)
 
 
     # ------------------
