@@ -277,11 +277,11 @@ def PutFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
         if not flagged:
             row+=f'<TD sorttable_customkey="zzzz"><BR></TD>'
         elif fanzine.Complete and not fanzine.UpdatedFlag:
-            row+=f'<TD><X CLASS="complete">Complete</X></TD>\n'
+            row+=f'<TD sorttable_customkey="complete"><X CLASS="complete">Complete</X></TD>\n'
         elif not fanzine.Complete and fanzine.UpdatedFlag:
-            row+=f'<TD><X CLASS="updated">Updated</X></TD>\n'
+            row+=f'<TD sorttable_customkey="updated"><X CLASS="updated">Updated</X></TD>\n'
         else:
-            row+=f'<TD><X CLASS="complete">Updated/Complete</X></TD>\n'
+            row+=f'<TD sorttable_customkey="complete+updated"><X CLASS="complete">Updated+Complete</X></TD>\n'
 
         flu=""
         if fanzine.LastUpdate is not None:
