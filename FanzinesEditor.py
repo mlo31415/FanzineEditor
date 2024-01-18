@@ -242,7 +242,7 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
     return namelist
 
 
-def PutFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
+def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
     output=""
     if not os.path.exists("Template - Classic_Fanzines.html"):
         LogError(f"PutFanzineIndexPage() can't find 'Template - Classic_Fanzines.html' at {os.path.curdir}")
@@ -289,6 +289,7 @@ def PutFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
         row+=f'<!-- fanac-updated {flu} -->\n'
 
         row+=f'</TR>\n'
+        #Log(str(row))
         insert+=row
 
     temp=InsertHTMLUsingFanacComments(output, "table", insert)
@@ -467,7 +468,7 @@ class FanzineEditorWindow(FanzinesGridGen):
     #-------------------
     # Upload the fanzines list to the classic fanzine page
     def OnUploadPressed( self, event ):       # FanzineEditor(FanzineGrid)
-        PutFanzineList(self._fanzinesList)
+        PutClassicFanzineList(self._fanzinesList)
 
 
 
