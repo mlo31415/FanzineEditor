@@ -317,7 +317,16 @@ class FanzineEditorWindow(FanzinesGridGen):
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
 
-        with ProgressMsg(None, "Downloading main fanzine page"):
+
+        # Position the window on the screen it was on before
+        tlwp=Settings("FanzineEditor positions.json").Get("Top Level Window Position")
+        if tlwp:
+            self.SetPosition(tlwp)
+        tlws=Settings("FanzineEditor positions.json").Get("Top Level Window Size")
+        if tlws:
+            self.SetSize(tlws)
+
+        with ProgressMsg(self, "Downloading main fanzine page"):
             cfllist=GetFanzinesList()
             if cfllist is None or len(cfllist) == 0:
                 return
@@ -328,13 +337,6 @@ class FanzineEditorWindow(FanzinesGridGen):
         self._dataGrid.HideRowLabels()
         self._dataGrid.HideColLabels()
 
-        # Position the window on the screen it was on before
-        tlwp=Settings("FanzineEditor positions.json").Get("Top Level Window Position")
-        if tlwp:
-            self.SetPosition(tlwp)
-        tlws=Settings("FanzineEditor positions.json").Get("Top Level Window Size")
-        if tlws:
-            self.SetSize(tlws)
 
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
 
