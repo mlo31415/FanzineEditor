@@ -6,6 +6,7 @@ import wx
 import wx.grid
 import re
 from datetime import datetime
+from string import capwords
 
 from bs4 import BeautifulSoup
 import bs4
@@ -19,10 +20,10 @@ from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefini
 from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, AddChar
 from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
-from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders
+from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList
 from HelpersPackage import InsertInvisibleTextUsingFanacComments, InsertHTMLUsingFanacComments, ExtractHTMLUsingFanacComments, ExtractInvisibleTextUsingFanacComments
-from HelpersPackage import  InsertInvisibleTextInsideFanacComment, ExtractInvisibleTextInsideFanacComment
+from HelpersPackage import  InsertInvisibleTextInsideFanacComment, ExtractInvisibleTextInsideFanacComment, WikidotCanonicizeName
 from PDFHelpers import GetPdfPageCount
 from Log import Log, LogError
 from Settings import Settings
@@ -63,6 +64,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # _isNew True means this FIP is newly created and has not yet been uploaded.
         # Some fields are uneditable if _isNew is False
         self.IsNewDirectory=url == ""
+        self._manualEntryOfServerDirectoryName=False
+        self._manualEntryOfLocalDirectoryName=False
         self._uploaded=False
 
         # Used to communicate with the fanzine list editor.  It is set to None, but is filled in with a CFL when something is uploaded.
@@ -535,13 +538,32 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             event.Skip()
             return
 
-        # # The only time we update the local directory is when we are creating a new fanzine and have not yet uploaded it.
         fname=AddChar(self.tFanzineName.GetValue(), event.GetKeyCode())
         self.tFanzineName.SetValue(fname)
         self.tFanzineName.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
 
-        self.tLocalDirectory.SetValue(fname)
-        self.tServerDirectory.SetValue(fname)
+        # Requests from Edie:
+        # Suppress leading articles, eg The or A
+        # Remove non-letter characters, eg apostrophes or commas
+        # Local directories all in caps Server directories with first letters of words capitalized
+        # Spaces around dashes suppressed (eg fanzine title of: Bangsund - Other Publications)
+        # Ability to manually add text to the server and local directories (eg fanzine title: Cinder ; server directory Cinder-Williams)
+        # Ability to manually delete text for the server and local directories (eg fanzine title: Prolapse / Relapse ; server directory Prolapse)
+
+        # Compute the Server Directory name from the fanzine directory name if the user has not taken over editing of that field
+        if not self._manualEntryOfServerDirectoryName:
+            # Strip leading "The", etc
+            sname=RemoveArticles(fname).strip()
+            sname=WikidotCanonicizeName(sname)
+            sname="-".join([capwords(x) for x in sname.split("-")])
+            self.tServerDirectory.SetValue(sname)
+
+        if not self._manualEntryOfLocalDirectoryName:
+            # Strip leading "The", etc
+            lname=RemoveArticles(fname).strip()
+            lname=WikidotCanonicizeName(lname)
+            lname=lname.upper()
+            self.tLocalDirectory.SetValue(lname)
 
 
     def OnFanzineNameText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
@@ -551,14 +573,51 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     # This event can only happen when creating a new fanzine. For all existing fanzines, the text box is not enabled.
     def OnServerDirectoryText( self, event ):
+        Log("OnServerDirectoryText")
         if not self.IsNewDirectory:
             return
 
-        # Check to see if this already exists.
+        # if not self._manualEntryOfServerDirectoryName:
+        #     fname=self.tFanzineName.GetValue()
+        #     self.tServerDirectory.SetValue(fname)
+        #     self.tServerDirectory.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
+
+        return
+
+
+    def OnServerDirectoryChar(self, event):
+        Log("OnServerDirectoryChar")
+        if not self.IsNewDirectory:
+            return
+
+        fname=AddChar(self.tServerDirectory.GetValue(), event.GetKeyCode())
+        self.tServerDirectory.SetValue(fname)
+        self.tServerDirectory.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
+
+        self._manualEntryOfServerDirectoryName=True
         return
 
 
     def OnLocalDirectoryText( self, event ):
+        Log("OnLocalDirectoryText")
+        if not self.IsNewDirectory:
+            return
+
+        # fname=self.tFanzineName.GetValue()
+        # self.tLocaleText.SetValue(fname)
+        # self.tLocaleText.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
+        # return
+
+
+    def OnLocalDirectoryChar( self, event ):
+        Log("OnLocalDirectoryChar")
+
+        if not self._manualEntryOfServerDirectoryName:
+            fname=AddChar(self.tFanzineName.GetValue(), event.GetKeyCode())
+            self.tLocaleText.SetValue(fname)
+            self.tLocaleText.SetInsertionPoint(999)  # Make sure the cursor stays at the end of the string
+
+        self._manualEntryOfLocalDirectoryName=True
         return
 
 

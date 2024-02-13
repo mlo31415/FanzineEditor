@@ -286,16 +286,18 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.bUpload.Bind( wx.EVT_BUTTON, self.OnUpload )
 		self.bExit.Bind( wx.EVT_BUTTON, self.OnClose )
 		self.tFanzineName.Bind( wx.EVT_CHAR, self.OnFanzineNameChar )
-		self.tFanzineName.Bind(wx.EVT_TEXT, self.OnFanzineNameText)
-		self.tEditors.Bind(wx.EVT_TEXT, self.OnEditorsText)
-		self.tDates.Bind(wx.EVT_TEXT, self.OnDatesText)
+		self.tFanzineName.Bind( wx.EVT_TEXT, self.OnFanzineNameText )
+		self.tEditors.Bind( wx.EVT_TEXT, self.OnEditorsText )
+		self.tDates.Bind( wx.EVT_TEXT, self.OnDatesTexts )
 		self.tFanzineType.Bind( wx.EVT_CHOICE, self.OnFanzineType )
 		self.cbComplete.Bind( wx.EVT_CHECKBOX, self.OnCheckComplete )
 		self.cbAlphabetizeIndividually.Bind( wx.EVT_CHECKBOX, self.OnCheckAlphabetizeIndividually )
+		self.tServerDirectory.Bind( wx.EVT_CHAR, self.OnServerDirectoryChar )
 		self.tServerDirectory.Bind( wx.EVT_TEXT, self.OnServerDirectoryText )
+		self.tLocalDirectory.Bind( wx.EVT_CHAR, self.OnLocalDirectoryChar )
 		self.tLocalDirectory.Bind( wx.EVT_TEXT, self.OnLocalDirectoryText )
-		self.tTopComments.Bind( wx.EVT_TEXT, self.OnTopCommentsText )
-		self.tLocaleText.Bind(wx.EVT_TEXT, self.OnLocaleText)
+		self.tTopComments.Bind( wx.EVT_TEXT, self.OnTopComments )
+		self.tLocaleText.Bind( wx.EVT_TEXT, self.OnLocaleText )
 		self.tCredits.Bind( wx.EVT_TEXT, self.OnCreditsText )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_CHANGED, self.OnGridCellChanged )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnGridCellDoubleClick )
@@ -341,13 +343,13 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnFanzineNameChar( self, event ):
 		event.Skip()
 
-	def OnFanzineNameText( self, event):
+	def OnFanzineNameText( self, event ):
 		event.Skip()
 
-	def OnEditorsText( self, event):
+	def OnEditorsText( self, event ):
 		event.Skip()
 
-	def OnDatesText( self, event):
+	def OnDatesTexts( self, event ):
 		event.Skip()
 
 	def OnFanzineType( self, event ):
@@ -359,16 +361,22 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnCheckAlphabetizeIndividually( self, event ):
 		event.Skip()
 
+	def OnServerDirectoryChar( self, event ):
+		event.Skip()
+
 	def OnServerDirectoryText( self, event ):
+		event.Skip()
+
+	def OnLocalDirectoryChar( self, event ):
 		event.Skip()
 
 	def OnLocalDirectoryText( self, event ):
 		event.Skip()
 
-	def OnTopCommentsText( self, event ):
+	def OnTopComments( self, event ):
 		event.Skip()
 
-	def OnLocaleText( self, event):
+	def OnLocaleText( self, event ):
 		event.Skip()
 
 	def OnCreditsText( self, event ):
