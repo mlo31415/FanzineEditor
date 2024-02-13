@@ -7,6 +7,7 @@ import wx
 import wx.grid
 import sys
 import re
+from datetime import datetime
 
 from FTP import FTP
 from bs4 import BeautifulSoup
@@ -37,6 +38,8 @@ def main():
     else:
         # We are debugging.
         homedir=os.getcwd()
+
+    homedir=os.getcwd()     # Awful. This will break a non-debug version
 
     # Set up LogDialog
     # global g_LogDialog
@@ -419,9 +422,10 @@ class FanzineEditorWindow(FanzinesGridGen):
             MessageBox(f"Unable to load new fanzine window", Title="Loading Fanzine Index page", ignoredebugger=True)
             Log(f"FanzineIndexPageWindow('') failed")
 
-        # Update ClassicFanzine row
-        if fsw.CFL is None:
-            # Nothing got uploaded, so no change is needed.
+        with FanzineIndexPageWindow(None) as fsw:
+            fsw.ShowModal()
+
+        if not fsw._uploaded:
             return
 
         # A new fanzine has been added.
@@ -434,11 +438,7 @@ class FanzineEditorWindow(FanzinesGridGen):
     #-------------------
     def OnGridCellDoubleClick(self, event):       # FanzineEditor(FanzineGrid)
         url=self._Datasource.Rows[event.Row][event.Col]
-        lookup=[(i, x) for i, x in enumerate(self._Datasource.FanzineList) if x.URL == url]
-        cfl=None
-        if len(lookup) > 0:
-            cfl=lookup[0][1]
-        with FanzineIndexPageWindow(None, url, cfl) as fsw:
+        with FanzineIndexPageWindow(None, url) as fsw:
             if fsw.failure:
                 MessageBox(f"Unable to load {url}", Title="Loading Fanzine Index page", ignoredebugger=True)
                 Log(f"FanzineIndexPageWindow('{url}') failed")

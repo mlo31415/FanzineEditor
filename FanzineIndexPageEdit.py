@@ -16,7 +16,7 @@ from ClassicFanzinesLine import ClassicFanzinesLine, Updated
 from FTP import FTP
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
-from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage
+from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, AddChar
 from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders
@@ -55,18 +55,21 @@ gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
 
 
 class FanzineIndexPageWindow(FanzineIndexPageEditGen):
-    def __init__(self, parent, url: str="", cfl: ClassicFanzinesLine=None):
+    def __init__(self, parent, url: str=""):
         FanzineIndexPageEditGen.__init__(self, parent)
 
         self.failure=True
+
+        # _isNew True means this FIP is newly created and has not yet been uploaded.
+        # Some fields are uneditable if _isNew is False
+        self.IsNewDirectory=url == ""
+        self._uploaded=False
 
         # Used to communicate with the fanzine list editor.  It is set to None, but is filled in with a CFL when something is uploaded.
         self.CFL: ClassicFanzinesLine|None=None
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzineIndexPage()
-
-        self.IsNewDirectory=url == ""  # Are we creating a new directory or editing an existing one?
 
         self.url=url
 
@@ -170,9 +173,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     # Look at information available and color buttons and fields accordingly.
-    def ColorFields(self):                      # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def ColorAndEnableFields(self):                      # FanzineIndexPageWindow(FanzineIndexPageEditGen)
 
-        # Some things are turned on for both EditingOld and CreatingNew
+        # Some things are turned on for both editing an old FIP and creating a new one
         self.tFanzineName.SetEditable(True)
         self.tEditors.SetEditable(True)
         self.tDates.SetEditable(True)
@@ -182,6 +185,20 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.cbComplete.Enabled=True
         self.cbAlphabetizeIndividually.Enabled=True
         self.wxGrid.Enabled=True
+
+        # A few are enabled only when creating a new one (which lasts onbly until it is uploaded -- then it's an old one)
+        if self.IsNewDirectory:
+            self.tServerDirectory.SetEditable(True)
+            self.tServerDirectory.SetEditable(True)
+        else:
+            self.tServerDirectory.SetEditable(False)
+            self.tServerDirectory.SetEditable(False)
+
+        # The Upload button is enabled only if sufficient information is present
+        self.bUpload.Enabled=False
+        if len(self.tServerDirectory.GetValue()) > 0 and len(self.tLocalDirectory.GetValue()) > 0 and len(self.tFanzineName.GetValue()) > 0:
+            # This is definitely not enough!!s
+            self.bUpload.Enabled=True
 
         self.tFanzineName.Enabled=self.IsNewDirectory
 
@@ -449,6 +466,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.LastUpdate=datetime.now()
         self.CFL=cfl
 
+        self._uploaded=True
         self.MarkAsSaved()
 
         # Once a new fanzine has been uploaded, the server directory is no longer changeable
@@ -493,7 +511,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         if not DontRefreshGrid:
             self._dataGrid.RefreshWxGridFromDatasource()
-        self.ColorFields()
+        self.ColorAndEnableFields()
 
 
     # ----------------------------------------------
@@ -513,35 +531,43 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     # This method updates the local directory name by computing it from the fanzine name.  It only applies when creating a new fanzine index page
     def OnFanzineNameChar(self, event):
-        event.Skip()
-        return
-        # # The only time we update the local directory
-        # fname=AddChar(self.tFanzineName.GetValue(), event.GetKeyCode())
-        # self.tFanzineName.SetValue(fname)
-        # self.tFanzineName.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
+        if not self.IsNewDirectory:
+            event.Skip()
+            return
+
+        # # The only time we update the local directory is when we are creating a new fanzine and have not yet uploaded it.
+        fname=AddChar(self.tFanzineName.GetValue(), event.GetKeyCode())
+        self.tFanzineName.SetValue(fname)
+        self.tFanzineName.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
+
+        self.tLocalDirectory.SetValue(fname)
+        self.tServerDirectory.SetValue(fname)
 
 
-    def OnFanzineName(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnFanzineNameText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self.Datasource.FanzineName=self.tFanzineName.GetValue()
         self.RefreshWindow(DontRefreshGrid=True)
 
 
     # This event can only happen when creating a new fanzine. For all existing fanzines, the text box is not enabled.
-    def OnServerDirectory( self, event ):
+    def OnServerDirectoryText( self, event ):
+        if not self.IsNewDirectory:
+            return
+
         # Check to see if this already exists.
         return
 
 
-    def OnLocalDirectory( self, event ):
+    def OnLocalDirectoryText( self, event ):
         return
 
 
-    def OnEditors(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnEditorsText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self.Datasource.Editors=self.tEditors.GetValue()
         self.RefreshWindow(DontRefreshGrid=True)
 
 
-    def OnDates(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnDatesText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self.Datasource.Dates=self.tDates.GetValue()
         self.RefreshWindow(DontRefreshGrid=True)
 
@@ -552,7 +578,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow(DontRefreshGrid=True)
 
     #------------------
-    def OnTopComments(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnTopCommentsText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         if self.Datasource.TopComments is not None and len(self.Datasource.TopComments) > 0:
             self.Datasource.TopComments=self.tTopComments.GetValue().split("\n")
         else:
@@ -575,7 +601,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     #------------------
-    def OnTextLocale(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnLocaleText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self.Datasource.Locale=self.tLocaleText.GetValue().split("\n")
         self.RefreshWindow(DontRefreshGrid=True)
 

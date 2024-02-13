@@ -536,7 +536,7 @@
                                         <property name="window_name"></property>
                                         <property name="window_style"></property>
                                         <event name="OnChar">OnFanzineNameChar</event>
-                                        <event name="OnText">OnFanzineName</event>
+                                        <event name="OnText">OnFanzineNameText</event>
                                     </object>
                                 </object>
                                 <object class="sizeritem" expanded="0">
@@ -662,7 +662,7 @@
                                         <property name="window_extra_style"></property>
                                         <property name="window_name"></property>
                                         <property name="window_style"></property>
-                                        <event name="OnText">OnEditors</event>
+                                        <event name="OnText">OnEditorsText</event>
                                     </object>
                                 </object>
                                 <object class="sizeritem" expanded="0">
@@ -1314,7 +1314,7 @@
                                         <property name="window_extra_style"></property>
                                         <property name="window_name"></property>
                                         <property name="window_style"></property>
-                                        <event name="OnText">OnLocalDirectory</event>
+                                        <event name="OnText">OnLocalDirectoryText</event>
                                     </object>
                                 </object>
                             </object>
@@ -1584,7 +1584,7 @@
                                         <property name="window_extra_style"></property>
                                         <property name="window_name"></property>
                                         <property name="window_style"></property>
-                                        <event name="OnText">OnTextLocale</event>
+                                        <event name="OnText">OnLocaleText</event>
                                     </object>
                                 </object>
                                 <object class="sizeritem" expanded="0">
@@ -1710,7 +1710,7 @@
                                         <property name="window_extra_style"></property>
                                         <property name="window_name"></property>
                                         <property name="window_style"></property>
-                                        <event name="OnText">OnCredits</event>
+                                        <event name="OnText">OnCreditsText</event>
                                     </object>
                                 </object>
                             </object>

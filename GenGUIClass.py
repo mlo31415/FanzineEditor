@@ -286,17 +286,17 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.bUpload.Bind( wx.EVT_BUTTON, self.OnUpload )
 		self.bExit.Bind( wx.EVT_BUTTON, self.OnClose )
 		self.tFanzineName.Bind( wx.EVT_CHAR, self.OnFanzineNameChar )
-		self.tFanzineName.Bind( wx.EVT_TEXT, self.OnFanzineName )
-		self.tEditors.Bind( wx.EVT_TEXT, self.OnEditors )
-		self.tDates.Bind( wx.EVT_TEXT, self.OnDates )
+		self.tFanzineName.Bind(wx.EVT_TEXT, self.OnFanzineNameText)
+		self.tEditors.Bind(wx.EVT_TEXT, self.OnEditorsText)
+		self.tDates.Bind(wx.EVT_TEXT, self.OnDatesText)
 		self.tFanzineType.Bind( wx.EVT_CHOICE, self.OnFanzineType )
 		self.cbComplete.Bind( wx.EVT_CHECKBOX, self.OnCheckComplete )
 		self.cbAlphabetizeIndividually.Bind( wx.EVT_CHECKBOX, self.OnCheckAlphabetizeIndividually )
-		self.tServerDirectory.Bind( wx.EVT_TEXT, self.OnServerDirectory )
-		self.tLocalDirectory.Bind( wx.EVT_TEXT, self.OnLocalDirectory )
-		self.tTopComments.Bind( wx.EVT_TEXT, self.OnTopComments )
-		self.tLocaleText.Bind( wx.EVT_TEXT, self.OnTextLocale )
-		self.tCredits.Bind( wx.EVT_TEXT, self.OnCredits )
+		self.tServerDirectory.Bind( wx.EVT_TEXT, self.OnServerDirectoryText )
+		self.tLocalDirectory.Bind( wx.EVT_TEXT, self.OnLocalDirectoryText )
+		self.tTopComments.Bind( wx.EVT_TEXT, self.OnTopCommentsText )
+		self.tLocaleText.Bind(wx.EVT_TEXT, self.OnLocaleText)
+		self.tCredits.Bind( wx.EVT_TEXT, self.OnCreditsText )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_CHANGED, self.OnGridCellChanged )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnGridCellDoubleClick )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self.OnGridCellRightClick )
@@ -341,13 +341,13 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnFanzineNameChar( self, event ):
 		event.Skip()
 
-	def OnFanzineName( self, event ):
+	def OnFanzineNameText( self, event):
 		event.Skip()
 
-	def OnEditors( self, event ):
+	def OnEditorsText( self, event):
 		event.Skip()
 
-	def OnDates( self, event ):
+	def OnDatesText( self, event):
 		event.Skip()
 
 	def OnFanzineType( self, event ):
@@ -359,19 +359,19 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnCheckAlphabetizeIndividually( self, event ):
 		event.Skip()
 
-	def OnServerDirectory( self, event ):
+	def OnServerDirectoryText( self, event ):
 		event.Skip()
 
-	def OnLocalDirectory( self, event ):
+	def OnLocalDirectoryText( self, event ):
 		event.Skip()
 
-	def OnTopComments( self, event ):
+	def OnTopCommentsText( self, event ):
 		event.Skip()
 
-	def OnTextLocale( self, event ):
+	def OnLocaleText( self, event):
 		event.Skip()
 
-	def OnCredits( self, event ):
+	def OnCreditsText( self, event ):
 		event.Skip()
 
 	def OnGridCellChanged( self, event ):
