@@ -17,7 +17,7 @@ from ClassicFanzinesLine import ClassicFanzinesLine, Updated
 from FTP import FTP
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
-from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, AddChar
+from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, AddChar, ProcessChar
 from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
@@ -575,9 +575,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if not self.IsNewDirectory:
             return
 
-        fname=AddChar(self.tServerDirectory.GetValue(), event.GetKeyCode())
+        fname, cursorloc=ProcessChar(self.tServerDirectory.GetValue(), event.GetKeyCode(), self.tServerDirectory.GetInsertionPoint())
         self.tServerDirectory.SetValue(fname)
-        self.tServerDirectory.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
+        self.tServerDirectory.SetInsertionPoint(cursorloc)
 
         self._manualEntryOfServerDirectoryName=True
         return
@@ -587,9 +587,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if not self.IsNewDirectory:
             return
 
-        fname=AddChar(self.tLocalDirectory.GetValue(), event.GetKeyCode())
+        fname, cursorloc=ProcessChar(self.tLocalDirectory.GetValue(), event.GetKeyCode(), self.tLocalDirectory.GetInsertionPoint())
         self.tLocalDirectory.SetValue(fname)
-        self.tLocalDirectory.SetInsertionPoint(999)  # Make sure the cursor stays at the end of the string
+        self.tLocalDirectory.SetInsertionPoint(cursorloc)
 
         self._manualEntryOfLocalDirectoryName=True
         return
