@@ -133,7 +133,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		fgSizer6.Add( self.m_staticText39, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5 )
 
 		self.tLocalDirectory = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.tLocalDirectory.SetMinSize( wx.Size( 150,-1 ) )
+		self.tLocalDirectory.SetMinSize( wx.Size( 180,-1 ) )
 
 		fgSizer6.Add( self.tLocalDirectory, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, 5 )
 

@@ -571,22 +571,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow(DontRefreshGrid=True)
 
 
-    # This event can only happen when creating a new fanzine. For all existing fanzines, the text box is not enabled.
-    def OnServerDirectoryText( self, event ):
-        Log("OnServerDirectoryText")
-        if not self.IsNewDirectory:
-            return
-
-        # if not self._manualEntryOfServerDirectoryName:
-        #     fname=self.tFanzineName.GetValue()
-        #     self.tServerDirectory.SetValue(fname)
-        #     self.tServerDirectory.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
-
-        return
-
-
     def OnServerDirectoryChar(self, event):
-        Log("OnServerDirectoryChar")
         if not self.IsNewDirectory:
             return
 
@@ -598,24 +583,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         return
 
 
-    def OnLocalDirectoryText( self, event ):
-        Log("OnLocalDirectoryText")
+    def OnLocalDirectoryChar( self, event ):
         if not self.IsNewDirectory:
             return
 
-        # fname=self.tFanzineName.GetValue()
-        # self.tLocaleText.SetValue(fname)
-        # self.tLocaleText.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
-        # return
-
-
-    def OnLocalDirectoryChar( self, event ):
-        Log("OnLocalDirectoryChar")
-
-        if not self._manualEntryOfServerDirectoryName:
-            fname=AddChar(self.tFanzineName.GetValue(), event.GetKeyCode())
-            self.tLocaleText.SetValue(fname)
-            self.tLocaleText.SetInsertionPoint(999)  # Make sure the cursor stays at the end of the string
+        fname=AddChar(self.tLocalDirectory.GetValue(), event.GetKeyCode())
+        self.tLocalDirectory.SetValue(fname)
+        self.tLocalDirectory.SetInsertionPoint(999)  # Make sure the cursor stays at the end of the string
 
         self._manualEntryOfLocalDirectoryName=True
         return
