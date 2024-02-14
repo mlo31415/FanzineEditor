@@ -7,7 +7,6 @@ import wx
 import wx.grid
 import sys
 import re
-from datetime import datetime
 
 from FTP import FTP
 from bs4 import BeautifulSoup
@@ -51,16 +50,16 @@ def main():
     #     g_LogDialog.Destroy()
     #     g_LogDialog=None
 
-    LogOpen(os.path.join(homedir, "Log -- FanzineEditor.txt"), os.path.join(homedir, "Log (Errors) -- FanzineEditor.txt"))
-    Log(f"Open Logfile {os.path.join(homedir, 'Log -- FanzineEditor.txt')}")
+    LogOpen(os.path.join(homedir, "Log -- FanzinesEditor.txt"), os.path.join(homedir, "Log (Errors) -- FanzinesEditor.txt"))
+    Log(f"Open Logfile {os.path.join(homedir, 'Log -- FanzinesEditor.txt')}")
     Log(f"{homedir=}")
     Log(f"{sys.executable=}")
 
     # Load the global settings dictionary
-    Log(f"Settings().Load({os.path.join(homedir, 'FanzineEditor settings.txt')})")
-    Settings().Load(os.path.join(homedir, "FanzineEditor settings.txt"), MustExist=True)
+    Log(f"Settings().Load({os.path.join(homedir, 'FanzinesEditor settings.txt')})")
+    Settings().Load(os.path.join(homedir, "FanzinesEditor settings.txt"), MustExist=True)
     Log(Settings().Dump())
-    Settings("FanzineEditor positions.json").Load(os.path.join(homedir, "FanzineEditor positions.json"), MustExist=True)
+    Settings("FanzinesEditor positions.json").Load(os.path.join(homedir, "FanzinesEditor positions.json"), MustExist=True)
     Log(Settings().Dump())
 
     # Set the debug/production mode
@@ -321,11 +320,11 @@ class FanzineEditorWindow(FanzinesGridGen):
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
 
 
-        # Position the window on the screen it was on before
-        tlwp=Settings("FanzineEditor positions.json").Get("Top Level Window Position")
+        # Position the window on the screen it was on before at the size it was before
+        tlwp=Settings("FanzinesEditor positions.json").Get("Top Level Window Position")
         if tlwp:
             self.SetPosition(tlwp)
-        tlws=Settings("FanzineEditor positions.json").Get("Top Level Window Size")
+        tlws=Settings("FanzinesEditor positions.json").Get("Top Level Window Size")
         if tlws:
             self.SetSize(tlws)
 
@@ -366,9 +365,9 @@ class FanzineEditorWindow(FanzinesGridGen):
 
         # Save the window's position
         pos=self.GetPosition()
-        Settings("FanzineEditor positions.json").Put("Top Level Window Position", (pos.x, pos.y))
+        Settings("FanzinesEditor positions.json").Put("Top Level Window Position", (pos.x, pos.y))
         size=self.GetSize()
-        Settings("FanzineEditor positions.json").Put("Top Level Window Size", (size.width, size.height))
+        Settings("FanzinesEditor positions.json").Put("Top Level Window Size", (size.width, size.height))
 
         self.Destroy()
         LogClose()

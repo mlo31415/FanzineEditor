@@ -81,10 +81,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.LocalDirectoryRoot=Settings().Get("Local Directory Root", ".")
 
         # Position the window on the screen it was on before
-        tlwp=Settings("FanzineEditor positions.json").Get("Index Page Window Position")
+        tlwp=Settings("FanzinesEditor positions.json").Get("Index Page Window Position")
         if tlwp:
             self.SetPosition(tlwp)
-        tlws=Settings("FanzineEditor positions.json").Get("Index Page Window Size")
+        tlws=Settings("FanzinesEditor positions.json").Get("Index Page Window Size")
         if tlws:
             self.SetSize(tlws)
 
@@ -230,9 +230,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # Save the window's position
         pos=self.GetPosition()
-        Settings("FanzineEditor positions.json").Put("Index Page Window Position", (pos.x, pos.y))
+        Settings("FanzinesEditor positions.json").Put("Index Page Window Position", (pos.x, pos.y))
         size=self.GetSize()
-        Settings("FanzineEditor positions.json").Put("Index Page Window Size", (size.width, size.height))
+        Settings("FanzinesEditor positions.json").Put("Index Page Window Size", (size.width, size.height))
 
         self.EndModal(wx.OK)
 
@@ -435,9 +435,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         ProgressMessage(self).Show(f"Uploading Fanzine Index Page: {self.serverDir}")
         Log(f"Uploading Fanzine Index Page: {self.serverDir}")
         self.failure=False
-        # If no URL has been specified, we pick it up out of the server directory field
+
+        # If no server directory has been specified, we pick it up out of the server directory field
         if self.serverDir == "":
             self.serverDir=self.tServerDirectory.GetValue()
+        # Put the FanzineIndexPage on the server as an HTML file
         if not self.Datasource.PutFanzineIndexPage(self.serverDir):
             self.failure=True
             Log("Failed\n")
