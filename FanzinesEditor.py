@@ -167,7 +167,7 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
                 Log(f"                {row=}")
                 continue
 
-            cfl.URL=m.groups()[1]
+            cfl.ServerDir=m.groups()[1]
             cfl.DisplayName=StripSpecificTag(m.groups()[2], "strong", CaseSensitive=False)
             cfl.OtherNames=m.groups()[3]
 
@@ -270,7 +270,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
         # <!-- fanac.table end -->
         row='<TR VALIGN="top">\n'
         row+='<TD><IMG SRC="blue.gif" HEIGHT="14" WIDTH="21" ALT="[BB]"></TD>\n'
-        row+=f'<TD sorttable_customkey="{fanzine.DisplayNameSort}"><A HREF="{fanzine.URL}/"><STRONG>{UnicodeToHtml(fanzine.DisplayName)}</STRONG></A></TD>'
+        row+=f'<TD sorttable_customkey="{fanzine.DisplayNameSort}"><A HREF="{fanzine.ServerDir}/"><STRONG>{UnicodeToHtml(fanzine.DisplayName)}</STRONG></A></TD>'
         row+=f'<TD sorttable_customkey="{fanzine.EditorsSort}">{UnicodeToHtml(fanzine.Editors)}</TD>\n'
         row+=f'<TD sorttable_customkey="{fanzine.DatesSort}">{fanzine.Dates}</TD>\n'
         row+=f'<TD>{fanzine.Type}</TD>\n'
@@ -334,7 +334,7 @@ class FanzineEditorWindow(FanzinesGridGen):
             if cfllist is None or len(cfllist) == 0:
                 return
             self._fanzinesList: list[ClassicFanzinesLine]=cfllist
-            self._fanzinesList.sort(key=lambda cfl: cfl.URL.casefold())
+            self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())
             self.Datasource.FanzineList=self._fanzinesList
 
         self._dataGrid.HideRowLabels()
@@ -405,7 +405,7 @@ class FanzineEditorWindow(FanzinesGridGen):
     def OnSearchText(self, event):       # FanzineEditor(FanzineGrid)
         searchtext=self.tSearch.GetValue()
         if searchtext != "":
-            fanzinelist=[x for x in self._fanzinesList if searchtext.casefold().replace("_", " ") in x.URL.casefold().replace("_", " ") or searchtext.casefold() in x.DisplayName.casefold()]
+            fanzinelist=[x for x in self._fanzinesList if searchtext.casefold().replace("_", " ") in x.ServerDir.casefold().replace("_", " ") or searchtext.casefold() in x.DisplayName.casefold()]
             self.Datasource.FanzineList=fanzinelist
             self.RefreshWindow()
 
@@ -430,7 +430,7 @@ class FanzineEditorWindow(FanzinesGridGen):
 
         # A new fanzine has been added.
         self._fanzinesList.append(fsw.CFL)
-        self._fanzinesList.sort(key=lambda cfl: cfl.URL.casefold())
+        self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())
         self.Datasource.FanzineList=self._fanzinesList
         self.RefreshWindow()
 
@@ -605,7 +605,7 @@ class FanzinesPage(GridDataSource):
             col=i%self._numCols
             if col == 0:
                 self._rows.append(self._gridDataRowClass(self._numCols*[""]))
-            self._rows[row][col]=val[i].URL
+            self._rows[row][col]=val[i].ServerDir
 
 
 

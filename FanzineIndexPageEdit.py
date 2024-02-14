@@ -56,14 +56,14 @@ gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
 
 
 class FanzineIndexPageWindow(FanzineIndexPageEditGen):
-    def __init__(self, parent, url: str=""):
+    def __init__(self, parent, serverDir: str= ""):
         FanzineIndexPageEditGen.__init__(self, parent)
 
         self.failure=True
 
         # _isNew True means this FIP is newly created and has not yet been uploaded.
         # Some fields are uneditable if _isNew is False
-        self.IsNewDirectory=url == ""
+        self.IsNewDirectory=serverDir == ""
         self._manualEntryOfServerDirectoryName=False
         self._manualEntryOfLocalDirectoryName=False
         self._uploaded=False
@@ -74,7 +74,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzineIndexPage()
 
-        self.url=url
+        self.serverDir=serverDir
 
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
@@ -109,9 +109,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         else:
             # This is not a new directory
             # Load the fanzine index page
-            with ProgressMsg(parent, f"Downloading Fanzine Index Page: {url}"):
+            with ProgressMsg(parent, f"Downloading Fanzine Index Page: {serverDir}"):
                 self.failure=False
-                if not self.Datasource.GetFanzineIndexPage(url):
+                if not self.Datasource.GetFanzineIndexPage(serverDir):
                     self.failure=True
                     return
 
@@ -128,9 +128,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.cbAlphabetizeIndividually.SetValue(self.Datasource.AlphabetizeIndividually)
 
             # The server directory is not editable when it already exists.
-            # If the input parameter url is empty, then we're creating a new fanzine entry and the url can and must be edited.
-            if self.url != "":
-                self.tServerDirectory.SetValue(self.url)
+            # If the input parameter serverDirectory is empty, then we're creating a new fanzine entry and the serverDirectory can and must be edited.
+            if self.serverDir != "":
+                self.tServerDirectory.SetValue(self.serverDir)
                 self.tServerDirectory.Disable()
 
             # Now load the fanzine issue data
@@ -432,12 +432,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     #------------------
     # Upload the current FanzineIndexPage (including any added fanzines) to the server
     def OnUpload(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
-        ProgressMessage(self).Show(f"Uploading Fanzine Index Page: {self.url}")
-        Log(f"Uploading Fanzine Index Page: {self.url}")
+        ProgressMessage(self).Show(f"Uploading Fanzine Index Page: {self.serverDir}")
+        Log(f"Uploading Fanzine Index Page: {self.serverDir}")
         self.failure=False
-        if self.url == "":
-            self.url=self.tServerDirectory.GetValue()
-        if not self.Datasource.PutFanzineIndexPage(self.url):
+        # If no URL has been specified, we pick it up out of the server directory field
+        if self.serverDir == "":
+            self.serverDir=self.tServerDirectory.GetValue()
+        if not self.Datasource.PutFanzineIndexPage(self.serverDir):
             self.failure=True
             Log("Failed\n")
             ProgressMessage(self).Close()
@@ -446,7 +447,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if row.FileSourcePath != "":
                 ProgressMessage(self).UpdateMessage(f"Uploading file: {row.FileSourcePath}")
                 Log(f"Uploading file: {row.FileSourcePath}")
-                if not FTP().PutFile(row.FileSourcePath, f"/Fanzines-test/{self.url}/{row.Cells[0]}"):
+                if not FTP().PutFile(row.FileSourcePath, f"/Fanzines-test/{self.serverDir}/{row.Cells[0]}"):
                     Log("Failed\n")
                     self.failure=True
                     ProgressMessage(self).Close()
@@ -459,13 +460,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl=ClassicFanzinesLine()
         cfl.Issues=self.Datasource.NumRows
         cfl.Editors=self.tEditors.GetValue()
+
         cfl.DisplayName=self.tFanzineName.GetValue()
         cfl.OtherNames="??"
         cfl.Dates=self.tDates.GetValue()
         cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
         cfl.Complete=self.cbComplete.GetValue()
-        if cfl.URL == "":
-            cfl.URL=self.tServerDirectory.GetValue()
+        if cfl.ServerDir == "":
+            cfl.ServerDir=self.tServerDirectory.GetValue()
         cfl.LastUpdate=datetime.now()
         self.CFL=cfl
 
@@ -481,7 +483,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     def UpdateNeedsSavingFlag(self):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
-        s="Editing "+self.url
+        s="Editing "+self.serverDir
         if self.NeedsSaving():
             s=s+" *"        # Append a change marker if needed
         self.SetTitle(s)

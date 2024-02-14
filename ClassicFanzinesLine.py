@@ -113,10 +113,10 @@ class ClassicFanzinesLine:
         assert False
 
     @property
-    def URL(self) -> str:
+    def ServerDir(self) -> str:
         return self._url
-    @URL.setter
-    def URL(self, val: str):
+    @ServerDir.setter
+    def ServerDir(self, val: str):
         self._url=val
 
     @property
