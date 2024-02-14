@@ -1363,7 +1363,7 @@ class FanzineIndexPage(GridDataSource):
         return [x for x in soupstuff if type(x) is not bs4.element.NavigableString]
 
 
-    # Read a fanzine index page fanac.org/fanzines/URL and fill in the class
+    # Download a fanzine index page fanac.org/fanzines/URL and fill in the class
     def GetFanzineIndexPage(self, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
         testServerDirectory=Settings().Get("Test server directory")
         html=None
@@ -1600,14 +1600,14 @@ class FanzineIndexPage(GridDataSource):
         insert=f"{self.FanzineName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
         temp=InsertHTMLUsingFanacComments(output, "header", insert)
         if temp == "":
-            LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('header')")
+            LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('header')")
             return False
         output=temp
 
         insert=f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
         temp=InsertHTMLUsingFanacComments(output, "locale", insert)
         if temp == "":
-            LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('Locale')")
+            LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('Locale')")
             return False
         output=temp
 
@@ -1639,7 +1639,7 @@ class FanzineIndexPage(GridDataSource):
         insert+="</TR>\n"
         temp=InsertHTMLUsingFanacComments(output, "table-headers", insert)
         if temp == "":
-            LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('table-headers')")
+            LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('table-headers')")
             return False
         output=temp
 
@@ -1655,7 +1655,7 @@ class FanzineIndexPage(GridDataSource):
             insert+="</TR>\n"
         temp=InsertHTMLUsingFanacComments(output, "table-rows", insert)
         if temp == "":
-            LogError(f"PutFanzineIndexPage({url}) failed: InsertUsingFanacComments('table-rows')")
+            LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('table-rows')")
             return False
         output=temp
 
