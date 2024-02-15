@@ -1,0 +1,22 @@
+# Use this to fill in a Fanzine Index Page dialog for a new fanzine
+Scanning credits default=Scanned by Joe Siclari
+
+# Directpory to initially point the dialog to add PDFs to a FIP
+PDF Source Path=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\\Python\\FanacLSTGenerator\\Root\\PAS-TELL
+
+# Pathname of the (local) table relating server directories to local directories
+Server To Local Table Name=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\Python\FanzineEditor\ServerToLocal Conversion.txt
+
+# For how many days should updated FIP's be tagged as updated on the classic fanzines list?
+How old is old=90
+
+
+#Show log window=0
+
+# Debug/test controls
+# When in test mode, use this server directory as the root
+Test server directory=Fanzines-test
+
+# Obsolete?
+#Template directory=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\\Python\\FanacLSTGenerator\\Templates
+#Local Directory Root=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\\Python\\FanzineEditor\\Root
