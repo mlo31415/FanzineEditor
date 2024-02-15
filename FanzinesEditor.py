@@ -580,6 +580,7 @@ class FanzinesPage(GridDataSource):
             self._colDefs.append(ColDefinition("", IsEditable=IsEditable.Yes))
         self._rows: list[FanzinesPageRow]=[]
         self._gridDataRowClass=FanzinesPageRow
+        self._daysForUpdatedFlag=Settings().Get("How old is old", 90)
 
         self._fanzineList:list[str]=[]
 
