@@ -328,6 +328,21 @@ class FanzineEditorWindow(FanzinesGridGen):
         if tlws:
             self.SetSize(tlws)
 
+        # Open the settings file
+        # Load the global settings dictionary
+        Settings().Load("FanzinesEditor settings.txt")
+
+        # Load the server->local directory table
+        s2LDir=Settings().Get("Server To Local Table Name")
+        if s2LDir is None:
+            s2LDir="ServerToLocalTable.txt"
+            Settings().Put("Server To Local Table Name", "s2LDir")
+
+        if not Settings("ServerToLocal").Load(s2LDir):
+            Log(f"Can't open/read {os.getcwd()}/{s2LDir}")
+            exit(999)
+
+
         with ProgressMsg(self, "Downloading main fanzine page"):
             cfllist=GetFanzinesList()
             if cfllist is None or len(cfllist) == 0:
