@@ -298,6 +298,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
 
+    #--------------------------
+    # Allow user to change the fanzine's name
+    def OnEditFanzineNameClicked(self, event):
+        self.tFanzineName.Enabled=True
+
 
     #--------------------------
     # Check the rows to see if any of the files is a pdf

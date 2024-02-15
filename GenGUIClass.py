@@ -27,6 +27,8 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_toolBarTop = wx.ToolBar( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TB_HORIZONTAL )
 		self.bAddNewIssues = wx.Button( self.m_toolBarTop, wx.ID_ANY, u"Add New Issue(s)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_toolBarTop.AddControl( self.bAddNewIssues )
+		self.m_EditFanzineName = wx.Button( self.m_toolBarTop, wx.ID_ANY, u"Edit Fanzine Name", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_toolBarTop.AddControl( self.m_EditFanzineName )
 		self.m_staticText14 = wx.StaticText( self.m_toolBarTop, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText14.Wrap( -1 )
 
@@ -283,6 +285,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		# Connect Events
 		self.Bind( wx.EVT_CLOSE, self.OnClose )
 		self.bAddNewIssues.Bind( wx.EVT_BUTTON, self.OnAddNewIssues )
+		self.m_EditFanzineName.Bind( wx.EVT_BUTTON, self.OnEditFanzineNameClicked )
 		self.bUpload.Bind( wx.EVT_BUTTON, self.OnUpload )
 		self.bExit.Bind( wx.EVT_BUTTON, self.OnClose )
 		self.tFanzineName.Bind( wx.EVT_CHAR, self.OnFanzineNameChar )
@@ -334,6 +337,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnAddNewIssues( self, event ):
+		event.Skip()
+
+	def OnEditFanzineNameClicked( self, event ):
 		event.Skip()
 
 	def OnUpload( self, event ):
