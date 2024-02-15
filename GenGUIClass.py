@@ -296,7 +296,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.tServerDirectory.Bind( wx.EVT_TEXT, self.OnServerDirectoryText )
 		self.tLocalDirectory.Bind( wx.EVT_CHAR, self.OnLocalDirectoryChar )
 		self.tLocalDirectory.Bind( wx.EVT_TEXT, self.OnLocalDirectoryText )
-		self.tTopComments.Bind( wx.EVT_TEXT, self.OnTopComments )
+		self.tTopComments.Bind( wx.EVT_TEXT, self.OnTopCommentsText )
 		self.tLocaleText.Bind( wx.EVT_TEXT, self.OnLocaleText )
 		self.tCredits.Bind( wx.EVT_TEXT, self.OnCreditsText )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_CHANGED, self.OnGridCellChanged )
@@ -373,7 +373,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnLocalDirectoryText( self, event ):
 		event.Skip()
 
-	def OnTopComments( self, event ):
+	def OnTopCommentsText( self, event ):
 		event.Skip()
 
 	def OnLocaleText( self, event ):

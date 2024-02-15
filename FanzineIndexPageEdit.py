@@ -123,6 +123,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if self.Datasource.FanzineType in self.tFanzineType.Items:
                 self.tFanzineType.SetSelection(self.tFanzineType.Items.index(self.Datasource.FanzineType))
             self.tLocaleText.SetValue(self.Datasource.Locale)
+            self.tTopComments.SetValue(self.Datasource.TopComments)
 
             self.cbComplete.SetValue(self.Datasource.Complete)
             self.cbAlphabetizeIndividually.SetValue(self.Datasource.AlphabetizeIndividually)
@@ -471,6 +472,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if cfl.ServerDir == "":
             cfl.ServerDir=self.tServerDirectory.GetValue()
         cfl.LastUpdate=datetime.now()
+        cfl.TopComments=self.tTopComments.GetValue()
         self.CFL=cfl
 
         self._uploaded=True
@@ -508,8 +510,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # The local directory text box is editable in a new directory, but not in an existing one
         self.tLocalDirectory.Enabled=len(self.tLocalDirectory.GetValue()) == 0 or self.IsNewDirectory
-
-
 
 
     def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
@@ -617,9 +617,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     #------------------
     def OnTopCommentsText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         if self.Datasource.TopComments is not None and len(self.Datasource.TopComments) > 0:
-            self.Datasource.TopComments=self.tTopComments.GetValue().split("\n")
+            self.Datasource.TopComments=self.tTopComments.GetValue()
         else:
-            self.Datasource.TopComments=[self.tTopComments.GetValue().strip()]
+            self.Datasource.TopComments=self.tTopComments.GetValue().strip()
 
         self.RefreshWindow(DontRefreshGrid=True)
 
@@ -1309,8 +1309,8 @@ class FanzineIndexPage(GridDataSource):
         s=0
         if self._colDefs is not None:
             s+=self._colDefs.Signature()
-        s+=hash(f"{self._name.strip()};{' '.join(self.TopComments).strip()};{' '.join(self.Locale).strip()}")
-        s+=hash(f"{' '.join(self.TopComments).strip()};{' '.join(self.Locale).strip()}")
+        s+=hash(f"{self._name.strip()};{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
+        s+=hash(f"{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{self.FanzineName};{self.Editors};{self.Dates};{self.FanzineType};{self.Credits};{self.Complete}{self.AlphabetizeIndividually}")
         s+=sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
         s+=hash(self._specialTextColor)
@@ -1538,6 +1538,10 @@ class FanzineIndexPage(GridDataSource):
             if keyword == "Complete":
                 self.Complete=True
 
+        comments=ExtractHTMLUsingFanacComments(html, "topcomments")
+        if comments is not None:
+            self.TopComments=comments.replace("<br>", "\n")
+
         # Now interpret the table to generate the column headers and data rows
         headers=ExtractHTMLUsingFanacComments(html, "table-headers")
         if headers == "":
@@ -1608,6 +1612,13 @@ class FanzineIndexPage(GridDataSource):
         temp=InsertHTMLUsingFanacComments(output, "locale", insert)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('Locale')")
+            return False
+        output=temp
+
+        insert=self.TopComments.replace("\n", "<br>")
+        temp=InsertHTMLUsingFanacComments(output, "topcomments", insert)
+        if temp == "":
+            LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('topcomments')")
             return False
         output=temp
 
