@@ -609,7 +609,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow(DontRefreshGrid=True)
 
 
-    def OnFanzineType(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnFanzineTypeSelect(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
 
         self.Datasource.FanzineType=self.tFanzineType.GetItems()[self.tFanzineType.GetSelection()]
         self.RefreshWindow(DontRefreshGrid=True)
