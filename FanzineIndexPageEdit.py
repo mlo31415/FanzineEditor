@@ -643,7 +643,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow(DontRefreshGrid=True)
 
     #------------------
-    def OnCredits(self, event):
+    def OnCreditsText(self, event):
         self.Datasource.Credits=self.tCredits.GetValue().strip()
         self.RefreshWindow(DontRefreshGrid=True)
 
