@@ -1303,7 +1303,7 @@ class FanzineIndexPage(GridDataSource):
         self._gridDataRowClass=FanzineIndexPageTableRow
         self._name: str=""
         self._specialTextColor: Optional[Color, bool]=True
-        self.TopComments: list[str]=[]
+        self.TopComments: str=""
         self.Locale: list[str]=[]
         self.FanzineName: str=""
         self._Editors: str=""
