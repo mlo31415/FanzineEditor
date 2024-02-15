@@ -134,6 +134,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 self.tServerDirectory.SetValue(self.serverDir)
                 self.tServerDirectory.Disable()
 
+            self.localDir=Settings("ServerToLocal").Get(self.serverDir)
+            if self.localDir is not None:
+                self.tLocalDirectory.SetValue(self.localDir)
+                self.tLocalDirectory.Disable()
+
             # Now load the fanzine issue data
             self._dataGrid.HideRowLabels()
 
@@ -145,7 +150,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # Read in the table of local directory to server directory equivalences
         l2slines: list[str]=[]
-        with open("LocalToServer Conversion.txt", "r") as f:
+        with open("ServerToLocal Conversion.txt", "r") as f:
             l2sLines=f.readlines()
         self.serverNameList: list[str]=[]
         self.localNameList: list[str]=[]
