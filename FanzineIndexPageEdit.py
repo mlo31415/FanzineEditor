@@ -78,7 +78,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
-        self.LocalDirectoryRoot=Settings().Get("Local Directory Root", ".")
+        #self.LocalDirectoryRoot=Settings().Get("Local Directory Root", ".")
 
         # Position the window on the screen it was on before
         tlwp=Settings("FanzinesEditor positions.json").Get("Index Page Window Position")
