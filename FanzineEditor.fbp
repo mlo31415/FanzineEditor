@@ -1882,6 +1882,7 @@
                                         <property name="window_name"></property>
                                         <property name="window_style"></property>
                                         <event name="OnGridCellChange">OnGridCellChanged</event>
+                                        <event name="OnGridCellLeftClick">OnGridCellLeftClick</event>
                                         <event name="OnGridCellLeftDClick">OnGridCellDoubleClick</event>
                                         <event name="OnGridCellRightClick">OnGridCellRightClick</event>
                                         <event name="OnGridEditorHidden">OnGridEditorShown</event>
@@ -3272,6 +3273,7 @@
                                         <property name="window_extra_style"></property>
                                         <property name="window_name"></property>
                                         <property name="window_style"></property>
+                                        <event name="OnButtonClick">OnDeleteFanzineClicked</event>
                                     </object>
                                 </object>
                             </object>
@@ -3364,6 +3366,7 @@
                         <property name="window_extra_style"></property>
                         <property name="window_name"></property>
                         <property name="window_style"></property>
+                        <event name="OnGridCellLeftClick">OnGridCellLeftClick</event>
                         <event name="OnGridCellLeftDClick">OnGridCellDoubleClick</event>
                         <event name="OnGridCellRightClick">OnGridCellRightClick</event>
                     </object>

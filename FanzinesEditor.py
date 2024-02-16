@@ -7,6 +7,7 @@ import wx
 import wx.grid
 import sys
 import re
+import tkinter as tk
 
 from FTP import FTP
 from bs4 import BeautifulSoup
@@ -449,8 +450,13 @@ class FanzineEditorWindow(FanzinesGridGen):
         self.RefreshWindow()
 
 
+    def OnGridCellLeftClick( self, event ):
+        self._dataGrid.OnGridCellLeftClick(event)
+
+
     #-------------------
     def OnGridCellDoubleClick(self, event):       # FanzineEditor(FanzineGrid)
+        self._dataGrid.SaveClickLocation(event, "double")
         url=self._Datasource.Rows[event.Row][event.Col]
         with FanzineIndexPageWindow(None, url) as fsw:
             if fsw.failure:
@@ -486,6 +492,27 @@ class FanzineEditorWindow(FanzinesGridGen):
     def OnUploadPressed( self, event ):       # FanzineEditor(FanzineGrid)
         PutClassicFanzineList(self._fanzinesList)
 
+
+    # ------------------
+    def OnDeleteFanzineClicked( self, event):
+        row=self._dataGrid.clickedRow
+        col=self._dataGrid.clickedColumn
+        type=self._dataGrid.clickType
+        if type == "left":
+            fanzine=self._dataGrid.Datasource.Rows[row][col]
+
+            dlg=wx.MessageDialog(None, f"Really delete {fanzine}?", "Delete fanzine?", wx.YES_NO|wx.ICON_QUESTION)
+            result=dlg.ShowModal()
+            dlg.Destroy()
+            if result == wx.ID_YES:
+                self._fanzinesList=[x for x in self._fanzinesList if x.ServerDir != fanzine]
+                self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())
+                searchtext=self.tSearch.GetValue()
+                fanzinelist=self._fanzinesList
+                if searchtext != "":
+                    fanzinelist=[x for x in self._fanzinesList if searchtext.casefold().replace("_", " ") in x.ServerDir.casefold().replace("_", " ") or searchtext.casefold() in x.DisplayName.casefold()]
+                self.Datasource.FanzineList=fanzinelist
+                self.RefreshWindow()
 
 
     # ------------------

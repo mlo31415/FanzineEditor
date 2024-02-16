@@ -667,6 +667,8 @@ class FanzinesGridGen ( wx.Frame ):
 		self.bExit.Bind( wx.EVT_BUTTON, self.OnClose )
 		self.bUpload.Bind( wx.EVT_BUTTON, self.OnUploadPressed )
 		self.bAddNewFanzine.Bind( wx.EVT_BUTTON, self.OnAddNewFanzine )
+		self.bDeleteFanzine.Bind( wx.EVT_BUTTON, self.OnDeleteFanzineClicked )
+		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnGridCellLeftClick )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnGridCellDoubleClick )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self.OnGridCellRightClick )
 
@@ -688,6 +690,12 @@ class FanzinesGridGen ( wx.Frame ):
 		event.Skip()
 
 	def OnAddNewFanzine( self, event ):
+		event.Skip()
+
+	def OnDeleteFanzineClicked( self, event ):
+		event.Skip()
+
+	def OnGridCellLeftClick( self, event ):
 		event.Skip()
 
 	def OnGridCellDoubleClick( self, event ):
