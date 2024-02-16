@@ -303,6 +303,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.tLocaleText.Bind( wx.EVT_TEXT, self.OnLocaleText )
 		self.tCredits.Bind( wx.EVT_TEXT, self.OnCreditsText )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_CHANGED, self.OnGridCellChanged )
+		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnGridCellLeftClick )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnGridCellDoubleClick )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self.OnGridCellRightClick )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_EDITOR_HIDDEN, self.OnGridEditorShown )
@@ -389,6 +390,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnGridCellChanged( self, event ):
+		event.Skip()
+
+	def OnGridCellLeftClick( self, event ):
 		event.Skip()
 
 	def OnGridCellDoubleClick( self, event ):
@@ -662,9 +666,10 @@ class FanzinesGridGen ( wx.Frame ):
 		self.Centre( wx.BOTH )
 
 		# Connect Events
+		self.Bind( wx.EVT_CLOSE, self.OnClosePressed )
 		self.tSearch.Bind( wx.EVT_TEXT, self.OnSearchText )
 		self.bClearSearch.Bind( wx.EVT_BUTTON, self.OnClearSearch )
-		self.bExit.Bind( wx.EVT_BUTTON, self.OnClose )
+		self.bExit.Bind( wx.EVT_BUTTON, self.OnExitPressed )
 		self.bUpload.Bind( wx.EVT_BUTTON, self.OnUploadPressed )
 		self.bAddNewFanzine.Bind( wx.EVT_BUTTON, self.OnAddNewFanzine )
 		self.bDeleteFanzine.Bind( wx.EVT_BUTTON, self.OnDeleteFanzineClicked )
@@ -677,13 +682,16 @@ class FanzinesGridGen ( wx.Frame ):
 
 
 	# Virtual event handlers, override them in your derived class
+	def OnClosePressed( self, event ):
+		event.Skip()
+
 	def OnSearchText( self, event ):
 		event.Skip()
 
 	def OnClearSearch( self, event ):
 		event.Skip()
 
-	def OnClose( self, event ):
+	def OnExitPressed( self, event ):
 		event.Skip()
 
 	def OnUploadPressed( self, event ):

@@ -374,6 +374,12 @@ class FanzineEditorWindow(FanzinesGridGen):
         self._dataGrid.Datasource=val
 
 
+    def OnClosePressed( self, event ):
+        self.OnClose(event)
+
+    def OnExitPressed( self, event ):
+        self.OnClose(event)
+
     def OnClose(self, event):       # FanzineEditor(FanzineGrid)
         if OnCloseHandling(event, self.NeedsSaving(), "The list of fanzines has been updated and not yet saved. Exit anyway?"):
             return
