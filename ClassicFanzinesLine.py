@@ -51,7 +51,7 @@ class Updated:
 
     # Has this been updated recently?
     @property
-    def Recent(self) -> bool:
+    def IsRecent(self) -> bool:
         return self._updated is not None and (datetime.now()-self._updated).days < 100
 
 
@@ -214,4 +214,4 @@ class ClassicFanzinesLine:
     @property
     # Has this fanzine been updated recently enough to be flagged?
     def UpdatedFlag(self) -> bool:
-        return self.LastUpdate is not None and self.LastUpdate.Recent
+        return self.LastUpdate is not None and self.LastUpdate.IsRecent
