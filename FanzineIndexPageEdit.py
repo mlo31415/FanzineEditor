@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 import bs4
 
 from GenGUIClass import FanzineIndexPageEditGen
-from ClassicFanzinesLine import ClassicFanzinesLine, Updated
+from ClassicFanzinesLine import ClassicFanzinesLine, LastUpdateDate
 
 from FTP import FTP
 
@@ -1312,7 +1312,7 @@ class FanzineIndexPage(GridDataSource):
         self.Complete=False     # Is this fanzine series complete?
         self.AlphabetizeIndividually=False      # Treat all issues as part of main series
         self.Credits=""         # Who is to be credited for this affair?
-        self.Updated: Updated=Updated(None)
+        self.Updated: LastUpdateDate=LastUpdateDate(None)
 
 
     def Signature(self) -> int:        # FanzineIndexPage(GridDataSource)
@@ -1565,7 +1565,7 @@ class FanzineIndexPage(GridDataSource):
         # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
         self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.No)])+self._colDefs
 
-        self.Updated=ExtractInvisibleTextInsideFanacComment(html, "updated")
+        self.Updated=LastUpdateDate(ExtractInvisibleTextInsideFanacComment(html, "updated"))
 
         # Now the rows
         rows=ExtractHTMLUsingFanacComments(html, "table-rows")
@@ -1646,7 +1646,7 @@ class FanzineIndexPage(GridDataSource):
         output=temp
 
         # Insert an invisible updated datetime
-        output=InsertInvisibleTextInsideFanacComment(output, "updated", f"{Updated().Now()}")
+        output=InsertInvisibleTextInsideFanacComment(output, "updated", f"{LastUpdateDate().Now()}")
 
         # Now interpret the table to generate the column headers and data rows
         # The 1st col is the URL and it gets mixed with ther 2nd to form an Href.

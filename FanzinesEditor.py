@@ -20,7 +20,7 @@ from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
 
-from FanzineIndexPageEdit import FanzineIndexPageWindow, Updated
+from FanzineIndexPageEdit import FanzineIndexPageWindow, LastUpdateDate
 from GenGUIClass import FanzinesGridGen
 from GenLogDialogClass import LogDialog
 from ClassicFanzinesLine import ClassicFanzinesLine
@@ -235,7 +235,7 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
                             cfl.Flag="New"
 
         # Look for an invisible Updated flag somwehere in the row
-        updated=Updated(ExtractInvisibleTextInsideFanacComment(str(row), "updated"))
+        updated=LastUpdateDate(ExtractInvisibleTextInsideFanacComment(str(row), "updated"))
         cfl.LastUpdate=updated
 
 
@@ -276,12 +276,17 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
         row+=f'<TD>{fanzine.Type}</TD>\n'
         row+=f'<TD CLASS="right" sorttable_customkey="{fanzine.IssuesSort}">{fanzine.Issues}</TD>\n'
 
-        flagged=fanzine.Complete or fanzine.UpdatedFlag
+        udate=fanzine.LastUpdate.DaysBeforeNow()
+        updatedFlag=False
+        if udate is not None:
+            updatedFlag=udate < Settings().Get("How old is old", 90)
+
+        flagged=fanzine.Complete or updatedFlag
         if not flagged:
             row+=f'<TD sorttable_customkey="zzzz"><BR></TD>'
-        elif fanzine.Complete and not fanzine.UpdatedFlag:
+        elif fanzine.Complete and not updatedFlag:
             row+=f'<TD sorttable_customkey="complete"><X CLASS="complete">Complete</X></TD>\n'
-        elif not fanzine.Complete and fanzine.UpdatedFlag:
+        elif not fanzine.Complete and updatedFlag:
             row+=f'<TD sorttable_customkey="updated"><X CLASS="updated">Updated</X></TD>\n'
         else:
             row+=f'<TD sorttable_customkey="complete+updated"><X CLASS="complete">Updated+Complete</X></TD>\n'
@@ -301,7 +306,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
         return False
     output=temp
 
-    insert=f"Updated {Updated().Now()}"
+    insert=f"Updated {LastUpdateDate().Now()}"
     temp=InsertHTMLUsingFanacComments(output, "updated", insert)
     if temp == "":
         LogError(f"Could not InsertUsingFanacComments('updated')")
@@ -613,7 +618,7 @@ class FanzinesPage(GridDataSource):
             self._colDefs.append(ColDefinition("", IsEditable=IsEditable.Yes))
         self._rows: list[FanzinesPageRow]=[]
         self._gridDataRowClass=FanzinesPageRow
-        self._daysForUpdatedFlag=Settings().Get("How old is old", 90)
+        #self._daysForUpdatedFlag=Settings().Get("How old is old", 90)
 
         self._fanzineList:list[str]=[]
 

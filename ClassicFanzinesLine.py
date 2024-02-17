@@ -8,7 +8,7 @@ from FanzineIssueSpecPackage import FanzineDate
 
 ########################################################################
 # A class to hold the updated date in standard ConEditor format
-class Updated:
+class LastUpdateDate:
     def __init__(self, val: datetime|str|None=None):
         self._updated=self.Set(val)
 
@@ -49,10 +49,10 @@ class Updated:
     def Now(self) -> str:
         return f"{datetime.now():%B %d, %Y}"
 
-    # Has this been updated recently?
-    @property
-    def IsRecent(self) -> bool:
-        return self._updated is not None and (datetime.now()-self._updated).days < 100
+    def DaysBeforeNow(self) -> int|None:
+        if self._updated is None:
+            return None
+        return (datetime.now()-self._updated).days
 
 
 #==========================================================================================================
@@ -203,15 +203,10 @@ class ClassicFanzinesLine:
         self._complete=val
 
     @property
-    def LastUpdate(self) -> Updated:
+    def LastUpdate(self) -> LastUpdateDate:
         return self._lastupdate
     @LastUpdate.setter
-    def LastUpdate(self, val: Updated|datetime):
+    def LastUpdate(self, val: LastUpdateDate|datetime):
         if type(val) is datetime:
-            val=Updated(val)
+            val=LastUpdateDate(val)
         self._lastupdate=val
-
-    @property
-    # Has this fanzine been updated recently enough to be flagged?
-    def UpdatedFlag(self) -> bool:
-        return self.LastUpdate is not None and self.LastUpdate.IsRecent
