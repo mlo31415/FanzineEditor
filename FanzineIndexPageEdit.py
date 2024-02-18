@@ -63,9 +63,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         self.failure=True
 
-        # _isNew True means this FIP is newly created and has not yet been uploaded.
-        # Some fields are uneditable if _isNew is False
-        self.IsNewDirectory=serverDir == ""
+        # IsNewDirectory True means this FIP is newly created and has not yet been uploaded.
+        # Some fields are uneditable if IsNewDirectory is False
+        self.IsNewDirectory=False
+        if serverDir == "":
+            self.IsNewDirectory=True
+
         self._manualEntryOfServerDirectoryName=False
         self._manualEntryOfLocalDirectoryName=False
         self._uploaded=False
