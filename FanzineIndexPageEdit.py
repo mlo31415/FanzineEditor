@@ -7,6 +7,7 @@ import wx.grid
 import re
 from datetime import datetime
 from string import capwords
+from math import floor, ceil
 
 from bs4 import BeautifulSoup
 import bs4
@@ -18,6 +19,7 @@ from FTP import FTP
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, AddChar, ProcessChar
+from HelpersPackage import MessageBox
 from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
@@ -446,6 +448,56 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         ProgressMessage(self).Show(f"Uploading Fanzine Index Page: {self.serverDir}")
         Log(f"Uploading Fanzine Index Page: {self.serverDir}")
         self.failure=False
+
+        # Check the dates to make sure that the dated issues all fall into the date range given for the fanzine
+        # Date range sgould be of the form yyyy-yyyy with question marks abounding
+        dates=self.tDates.GetValue()
+        # Unless there is exactly one hyphen in the range, we can't do comparisons
+        if dates.count("-") == 1:
+            # Remove question marks, as they tell us nothing.  Then split
+            dates=dates.replace("?", "")
+            date1, date2=dates.split("-")
+            # The dates should be of one of these forms:
+            #       yyyy, <empty>, 1950s, Ppresent
+            #       empty is interpreted as 1920 or 2100, depending on which side of the hyphen it's on
+            #       present is interpreted as, well, now.
+            #       something like 1950s is interpreted as the start or end of the decade depending on which side of the hyphen it's on
+            d1=Int0(date1)
+            d2=Int0(date2)
+            if date2.lower() == "present":
+                d2=datetime.now().year+1
+            if date1[-1].lower() == "s":
+                # This ends in "s", it must either be something like 1950s or garbage
+                d1=Int0(date1[:-1])
+                if d1 > 1900:
+                    d1=10*floor(d1/10)
+            # Also check date 2
+            if date2[-1].lower() == "s":
+                # This ends in "s", it must either be something like 1950s or garbage
+                d2=Int0(date2[:-1])
+                if d2 > 1900:
+                    d2=10*ceil(d2/10)
+            # OK, we now change zero dates into 1900 and 2200, respectively
+            if d1 == 0:
+                d1=1900
+            if d2 == 0:
+                d2=2200
+
+            # Now check this against all the years in the rows.
+            icol=self.Datasource.ColHeaderIndex("year")
+            failed=False
+            if icol != -1:
+                for row in self.Datasource.Rows:
+                    year=row[icol]
+                    # Remove question marks and interpret the rest
+                    year=year.replace("?", "")
+                    year=Int0(year)
+                    if year > 0:
+                        if year < d1 or year > d2:
+                            failed=True
+            if failed:
+                MessageBox("Warning: One or more of the years in the table are outside the date range given fore this fanzine.")
+
 
         # If no server directory has been specified, we pick it up out of the server directory field
         if self.serverDir == "":
