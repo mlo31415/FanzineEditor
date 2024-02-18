@@ -65,10 +65,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.failure=True
 
         # IsNewDirectory True means this FIP is newly created and has not yet been uploaded.
-        # Some fields are uneditable if IsNewDirectory is False
+        # We can tell because an existing fanzine must be opened by supplying a server diretcory, while for a new anzine, g]the server direectory must be the empty string
+        # Some fields are editable only for new fanzines (which will be in new server directories, allowing some things to be set for the first time.).
         self.IsNewDirectory=False
         if serverDir == "":
             self.IsNewDirectory=True
+        self.serverDir=serverDir
 
         self._manualEntryOfServerDirectoryName=False
         self._manualEntryOfLocalDirectoryName=False
@@ -79,8 +81,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzineIndexPage()
-
-        self.serverDir=serverDir
 
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
@@ -454,10 +454,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             Log(f"Uploading Fanzine Index Page: {self.serverDir}")
             self.failure=False
 
-
-            # If no server directory has been specified, we pick it up out of the server directory field
+            # If this is a new fanzine, it's being uploaded to a new server directory and we must get it fri=om the server directory field
             if self.serverDir == "":
-                self.serverDir=self.tServerDirectory.GetValue()  # TODO: Is this really needed?  It shouldn't be.
+                self.serverDir=self.tServerDirectory.GetValue()
 
             # If this is a new fanzine, it needs to be in a new directory.  Check it.
             if self.IsNewDirectory:
