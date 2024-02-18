@@ -7,7 +7,6 @@ import wx
 import wx.grid
 import sys
 import re
-import tkinter as tk
 
 from FTP import FTP
 from bs4 import BeautifulSoup
