@@ -519,7 +519,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if not self.Datasource.PutFanzineIndexPage(self.serverDir):
                 self.failure=True
                 Log("Failed\n")
-                ProgressMessage(self).Close()
                 return
             for row in self.Datasource.Rows:
                 if row.FileSourcePath != "":
@@ -528,7 +527,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     if not FTP().PutFile(row.FileSourcePath, f"/Fanzines-test/{self.serverDir}/{row.Cells[0]}"):
                         Log("Failed\n")
                         self.failure=True
-                        ProgressMessage(self).Close()
                         return
                     row.FileSourcePath=""
 
