@@ -19,6 +19,7 @@ from FTP import FTP
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, AddChar, ProcessChar
+from WxHelpers import ModalDialogManager
 from HelpersPackage import MessageBox
 from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
@@ -448,106 +449,113 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     #------------------
     # Upload the current FanzineIndexPage (including any added fanzines) to the server
     def OnUpload(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
-        ProgressMessage(self).Show(f"Uploading Fanzine Index Page: {self.serverDir}")
-        Log(f"Uploading Fanzine Index Page: {self.serverDir}")
-        self.failure=False
-
-        # Check the dates to make sure that the dated issues all fall into the date range given for the fanzine
-        # Date range sgould be of the form yyyy-yyyy with question marks abounding
-        dates=self.tDates.GetValue()
-        # Unless there is exactly one hyphen in the range, we can't do comparisons
-        if dates.count("-") == 1:
-            # Remove question marks, as they tell us nothing.  Then split
-            dates=dates.replace("?", "")
-            date1, date2=dates.split("-")
-            # The dates should be of one of these forms:
-            #       yyyy, <empty>, 1950s, Ppresent
-            #       empty is interpreted as 1920 or 2100, depending on which side of the hyphen it's on
-            #       present is interpreted as, well, now.
-            #       something like 1950s is interpreted as the start or end of the decade depending on which side of the hyphen it's on
-            d1=Int0(date1)
-            d2=Int0(date2)
-            if date2.lower() == "present":
-                d2=datetime.now().year+1
-            if date1[-1].lower() == "s":
-                # This ends in "s", it must either be something like 1950s or garbage
-                d1=Int0(date1[:-1])
-                if d1 > 1900:
-                    d1=10*floor(d1/10)
-            # Also check date 2
-            if date2[-1].lower() == "s":
-                # This ends in "s", it must either be something like 1950s or garbage
-                d2=Int0(date2[:-1])
-                if d2 > 1900:
-                    d2=10*ceil(d2/10)
-            # OK, we now change zero dates into 1900 and 2200, respectively so that zero matches everything
-            if d1 == 0:
-                d1=1900
-            if d2 == 0:
-                d2=2200
-
-            # Now check this against all the years in the rows.
-            icol=self.Datasource.ColHeaderIndex("year")
-            failed=False
-            if icol != -1:
-                for row in self.Datasource.Rows:
-                    year=row[icol]
-                    # Remove question marks and interpret the rest
-                    year=year.replace("?", "")
-                    year=Int0(year)
-                    if year > 0:        # Ignore missing years
-                        if year < d1 or year > d2:
-                            failed=True
-            if failed:
-                MessageBox("Warning: One or more of the years in the table are outside the date range given fore this fanzine.")
+        with ModalDialogManager(ProgressMessage, self) as progressMessage:
+            progressMessage.Show(f"Uploading Fanzine Index Page: {self.serverDir}")
+            Log(f"Uploading Fanzine Index Page: {self.serverDir}")
+            self.failure=False
 
 
-        # If no server directory has been specified, we pick it up out of the server directory field
-        if self.serverDir == "":
-            self.serverDir=self.tServerDirectory.GetValue()
-        # Put the FanzineIndexPage on the server as an HTML file
-        if not self.Datasource.PutFanzineIndexPage(self.serverDir):
-            self.failure=True
-            Log("Failed\n")
-            ProgressMessage(self).Close()
-            return
-        for row in self.Datasource.Rows:
-            if row.FileSourcePath != "":
-                ProgressMessage(self).UpdateMessage(f"Uploading file: {row.FileSourcePath}")
-                Log(f"Uploading file: {row.FileSourcePath}")
-                if not FTP().PutFile(row.FileSourcePath, f"/Fanzines-test/{self.serverDir}/{row.Cells[0]}"):
-                    Log("Failed\n")
+            # If no server directory has been specified, we pick it up out of the server directory field
+            if self.serverDir == "":
+                self.serverDir=self.tServerDirectory.GetValue()  # TODO: Is this really needed?  It shouldn't be.
+
+            # If this is a new fanzine, it needs to be in a new directory.  Check it.
+            if self.IsNewDirectory:
+                path=f"/Fanzines-test/{self.serverDir}"
+                if FTP().PathExists(path):
+                    MessageBox(f"'Directory {path}' already exists.  Please change the server directory name.")
                     self.failure=True
-                    ProgressMessage(self).Close()
                     return
-                row.FileSourcePath=""
 
-        Log("All uploads succeeded.")
+            # Check the dates to make sure that the dated issues all fall into the date range given for the fanzine
+            # Date range sgould be of the form yyyy-yyyy with question marks abounding
+            dates=self.tDates.GetValue()
+            # Unless there is exactly one hyphen in the range, we can't do comparisons
+            if dates.count("-") == 1:
+                # Remove question marks, as they tell us nothing.  Then split
+                dates=dates.replace("?", "")
+                date1, date2=dates.split("-")
+                # The dates should be of one of these forms:
+                #       yyyy, <empty>, 1950s, Ppresent
+                #       empty is interpreted as 1920 or 2100, depending on which side of the hyphen it's on
+                #       present is interpreted as, well, now.
+                #       something like 1950s is interpreted as the start or end of the decade depending on which side of the hyphen it's on
+                d1=Int0(date1)
+                d2=Int0(date2)
+                if date2.lower() == "present":
+                    d2=datetime.now().year+1
+                if date1[-1].lower() == "s":
+                    # This ends in "s", it must either be something like 1950s or garbage
+                    d1=Int0(date1[:-1])
+                    if d1 > 1900:
+                        d1=10*floor(d1/10)
+                # Also check date 2
+                if date2[-1].lower() == "s":
+                    # This ends in "s", it must either be something like 1950s or garbage
+                    d2=Int0(date2[:-1])
+                    if d2 > 1900:
+                        d2=10*ceil(d2/10)
+                # OK, we now change zero dates into 1900 and 2200, respectively so that zero matches everything
+                if d1 == 0:
+                    d1=1900
+                if d2 == 0:
+                    d2=2200
 
-        # Save the fanzine's uploaded values to return to the main fanzines page.
-        cfl=ClassicFanzinesLine()
-        cfl.Issues=self.Datasource.NumRows
-        cfl.Editors=self.tEditors.GetValue()
+                # Now check this against all the years in the rows.
+                icol=self.Datasource.ColHeaderIndex("year")
+                failed=False
+                if icol != -1:
+                    for row in self.Datasource.Rows:
+                        year=row[icol]
+                        # Remove question marks and interpret the rest
+                        year=year.replace("?", "")
+                        year=Int0(year)
+                        if year > 0:        # Ignore missing years
+                            if year < d1 or year > d2:
+                                failed=True
+                if failed:
+                    MessageBox("Warning: One or more of the years in the table are outside the date range given fore this fanzine.")
 
-        cfl.DisplayName=self.tFanzineName.GetValue()
-        cfl.OtherNames="??"
-        cfl.Dates=self.tDates.GetValue()
-        cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
-        cfl.Complete=self.cbComplete.GetValue()
-        if cfl.ServerDir == "":
-            cfl.ServerDir=self.tServerDirectory.GetValue()
-        cfl.LastUpdate=datetime.now()
-        cfl.TopComments=self.tTopComments.GetValue()
-        self.CFL=cfl
+            # Put the FanzineIndexPage on the server as an HTML file
+            if not self.Datasource.PutFanzineIndexPage(self.serverDir):
+                self.failure=True
+                Log("Failed\n")
+                ProgressMessage(self).Close()
+                return
+            for row in self.Datasource.Rows:
+                if row.FileSourcePath != "":
+                    ProgressMessage(self).UpdateMessage(f"Uploading file: {row.FileSourcePath}")
+                    Log(f"Uploading file: {row.FileSourcePath}")
+                    if not FTP().PutFile(row.FileSourcePath, f"/Fanzines-test/{self.serverDir}/{row.Cells[0]}"):
+                        Log("Failed\n")
+                        self.failure=True
+                        ProgressMessage(self).Close()
+                        return
+                    row.FileSourcePath=""
 
-        self._uploaded=True
-        self.MarkAsSaved()
+            Log("All uploads succeeded.")
 
-        # Once a new fanzine has been uploaded, the server directory is no longer changeable
-        self.IsNewDirectory=False
+            # Save the fanzine's uploaded values to return to the main fanzines page.
+            cfl=ClassicFanzinesLine()
+            cfl.Issues=self.Datasource.NumRows
+            cfl.Editors=self.tEditors.GetValue()
 
-        self.UpdateEnabledStatus()
-        ProgressMessage(self).Close()
+            cfl.DisplayName=self.tFanzineName.GetValue()
+            cfl.OtherNames="??"
+            cfl.Dates=self.tDates.GetValue()
+            cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
+            cfl.Complete=self.cbComplete.GetValue()
+            cfl.LastUpdate=datetime.now()
+            cfl.TopComments=self.tTopComments.GetValue()
+            self.CFL=cfl
+
+            self._uploaded=True
+            self.MarkAsSaved()
+
+            # Once a new fanzine has been uploaded, the server directory is no longer changeable
+            self.IsNewDirectory=False
+
+            self.UpdateEnabledStatus()
 
 
 
