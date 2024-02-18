@@ -477,7 +477,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 d2=Int0(date2[:-1])
                 if d2 > 1900:
                     d2=10*ceil(d2/10)
-            # OK, we now change zero dates into 1900 and 2200, respectively
+            # OK, we now change zero dates into 1900 and 2200, respectively so that zero matches everything
             if d1 == 0:
                 d1=1900
             if d2 == 0:
@@ -492,7 +492,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     # Remove question marks and interpret the rest
                     year=year.replace("?", "")
                     year=Int0(year)
-                    if year > 0:
+                    if year > 0:        # Ignore missing years
                         if year < d1 or year > d2:
                             failed=True
             if failed:
