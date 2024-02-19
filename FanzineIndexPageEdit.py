@@ -741,7 +741,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.OnGridCellRightClick(event, self.m_GridPopup)
 
         # Call the RMB handler
-        self.RMBHandler(True, event)
+        self.RMBHandler(event)
 
     # ------------------
     def OnGridLabelLeftClick(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
@@ -753,11 +753,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.OnGridCellRightClick(event, self.m_GridPopup)
 
         # Call the RMB handler
-        self.RMBHandler(False, event)
+        self.RMBHandler(event)
 
     # RMB click handling for grid and grid label clicks
-    def RMBHandler(self, isCellClick: bool, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
-        isLabelClick=not isCellClick
+    def RMBHandler(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
 
         # Everything remains disabled when we're outside the defined columns
         if self._dataGrid.clickedColumn > self.Datasource.NumCols:    # Click is outside populated columns.  The +1 is because of the split of the 1st column
