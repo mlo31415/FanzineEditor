@@ -322,7 +322,7 @@ class FanzineEditorWindow(FanzinesGridGen):
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
-
+        self._fanzinesList: ClassicFanzinesLine=[]        # This holds the linear list of fanzines that gets folded into the rectangular grid
 
         # Position the window on the screen it was on before at the size it was before
         tlwp=Settings("FanzinesEditor positions.json").Get("Top Level Window Position")
@@ -351,13 +351,12 @@ class FanzineEditorWindow(FanzinesGridGen):
             cfllist=GetFanzinesList()
             if cfllist is None or len(cfllist) == 0:
                 return
-            self._fanzinesList: list[ClassicFanzinesLine]=cfllist
-            self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())
-            self.Datasource.FanzineList=self._fanzinesList
+            cfllist.sort(key=lambda cfl: cfl.ServerDir.casefold())
+            self._fanzinesList=cfllist      # Update the linear list oif fanzines
+            self.Datasource.FanzineList=self._fanzinesList      # Update the rectangular grid of fanzine server directories
 
         self._dataGrid.HideRowLabels()
         self._dataGrid.HideColLabels()
-
 
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
 
@@ -618,7 +617,7 @@ class FanzinesPage(GridDataSource):
         self._gridDataRowClass=FanzinesPageRow
         #self._daysForUpdatedFlag=Settings().Get("How old is old", 90)
 
-        self._fanzineList:list[str]=[]
+        self._fanzineList:list[FanzinesPageRow]=[]
 
 
     def Signature(self) -> int:        # FanzinesPage(GridDataSource)
@@ -641,16 +640,19 @@ class FanzinesPage(GridDataSource):
         return numcells//self._numCols+1
 
     @property
-    def FanzineList(self) -> list[str]:
-        return self._fanzineList
+    def FanzineList(self):
+        assert False    # We don't actually ever expect to use this
     @FanzineList.setter
     def FanzineList(self, val: list[ClassicFanzinesLine]):
         self._fanzineList=val
+
+        # Update the number of rows and columns
         numrows=len(val)/self._numCols
         if len(val)%self._numCols != 0:
             numrows+=1
+
+        # Now distribute the 1-D fanzine list into the 2-D grid
         self._rows=[]
-        row=self._rows
         for i in range(len(val)):
             row=i//self._numCols
             col=i%self._numCols
