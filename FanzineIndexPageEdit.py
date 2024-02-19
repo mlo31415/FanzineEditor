@@ -1023,7 +1023,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     # A sort function which treats the input text (if it can) as NNNaaa where NNN is sorted as an integer and aaa is sorted alphabetically.  Decimal point ends NNN.
-    def PseudonumericSort(self, x: str) -> float:
+    @staticmethod
+    def PseudonumericSort(x: str) -> float:
         if IsInt(x):
             return float(int(x))
         m=re.match("([0-9]+)\.?(.*)$", x)
@@ -1040,7 +1041,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     # Sort a mailing column.  They will typically be an APA name follwoed by a mailing number, sometimes sollowed by a letter
-    def MailingSort(self, h: str) -> int:
+    @staticmethod
+    def MailingSort(h: str) -> int:
         if len(h.strip()) == 0:
             return 0
         # First, strip the surrounding HTML
@@ -1442,7 +1444,8 @@ class FanzineIndexPage(GridDataSource):
             self._fanzineList.insert(insertat+i, ftr)
 
 
-    def SelectNonNavigableStrings(self, soupstuff) -> list:        # FanzineIndexPage(GridDataSource)
+    @staticmethod
+    def SelectNonNavigableStrings(soupstuff) -> list:        # FanzineIndexPage(GridDataSource)
         return [x for x in soupstuff if type(x) is not bs4.element.NavigableString]
 
 
