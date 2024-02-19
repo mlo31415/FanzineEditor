@@ -426,6 +426,10 @@ class FanzineEditorWindow(FanzinesGridGen):
 
 
     def OnSearchText(self, event):       # FanzineEditor(FanzineGrid)
+        self.SearchFanzineList()
+
+
+    def SearchFanzineList(self):       # FanzineEditor(FanzineGrid)
         searchtext=self.tSearch.GetValue()
         if searchtext != "":
             fanzinelist=[x for x in self._fanzinesList if searchtext.casefold().replace("_", " ") in x.ServerDir.casefold().replace("_", " ") or searchtext.casefold() in x.DisplayName.casefold()]
@@ -455,6 +459,7 @@ class FanzineEditorWindow(FanzinesGridGen):
         self._fanzinesList.append(fsw.CFL)
         self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())
         self.Datasource.FanzineList=self._fanzinesList
+        self.SearchFanzineList()
         self.RefreshWindow()
 
 
