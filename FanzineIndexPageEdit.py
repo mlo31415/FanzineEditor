@@ -759,7 +759,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def RMBHandler(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
 
         # Everything remains disabled when we're outside the defined columns
-        if self._dataGrid.clickedColumn > self.Datasource.NumCols:    # Click is outside populated columns.  The +1 is because of the split of the 1st column
+        if self._dataGrid.clickedColumn > self.Datasource.NumCols:    # Click is outside populated columns.
             return
         if self._dataGrid.clickedRow > self.Datasource.NumRows:      # Click is outside the populated rows
             return
