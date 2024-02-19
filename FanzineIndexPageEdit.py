@@ -855,7 +855,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     # ------------------
     # Extract 'scanned by' information from the Notes column, if any
-    def ExtractScanner(self, col):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def ExtractScannerFromNotes(self):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
 
         if "Notes" not in self.Datasource.ColDefs:
             return
@@ -1073,7 +1073,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     def OnPopupExtractScanner(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self.wxGrid.SaveEditControlValue()
-        self.ExtractScanner(self.Datasource.ColDefs.index("Notes"))
+        self.ExtractScannerFromNotes()
         self.RefreshWindow()
 
     def OnPopupTidyUpColumns(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
