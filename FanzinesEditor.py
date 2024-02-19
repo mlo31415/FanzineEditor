@@ -505,6 +505,7 @@ class FanzineEditorWindow(FanzinesGridGen):
     # Upload the fanzines list to the classic fanzine page
     def OnUploadPressed( self, event ):       # FanzineEditor(FanzineGrid)
         PutClassicFanzineList(self._fanzinesList)
+        self.MarkAsSaved()
 
 
     # ------------------
