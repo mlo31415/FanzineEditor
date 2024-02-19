@@ -909,26 +909,32 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
 
+
     def OnPopupCopy(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self._dataGrid.OnPopupCopy(event) # Pass event to WxDataGrid to handle
         self.RefreshWindow(DontRefreshGrid=True)
+
 
     def OnPopupPaste(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self._dataGrid.OnPopupPaste(event) # Pass event to WxDataGrid to handle
         self.RefreshWindow()
 
+
     def OnPopupEraseSelection(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self._dataGrid.OnPopupEraseSelection(event) # Pass event to WxDataGrid to handle
         self.RefreshWindow()
+
 
     def OnPopupDelCol(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         if self.Datasource.Element.CanDeleteColumns:
             self._dataGrid.DeleteSelectedColumns() # Pass event to WxDataGrid to handle
         self.RefreshWindow()
 
+
     def OnPopupDelRow(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self._dataGrid.DeleteSelectedRows() # Pass event to WxDataGrid to handle
         self.RefreshWindow()
+
 
     def OnPopupInsertRow(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         irow=self._dataGrid.clickedRow
@@ -941,6 +947,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.Datasource.Rows=rows
         self.RefreshWindow()
 
+
     def OnPopupRenameCol(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self._dataGrid.OnPopupRenameCol(event) # Pass event to WxDataGrid to handle
 
@@ -952,6 +959,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.Datasource.ColDefs[icol]=gStdColHeaders[cd.Name]
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
+
 
     # Merge a PDF into a previously non-PDF line
     def OnPopupMerge(self, event):
@@ -973,6 +981,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.Grid.ClearSelection()
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
+
 
     # Clear links in the selected row
     def OnPopupClearAllLinks(self, event):
@@ -1028,6 +1037,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             dec+=ord(j)/(256**pos)      # Convert the trailing junk into ascii numbers and divide by 256 to create a float which sorts in the same order
             pos+=1
         return int(m.groups()[0])+dec
+
 
     # Sort a mailing column.  They will typically be an APA name follwoed by a mailing number, sometimes sollowed by a letter
     def MailingSort(self, h: str) -> int:
