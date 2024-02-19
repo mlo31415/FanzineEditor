@@ -453,9 +453,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             Log(f"Uploading Fanzine Index Page: {self.serverDir}")
             self.failure=False
 
-            # If this is a new fanzine, it's being uploaded to a new server directory and we must get it from the server directory field
-            if self.serverDir == "":
-                self.serverDir=self.tServerDirectory.GetValue()
+            self.serverDir=self.tServerDirectory.GetValue()
 
             # If this is a new fanzine, it needs to be in a new directory.  Check it.
             if self.IsNewDirectory:
