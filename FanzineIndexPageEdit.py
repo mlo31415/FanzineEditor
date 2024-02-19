@@ -1056,7 +1056,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def OnPopupSortOnSelectedColumn(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self.wxGrid.SaveEditControlValue()
         # We already know that only a single column is selected because that's the only time this menu item is enabled and can be called
-        _, col, _, _=self._dataGrid.SelectionBoundingBox()
+        col=self._dataGrid.clickedColumn
         # If the column consists on thong but empty cells and numbers, we do a special numerical sort.
         testIsInt=all([(x[col] == "" or IsInt(x[col])) for x in self.Datasource.Rows])
         if testIsInt:
