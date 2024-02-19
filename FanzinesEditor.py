@@ -665,7 +665,7 @@ class FanzinesPage(GridDataSource):
     def __getitem__(self, index: int) -> FanzinesPageRow:        # FanzinesPage(GridDataSource)
         return self.Rows[index]
 
-    def __setitem__(self, index: int, val: str) -> None:        # FanzinesPage(GridDataSource)
+    def __setitem__(self, index: int, val: FanzinesPageRow) -> None:        # FanzinesPage(GridDataSource)
         self._fanzineList[index]=val
 
     def CanAddColumns(self) -> bool:        # FanzinesPage(GridDataSource)
