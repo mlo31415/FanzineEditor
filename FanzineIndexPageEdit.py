@@ -155,7 +155,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 self._dataGrid.AppendRows(self.Datasource.NumRows)
 
         # Read in the table of local directory to server directory equivalences
-        l2slines: list[str]=[]
         with open("ServerToLocal Conversion.txt", "r") as f:
             l2sLines=f.readlines()
         self.serverNameList: list[str]=[]
@@ -1534,7 +1533,7 @@ class FanzineIndexPage(GridDataSource):
         rows: list[list[str]]=[]
         if len(theRows) > 1:
             for thisrow in theRows[1:]:
-                row=[]
+
                 cols=thisrow.findAll("td")
                 # We treat column 0 specially, extracting its hyperref and turning it into two
                 cols0=str(cols[0])
@@ -1548,7 +1547,6 @@ class FanzineIndexPage(GridDataSource):
 
         for row in rows:
             self.Rows.append(FanzineIndexPageTableRow(self._colDefs, row) )
-        i=0
 
         credits="(not found)"
         loc=bodytext.rfind("</table>")
@@ -1680,7 +1678,6 @@ class FanzineIndexPage(GridDataSource):
     # Using the fanzine index page template, create a page and upload it.
     def PutFanzineIndexPage(self, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
 
-        output=""
         if not os.path.exists("Template - Fanzine Index Page.html"):
             LogError(f"PutFanzineIndexPage() can't find ';'Template - Fanzine Index Page.html' at {os.path.curdir}")
             return False
