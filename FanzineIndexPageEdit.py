@@ -741,7 +741,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.OnGridCellRightClick(event, self.m_GridPopup)
 
         # Call the RMB handler
-        self.RMBHandler(event)
+        self.RMBHandler(event, True)
 
     # ------------------
     def OnGridLabelLeftClick(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
@@ -753,10 +753,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.OnGridCellRightClick(event, self.m_GridPopup)
 
         # Call the RMB handler
-        self.RMBHandler(event)
+        self.RMBHandler(event, False)
+
 
     # RMB click handling for grid and grid label clicks
-    def RMBHandler(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def RMBHandler(self, event, isGridCellClick: bool):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
 
         # Everything remains disabled when we're outside the defined columns
         if self._dataGrid.clickedColumn > self.Datasource.NumCols:    # Click is outside populated columns.
@@ -781,6 +782,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     not self.Datasource.Rows[top][0].lower().endswith(".pdf") and self.Datasource.Rows[bottom][0].lower().endswith(".pdf"):
                     # Enable Merge if exactly two rows are highlighted and if exactly one of them is a PDF
                     Enable("Merge")
+
+        if not isGridCellClick:
+            Enable("Sort on Selected Column") # It's a label click, so sorting on gthe column is always OK
 
         if self._dataGrid.clipboard is not None:
             Enable("Paste")
