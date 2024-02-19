@@ -65,7 +65,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.failure=True
 
         # IsNewDirectory True means this FIP is newly created and has not yet been uploaded.
-        # We can tell because an existing fanzine must be opened by supplying a server diretcory, while for a new anzine, g]the server direectory must be the empty string
+        # We can tell because an existing fanzine must be opened by supplying a server directory, while for a new fanzine, the server directory must be the empty string
         # Some fields are editable only for new fanzines (which will be in new server directories, allowing some things to be set for the first time.).
         self.IsNewDirectory=False
         if serverDir == "":
@@ -454,7 +454,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             Log(f"Uploading Fanzine Index Page: {self.serverDir}")
             self.failure=False
 
-            # If this is a new fanzine, it's being uploaded to a new server directory and we must get it fri=om the server directory field
+            # If this is a new fanzine, it's being uploaded to a new server directory and we must get it from the server directory field
             if self.serverDir == "":
                 self.serverDir=self.tServerDirectory.GetValue()
 
@@ -897,7 +897,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if m is not None:
                 # Append the matched name to scanned
                 if len(row[scannedCol]) > 0:
-                    row[scannedCol]+="; "     # Use a semi-colon separator if there was already something there
+                    row[scannedCol]+="; "     # Use a semicolon separator if there was already something there
                 row[scannedCol]+=m.groups()[0]
 
                 note=re.sub(pattern, "", note)  # Delete the matched text from the note
