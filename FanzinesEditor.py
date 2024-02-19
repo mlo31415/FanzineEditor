@@ -245,7 +245,6 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
 
 
 def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
-    output=""
     if not os.path.exists("Template - Classic_Fanzines.html"):
         LogError(f"PutFanzineIndexPage() can't find 'Template - Classic_Fanzines.html' at {os.path.curdir}")
         return False
