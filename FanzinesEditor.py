@@ -448,6 +448,7 @@ class FanzineEditorWindow(FanzinesGridGen):
         if fsw.failure:
             MessageBox(f"Unable to load new fanzine window", Title="Loading Fanzine Index page", ignoredebugger=True)
             Log(f"FanzineIndexPageWindow('') failed")
+            return
 
         with FanzineIndexPageWindow(None) as fsw:
             fsw.ShowModal()
