@@ -533,6 +533,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             cfl=ClassicFanzinesLine()
             cfl.Issues=self.Datasource.NumRows
             cfl.Editors=self.tEditors.GetValue()
+            cfl.ServerDir=self.tServerDirectory.GetValue()
 
             cfl.DisplayName=self.tFanzineName.GetValue()
             cfl.OtherNames="??"
