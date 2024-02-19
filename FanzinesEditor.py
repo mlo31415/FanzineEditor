@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMsg
 from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll, ExtractInvisibleTextInsideFanacComment
-from HelpersPackage import InsertHTMLUsingFanacComments, UnicodeToHtml, StripSpecificTag
+from HelpersPackage import InsertHTMLUsingFanacComments, UnicodeToHtml, StripSpecificTag, Int0
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
@@ -278,7 +278,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
         udate=fanzine.LastUpdate.DaysBeforeNow()
         updatedFlag=False
         if udate is not None:
-            updatedFlag=udate < Settings().Get("How old is old", 90)
+            updatedFlag=udate < Int0(Settings().Get("How old is old", 90))
 
         flagged=fanzine.Complete or updatedFlag
         if not flagged:
