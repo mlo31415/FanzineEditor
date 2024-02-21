@@ -43,7 +43,11 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		bSizerMain = wx.BoxSizer( wx.VERTICAL )
 
-		fgSizer4 = wx.FlexGridSizer( 3, 8, 0, 0 )
+		fgSizer8 = wx.FlexGridSizer( 0, 2, 0, 0 )
+		fgSizer8.SetFlexibleDirection( wx.BOTH )
+		fgSizer8.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		fgSizer4 = wx.FlexGridSizer( 2, 6, 0, 0 )
 		fgSizer4.SetFlexibleDirection( wx.BOTH )
 		fgSizer4.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
@@ -60,20 +64,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.tFanzineName.SetMinSize( wx.Size( 200,-1 ) )
 
 		fgSizer4.Add( self.tFanzineName, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.FIXED_MINSIZE, 0 )
-
-		self.m_staticText5 = wx.StaticText( self, wx.ID_ANY, u"Editor(s):", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText5.Wrap( -1 )
-
-		self.m_staticText5.SetMinSize( wx.Size( 200,-1 ) )
-		self.m_staticText5.SetMaxSize( wx.Size( -1,50 ) )
-
-		fgSizer4.Add( self.m_staticText5, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL|wx.FIXED_MINSIZE, 5 )
-
-		self.tEditors = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.tEditors.SetToolTip( u"A list of editors separated by commans." )
-		self.tEditors.SetMinSize( wx.Size( 250,-1 ) )
-
-		fgSizer4.Add( self.tEditors, 0, wx.ALL, 5 )
 
 		self.m_staticText6 = wx.StaticText( self, wx.ID_ANY, u"Dates:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText6.Wrap( -1 )
@@ -113,7 +103,30 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		fgSizer4.Add( self.cbAlphabetizeIndividually, 0, wx.ALL, 5 )
 
 
-		bSizerMain.Add( fgSizer4, 0, wx.EXPAND, 5 )
+		fgSizer8.Add( fgSizer4, 0, wx.EXPAND, 5 )
+
+		fgSizer9 = wx.FlexGridSizer( 2, 2, 0, 0 )
+		fgSizer9.SetFlexibleDirection( wx.BOTH )
+		fgSizer9.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.m_staticText5 = wx.StaticText( self, wx.ID_ANY, u"          Editor(s): \n   (one per line) ", wx.Point( -1,-1 ), wx.DefaultSize, 0 )
+		self.m_staticText5.Wrap( -1 )
+
+		self.m_staticText5.SetMaxSize( wx.Size( -1,50 ) )
+
+		fgSizer9.Add( self.m_staticText5, 0, wx.ALIGN_RIGHT|wx.ALIGN_TOP|wx.FIXED_MINSIZE, 5 )
+
+		self.tEditors = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE )
+		self.tEditors.SetToolTip( u"A list of editors separated by commans." )
+		self.tEditors.SetMinSize( wx.Size( 300,80 ) )
+
+		fgSizer9.Add( self.tEditors, 0, wx.ALIGN_TOP|wx.EXPAND, 5 )
+
+
+		fgSizer8.Add( fgSizer9, 0, wx.EXPAND, 5 )
+
+
+		bSizerMain.Add( fgSizer8, 0, wx.EXPAND, 5 )
 
 		fgSizer6 = wx.FlexGridSizer( 1, 4, 0, 0 )
 		fgSizer6.SetFlexibleDirection( wx.BOTH )
@@ -220,7 +233,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		bSizerMain.Add( theIssueGrid, 1, wx.EXPAND, 5 )
 
 
-		bSizer5.Add( bSizerMain, 1, wx.EXPAND, 5 )
+		bSizer5.Add( bSizerMain, 0, wx.EXPAND, 5 )
 
 
 		self.SetSizer( bSizer5 )
@@ -290,11 +303,11 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.bExit.Bind( wx.EVT_BUTTON, self.OnClose )
 		self.tFanzineName.Bind( wx.EVT_CHAR, self.OnFanzineNameChar )
 		self.tFanzineName.Bind( wx.EVT_TEXT, self.OnFanzineNameText )
-		self.tEditors.Bind( wx.EVT_TEXT, self.OnEditorsText )
 		self.tDates.Bind( wx.EVT_TEXT, self.OnDatesTexts )
 		self.tFanzineType.Bind( wx.EVT_CHOICE, self.OnFanzineTypeSelect )
 		self.cbComplete.Bind( wx.EVT_CHECKBOX, self.OnCheckComplete )
 		self.cbAlphabetizeIndividually.Bind( wx.EVT_CHECKBOX, self.OnCheckAlphabetizeIndividually )
+		self.tEditors.Bind( wx.EVT_TEXT, self.OnEditorsText )
 		self.tServerDirectory.Bind( wx.EVT_CHAR, self.OnServerDirectoryChar )
 		self.tServerDirectory.Bind( wx.EVT_TEXT, self.OnServerDirectoryText )
 		self.tLocalDirectory.Bind( wx.EVT_CHAR, self.OnLocalDirectoryChar )
@@ -353,9 +366,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnFanzineNameText( self, event ):
 		event.Skip()
 
-	def OnEditorsText( self, event ):
-		event.Skip()
-
 	def OnDatesTexts( self, event ):
 		event.Skip()
 
@@ -366,6 +376,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnCheckAlphabetizeIndividually( self, event ):
+		event.Skip()
+
+	def OnEditorsText( self, event ):
 		event.Skip()
 
 	def OnServerDirectoryChar( self, event ):
