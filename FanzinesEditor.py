@@ -476,7 +476,7 @@ class FanzineEditorWindow(FanzinesGridGen):
         url=self._Datasource.Rows[event.Row][event.Col]
         with FanzineIndexPageWindow(None, url) as fsw:
             if fsw.failure:
-                MessageBox(f"Unable to load {url}", Title="Loading Fanzine Index page", ignoredebugger=True)
+                wx.MessageBox(f"Unable to load {url}", caption="Loading Fanzine Index page", parent=self)
                 Log(f"FanzineIndexPageWindow('{url}') failed")
                 return
             fsw.ShowModal()

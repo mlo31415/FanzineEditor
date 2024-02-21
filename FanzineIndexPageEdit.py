@@ -459,7 +459,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if self.IsNewDirectory:
                 path=f"/Fanzines-test/{self.serverDir}"
                 if FTP().PathExists(path):
-                    MessageBox(f"'Directory {path}' already exists.  Please change the server directory name.")
+                    wx.MessageBox(f"'Directory {path}' already exists.  Please change the server directory name.", parent=self)
                     self.failure=True
                     return
 
@@ -510,7 +510,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             if year < d1 or year > d2:
                                 failed=True
                 if failed:
-                    MessageBox("Warning: One or more of the years in the table are outside the date range given fore this fanzine.")
+                    wx.MessageBox("Warning: One or more of the years in the table are outside the date range given fore this fanzine.", parent=self)
 
             # Put the FanzineIndexPage on the server as an HTML file
             if not self.Datasource.PutFanzineIndexPage(self.serverDir):
