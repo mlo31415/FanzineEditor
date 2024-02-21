@@ -1594,12 +1594,16 @@ class FanzineIndexPage(GridDataSource):
         return self._Editors
     @Editors.setter
     def Editors(self, val):
+        v=val
         if type(val) is list:
             if len(val) == 1:
-                val=val[0]
+                v=val[0]
             else:
-                val=", ".join(val)
-        self._Editors=val
+                v=", ".join(val)
+        elif ", " in val:
+            v="\n".join([x.strip() for x in val.split(", ")])
+
+        self._Editors=v
 
 
     def GetFanzineIndexPageNew(self, html: str, version: str) -> bool:
@@ -1614,7 +1618,7 @@ class FanzineIndexPage(GridDataSource):
         if len(topstuff) != 4:
             topstuff+=["","","",""]
         self.FanzineName=topstuff[0]
-        self.Editors=topstuff[1]
+        self.Editors=topstuff[1].replace(",", "\n")
         self.Dates=topstuff[2]
         self.FanzineType=topstuff[3]
 
@@ -1696,7 +1700,8 @@ class FanzineIndexPage(GridDataSource):
         with open("Template - Fanzine Index Page.html") as f:
             output=f.read()
 
-        insert=f"{self.FanzineName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
+        eds=", ".join([x.strip() for x in self.Editors.split("\n")])
+        insert=f"{self.FanzineName}<BR><H2>{eds}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
         temp=InsertHTMLUsingFanacComments(output, "header", insert)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('header')")
