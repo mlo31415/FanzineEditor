@@ -511,82 +511,6 @@ class LogDialog ( wx.Dialog ):
 
 
 ###########################################################################
-## Class NewFanzineDialogGen
-###########################################################################
-
-class NewFanzineDialogGen ( wx.Dialog ):
-
-	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = u"Create a New Fanzine Directory", pos = wx.DefaultPosition, size = wx.Size( 435,152 ), style = wx.DEFAULT_DIALOG_STYLE )
-
-		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
-
-		fgSizer5 = wx.FlexGridSizer( 3, 1, 0, 0 )
-		fgSizer5.SetFlexibleDirection( wx.BOTH )
-		fgSizer5.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
-
-		gSizer4 = wx.GridSizer( 3, 2, 0, 0 )
-
-		self.m_staticText111 = wx.StaticText( self, wx.ID_ANY, u"Fanzine name:", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText111.Wrap( -1 )
-
-		gSizer4.Add( self.m_staticText111, 0, wx.ALIGN_RIGHT|wx.ALL, 5 )
-
-		self.tFanzineName = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.tFanzineName.SetMinSize( wx.Size( 200,-1 ) )
-
-		gSizer4.Add( self.tFanzineName, 0, wx.ALL, 5 )
-
-		self.m_staticText11 = wx.StaticText( self, wx.ID_ANY, u"Local directory name:", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText11.Wrap( -1 )
-
-		gSizer4.Add( self.m_staticText11, 0, wx.ALIGN_RIGHT|wx.ALL, 5 )
-
-		self.tDirName = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.tDirName.SetMinSize( wx.Size( 200,-1 ) )
-
-		gSizer4.Add( self.tDirName, 0, wx.ALL, 5 )
-
-		self.bCreate = wx.Button( self, wx.ID_ANY, u"Create", wx.DefaultPosition, wx.DefaultSize, 0 )
-		gSizer4.Add( self.bCreate, 0, wx.ALIGN_RIGHT|wx.ALL, 5 )
-
-		self.bCancel = wx.Button( self, wx.ID_ANY, u"Cancel", wx.DefaultPosition, wx.DefaultSize, 0 )
-		gSizer4.Add( self.bCancel, 0, wx.ALIGN_LEFT|wx.ALL, 5 )
-
-
-		fgSizer5.Add( gSizer4, 1, wx.EXPAND, 5 )
-
-
-		self.SetSizer( fgSizer5 )
-		self.Layout()
-
-		self.Centre( wx.BOTH )
-
-		# Connect Events
-		self.tFanzineName.Bind( wx.EVT_CHAR, self.OnCharFanzine )
-		self.tFanzineName.Bind( wx.EVT_TEXT, self.OnTextFanzine )
-		self.bCreate.Bind( wx.EVT_BUTTON, self.OnCreate )
-		self.bCancel.Bind( wx.EVT_BUTTON, self.OnCancel )
-
-	def __del__( self ):
-		pass
-
-
-	# Virtual event handlers, override them in your derived class
-	def OnCharFanzine( self, event ):
-		event.Skip()
-
-	def OnTextFanzine( self, event ):
-		event.Skip()
-
-	def OnCreate( self, event ):
-		event.Skip()
-
-	def OnCancel( self, event ):
-		event.Skip()
-
-
-###########################################################################
 ## Class FanzinesGridGen
 ###########################################################################
 
@@ -724,5 +648,3 @@ class FanzinesGridGen ( wx.Frame ):
 
 	def OnGridCellRightClick( self, event ):
 		event.Skip()
-
-
