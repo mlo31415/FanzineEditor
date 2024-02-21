@@ -610,10 +610,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             event.Skip()
             return
 
-        fname=AddChar(self.tFanzineName.GetValue(), event.GetKeyCode())
-        self.tFanzineName.SetValue(fname)
-        self.tFanzineName.SetInsertionPoint(999)    # Make sure the cursor stays at the end of the string
-
         # Requests from Edie:
         # Suppress leading articles, eg The or A
         # Remove non-letter characters, eg apostrophes or commas
@@ -621,6 +617,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Spaces around dashes suppressed (eg fanzine title of: Bangsund - Other Publications)
         # Ability to manually add text to the server and local directories (eg fanzine title: Cinder ; server directory Cinder-Williams)
         # Ability to manually delete text for the server and local directories (eg fanzine title: Prolapse / Relapse ; server directory Prolapse)
+
+        fname=self.tFanzineName.GetValue()
 
         # Compute the Server Directory name from the fanzine directory name if the user has not taken over editing of that field
         if not self._manualEntryOfServerDirectoryName:
@@ -650,6 +648,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             lname=lname.strip("_")  # Do not start or end names with underscores
             lname=lname.upper()
             self.tLocalDirectory.SetValue(lname)
+        event.Skip()
 
 
     def OnFanzineNameText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
