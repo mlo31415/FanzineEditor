@@ -131,6 +131,8 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
     # Process each of the columns
     namelist: list[ClassicFanzinesLine]=[]
     for row in rowtable:
+        if len(row) == 0:
+            continue
         if "<form action=" in row[0]:    # I don't know where this is coming from (this shows up as the last row, but does not appear on the website)>
             continue
 
