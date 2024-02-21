@@ -515,6 +515,9 @@ class FanzineEditorWindow(FanzinesGridGen):
         row=self._dataGrid.clickedRow
         col=self._dataGrid.clickedColumn
         type=self._dataGrid.clickType
+        if row is None or col is None or type is None:
+            wx.MessageBox("No fanzine selected for deletion.", parent=self)
+            return
         if type == "left":
             fanzine=self._dataGrid.Datasource.Rows[row][col]
 
