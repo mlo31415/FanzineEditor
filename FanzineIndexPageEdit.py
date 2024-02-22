@@ -72,7 +72,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.IsNewDirectory=True
         self.serverDir=serverDir
 
-        self._manualEntryOfServerDirectoryName=False
+        self._AllowFanzineNameEdit=False
+        self._allowEditOfServerDirectoryName=self.IsNewDirectory        # Is the user allowed to edit the fanzine name? On pressing the edit button, can be true even when not a new fanzine.
         self._manualEntryOfLocalDirectoryName=False
         self._uploaded=False
 
@@ -190,7 +191,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def ColorAndEnableFields(self):                      # FanzineIndexPageWindow(FanzineIndexPageEditGen)
 
         # Some things are turned on for both editing an old FIP and creating a new one
-        self.tFanzineName.SetEditable(True)
         self.tEditors.SetEditable(True)
         self.tDates.SetEditable(True)
         self.tFanzineType.Enabled=True
@@ -211,10 +211,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # The Upload button is enabled only if sufficient information is present
         self.bUpload.Enabled=False
         if len(self.tServerDirectory.GetValue()) > 0 and len(self.tLocalDirectory.GetValue()) > 0 and len(self.tFanzineName.GetValue()) > 0:
-            # This is definitely not enough!!s
+            # This is definitely not enough!!
             self.bUpload.Enabled=True
 
-        self.tFanzineName.Enabled=self.IsNewDirectory
+        self.tFanzineName.Enabled=self.IsNewDirectory or self._allowEditOfServerDirectoryName
+        self.tFanzineName.SetEditable(True)
 
         # On an old directory, we always have a target defined, so we can always add new issues
         self.bAddNewIssues.Enable(True)
@@ -303,10 +304,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
 
+
     #--------------------------
     # Allow user to change the fanzine's name
     def OnEditFanzineNameClicked(self, event):
         self.tFanzineName.Enabled=True
+        self._allowEditOfServerDirectoryName=True
 
 
     #--------------------------
@@ -549,6 +552,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             # Once a new fanzine has been uploaded, the server directory is no longer changeable
             self.IsNewDirectory=False
+            self._allowEditOfServerDirectoryName=False
 
             self.UpdateEnabledStatus()
 
@@ -606,9 +610,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     # This method updates the local directory name by computing it from the fanzine name.  It only applies when creating a new fanzine index page
     def OnFanzineNameChar(self, event):
-        if not self.IsNewDirectory:
-            event.Skip()
-            return
 
         # Requests from Edie:
         # Suppress leading articles, eg The or A
@@ -621,7 +622,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         fname=self.tFanzineName.GetValue()
 
         # Compute the Server Directory name from the fanzine directory name if the user has not taken over editing of that field
-        if not self._manualEntryOfServerDirectoryName:
+        if self.tServerDirectory.IsEditable() and not self._allowEditOfServerDirectoryName:
             # Strip leading "The", etc
             sname=RemoveArticles(fname).strip()
             if len(sname) > 0:
@@ -641,13 +642,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     sname="_".join(sname)
             self.tServerDirectory.SetValue(sname)
 
-        if not self._manualEntryOfLocalDirectoryName:
+        if self.tLocalDirectory.IsEditable() and not self._manualEntryOfLocalDirectoryName:
             # Strip leading "The", etc
             lname=RemoveArticles(fname).strip()
             lname=re.sub("[^a-zA-Z0-9-]+", "_", lname)  # Replace all spans of not-listed chars with underscore
             lname=lname.strip("_")  # Do not start or end names with underscores
             lname=lname.upper()
             self.tLocalDirectory.SetValue(lname)
+
+        # Now do routine character handling
         event.Skip()
 
 
@@ -664,7 +667,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tServerDirectory.SetValue(fname)
         self.tServerDirectory.SetInsertionPoint(cursorloc)
 
-        self._manualEntryOfServerDirectoryName=True
+        self._allowEditOfServerDirectoryName=True
         return
 
 

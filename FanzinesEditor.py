@@ -485,23 +485,14 @@ class FanzineEditorWindow(FanzinesGridGen):
             if fsw.CFL is not None:
                 cfl: ClassicFanzinesLine=self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]
                 # Copy the new vales in
-                if cfl.Editors != fsw.CFL.Editors:
-                    cfl.Editors=fsw.CFL.Editors
-
-                if cfl.Dates != fsw.CFL.Dates:
-                    cfl.Dates=fsw.CFL.Dates
-
-                if cfl.Issues != fsw.CFL.Issues:
-                    cfl.Issues=fsw.CFL.Issues
-
-                if cfl.DisplayName!= fsw.CFL.DisplayName:
-                    cfl.DisplayName=fsw.CFL.DisplayName
-
-                if cfl.Complete != fsw.CFL.Complete:
-                    cfl.Complete=fsw.CFL.Complete
-
-                if cfl.LastUpdate != fsw.CFL.LastUpdate:
-                    cfl.LastUpdate=fsw.CFL.LastUpdate
+                cfl.Editors=fsw.CFL.Editors
+                cfl.DisplayName=fsw.CFL.DisplayName
+                cfl.Dates=fsw.CFL.Dates
+                cfl.Issues=fsw.CFL.Issues
+                cfl.DisplayName=fsw.CFL.DisplayName
+                cfl.Complete=fsw.CFL.Complete
+                cfl.LastUpdate=fsw.CFL.LastUpdate
+                self.RefreshWindow()
 
     #-------------------
     # Upload the fanzines list to the classic fanzine page
