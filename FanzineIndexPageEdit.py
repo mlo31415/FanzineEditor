@@ -658,8 +658,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             lname=lname.upper()
             self.tLocalDirectory.SetValue(lname)
 
-        # Now do routine character handling
-        event.Skip()
+
 
 
     def OnFanzineNameText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
