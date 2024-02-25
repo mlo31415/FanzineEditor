@@ -56,7 +56,7 @@ class LastUpdateDate:
 
 
 #==========================================================================================================
-# A class to holdthe information in a single like of the classic Fanzines page
+# A class to hold the information in a single like of the classic Fanzines page
 class ClassicFanzinesLine:
 
     def __init__(self, cfl=None):
