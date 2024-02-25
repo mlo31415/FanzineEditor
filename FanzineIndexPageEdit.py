@@ -537,7 +537,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # Save the fanzine's uploaded values to return to the main fanzines page.
             cfl=ClassicFanzinesLine()
             cfl.Issues=self.Datasource.NumRows
-            cfl.Editors=self.tEditors.GetValue()
+            cfl.Editors=self.tEditors.GetValue().replace("\n", "<br>")
             cfl.ServerDir=self.tServerDirectory.GetValue()
 
             cfl.DisplayName=self.tFanzineName.GetValue()
@@ -1627,7 +1627,7 @@ class FanzineIndexPage(GridDataSource):
         if len(topstuff) != 4:
             topstuff+=["","","",""]
         self.FanzineName=topstuff[0]
-        self.Editors=topstuff[1].replace(",", "\n")
+        self.Editors="\n".join([x.strip() for x in topstuff[1].split(",")])
         self.Dates=topstuff[2]
         self.FanzineType=topstuff[3]
 
