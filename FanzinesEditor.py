@@ -591,15 +591,15 @@ class FanzinesPageRow(GridDataRowClass):
 
 
     def __getitem__(self, index: int | slice) -> str | list[str]:      # FanzineTableRow(GridDataRowClass)
-        if type(index) is int:
+        if isinstance(index, int):
             return self._cells[index]
-        if type(index) is slice:
+        if isinstance(index, slice):
             return self._cells[index]
             #return self._cells(self.List[index])
         raise KeyError
 
     def __setitem__(self, index: str | int | slice, value: str | int | bool) -> None:      # FanzineTableRow(GridDataRowClass)
-        if type(index) is int:
+        if isinstance(index, int):
             self._cells[index]=value
             return
         raise KeyError
