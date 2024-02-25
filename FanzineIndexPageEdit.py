@@ -627,10 +627,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Ability to manually add text to the server and local directories (eg fanzine title: Cinder ; server directory Cinder-Williams)
         # Ability to manually delete text for the server and local directories (eg fanzine title: Prolapse / Relapse ; server directory Prolapse)
 
+        # Pick up the current value of the fanzine name field
         fname=self.tFanzineName.GetValue()
 
         # Compute the Server Directory name from the fanzine directory name if the user has not taken over editing of that field
-        if self.tServerDirectory.IsEditable() and not self._manualEditOfServerDirectoryNameBegun:
+        if self.tServerDirectory.Enabled and not self._manualEditOfServerDirectoryNameBegun:
             # Strip leading "The", etc
             sname=RemoveArticles(fname).strip()
             if len(sname) > 0:
@@ -650,7 +651,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     sname="_".join(sname)
             self.tServerDirectory.SetValue(sname)
 
-        if self.tLocalDirectory.IsEditable() and not self._manualEditOfLocalDirectoryNameBegun:
+        if self.tLocalDirectory.Enabled and not self._manualEditOfLocalDirectoryNameBegun:
             # Strip leading "The", etc
             lname=RemoveArticles(fname).strip()
             lname=re.sub("[^a-zA-Z0-9-]+", "_", lname)  # Replace all spans of not-listed chars with underscore
