@@ -24,11 +24,11 @@ class LastUpdateDate:
 
     # Turn any input value into the proper internal format
     def Set(self, val: datetime|str|None) -> datetime|None:
-        if type(val) is datetime:
+        if isinstance(val, datetime):
             return val
         if val is None:
             return None
-        if type(val) is str:    # Required format: 'September 27, 1977' or empty string
+        if isinstance(val, str):    # Required format: 'September 27, 1977' or empty string
             if val == "":
                 return None
             else:
@@ -211,6 +211,6 @@ class ClassicFanzinesLine:
         return self._lastupdate
     @LastUpdate.setter
     def LastUpdate(self, val: LastUpdateDate|datetime):
-        if type(val) is datetime:
+        if isinstance(val, datetime):
             val=LastUpdateDate(val)
         self._lastupdate=val

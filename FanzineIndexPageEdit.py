@@ -1321,14 +1321,14 @@ class FanzineIndexPageTableRow(GridDataRowClass):
     #def GetVal(self, name: Union[str, int]) -> Union[str, int]:
     def __getitem__(self, index: str | int | slice) -> str | list[str]:        # FanzineTableRow(GridDataRowClass)
 
-        if type(index) is int:
+        if isinstance(index, int):
             if index < 0 or  index >= len(self._cells):
                 raise IndexError
             return self._cells[index]
 
-        assert type(index) is not slice
+        assert not isinstance(index, slice)
 
-        assert type(index) is str
+        assert isinstance(index, str)
 
         index=CanonicizeColumnHeaders(index)
         if index not in self._tableColdefs:
@@ -1340,18 +1340,18 @@ class FanzineIndexPageTableRow(GridDataRowClass):
 
     #def SetVal(self, nameOrCol: Union[str, int], val: Union[str, int]) -> None:
     def __setitem__(self, index: str | int | slice, value: str | int) -> None:        # FanzineTableRow(GridDataRowClass)
-        if type(value) is int:
+        if isinstance(value, int):
             value=str(value)    # All data is stored as strings
 
-        if type(index) is int:
+        if isinstance(index, int):
             if index < 0 or  index >= len(self._cells):
                 raise IndexError
             self._cells[index]=value
             return
 
-        assert type(index) is not slice
+        assert not isinstance(index, slice)
 
-        assert type(index) is str
+        assert isinstance(index, str)
 
         index=CanonicizeColumnHeaders(index)
         if index not in self._tableColdefs:
@@ -1460,7 +1460,7 @@ class FanzineIndexPage(GridDataSource):
 
     @staticmethod
     def SelectNonNavigableStrings(soupstuff) -> list:        # FanzineIndexPage(GridDataSource)
-        return [x for x in soupstuff if type(x) is not bs4.element.NavigableString]
+        return [x for x in soupstuff if not isinstance(x, bs4.element.NavigableString)]
 
 
     # Download a fanzine index page fanac.org/fanzines/URL and fill in the class
@@ -1598,7 +1598,7 @@ class FanzineIndexPage(GridDataSource):
     @Editors.setter
     def Editors(self, val):
         v=val
-        if type(val) is list:
+        if isinstance(val, list):
             if len(val) == 1:
                 v=val[0]
             else:

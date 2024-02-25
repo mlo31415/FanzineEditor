@@ -8,6 +8,7 @@ import wx.grid
 import sys
 import re
 
+import FanzineIssueSpecPackage
 from FTP import FTP
 from bs4 import BeautifulSoup
 
@@ -117,7 +118,7 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
     table=soup.find_all("table", class_="sortable")[0]
     rows=table.find_all_next("tr")
     rowtable: list[list[str]]=[]
-    for row in rows[1:]:    # row[0] is the column headers, and for this file the columns are hard-coded, so they can be ignored.
+    for i, row in enumerate(rows[1:]):    # row[0] is the column headers, and for this file the columns are hard-coded, so they can be ignored.
         srow=str(row)
         if "<form action=" in srow[:30]:  # I don't know where this line is coming from (it shows up as the last row, but does not appear on the website!)>
             continue
@@ -235,7 +236,7 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
                         if m is not None:
                             cfl.Flag="New"
 
-        # Look for an invisible Updated flag somwehere in the row
+        # Look for an invisible Updated flag somewhere in the row
         updated=LastUpdateDate(ExtractInvisibleTextInsideFanacComment(str(row), "updated"))
         cfl.LastUpdate=updated
 
@@ -477,26 +478,23 @@ class FanzineEditorWindow(FanzinesGridGen):
     #-------------------
     def OnGridCellDoubleClick(self, event):       # FanzineEditor(FanzineGrid)
         self._dataGrid.SaveClickLocation(event, "double")
-        url=self._Datasource.Rows[event.Row][event.Col]
-        with FanzineIndexPageWindow(None, url) as fsw:
+        serverDir=self._Datasource.Rows[event.Row][event.Col]
+        with FanzineIndexPageWindow(None, serverDir) as fsw:
             if fsw.failure:
-                wx.MessageBox(f"Unable to load {url}", caption="Loading Fanzine Index page", parent=self)
-                Log(f"FanzineIndexPageWindow('{url}') failed")
+                wx.MessageBox(f"Unable to load {serverDir}", caption="Loading Fanzine Index page", parent=self)
+                Log(f"FanzineIndexPageWindow('{serverDir}') failed")
                 return
             fsw.ShowModal()
 
-            # The edit may have updated some of the parameters used in the classic fanzines listing.
-            if fsw.CFL is not None:
-                cfl: ClassicFanzinesLine=self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]
-                # Copy the new vales in
-                cfl.Editors=fsw.CFL.Editors
-                cfl.DisplayName=fsw.CFL.DisplayName
-                cfl.Dates=fsw.CFL.Dates
-                cfl.Issues=fsw.CFL.Issues
-                cfl.DisplayName=fsw.CFL.DisplayName
-                cfl.Complete=fsw.CFL.Complete
-                cfl.LastUpdate=fsw.CFL.LastUpdate
-                self.RefreshWindow()
+        # The edit may have updated some of the parameters.
+        if fsw.CFL is not None:
+            self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]=fsw.CFL
+            #existingCFL: ClassicFanzinesLine=self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]
+            # Display the updated fanzines list
+            self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())
+            self.Datasource.FanzineList=self._fanzinesList
+            self.SearchFanzineList()
+            self.RefreshWindow()
 
     #-------------------
     # Upload the fanzines list to the classic fanzine page
