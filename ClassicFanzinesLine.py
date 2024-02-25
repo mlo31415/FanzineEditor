@@ -96,6 +96,10 @@ class ClassicFanzinesLine:
         self._lastupdate=None
 
 
+    def __str__(self) -> str:
+        s=f"{self.DisplayName}  [{self.DisplayNameSort}]     {self._editors}  [{self.EditorsSort}]     {self._dates}  [{self.DatesSort}]     {self._issues} issues     {'(complete)' if self._complete else ''}    Type={self.Type}    {self.LastUpdate} "
+        return s
+
 
     @property
     def DisplayName(self) -> str:

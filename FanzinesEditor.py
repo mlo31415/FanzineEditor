@@ -467,6 +467,10 @@ class FanzineEditorWindow(FanzinesGridGen):
 
 
     def OnGridCellLeftClick( self, event ):
+        row=event.GetRow()
+        col=event.GetCol()
+        cfl=self.Datasource._fanzineList[row*self.Datasource.NumCols+col]
+        self.CFLText.Label=f"{cfl}"
         self._dataGrid.OnGridCellLeftClick(event)
 
 

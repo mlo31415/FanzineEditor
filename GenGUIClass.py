@@ -324,6 +324,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.wxGrid.Bind( wx.grid.EVT_GRID_LABEL_RIGHT_CLICK, self.OnGridLabelRightClick )
 		self.wxGrid.Bind( wx.EVT_KEY_DOWN, self.OnKeyDown )
 		self.wxGrid.Bind( wx.EVT_KEY_UP, self.OnKeyUp )
+		self.wxGrid.Bind( wx.EVT_LEFT_DOWN, self.OnGridCellLeftDown )
 		self.Bind( wx.EVT_MENU, self.OnPopupCopy, id = self.m_menuItemPopupCopy.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupPaste, id = self.m_menuItemPopupPaste.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupEraseSelection, id = self.m_menuItemPopupEraseSelection.GetId() )
@@ -429,6 +430,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnKeyUp( self, event ):
 		event.Skip()
 
+	def OnGridCellLeftDown( self, event ):
+		event.Skip()
+
 	def OnPopupCopy( self, event ):
 		event.Skip()
 
@@ -523,7 +527,7 @@ class FanzinesGridGen ( wx.Frame ):
 
 		bSizer3 = wx.BoxSizer( wx.VERTICAL )
 
-		fgSizer7 = wx.FlexGridSizer( 2, 1, 0, 0 )
+		fgSizer7 = wx.FlexGridSizer( 3, 1, 0, 0 )
 		fgSizer7.SetFlexibleDirection( wx.BOTH )
 		fgSizer7.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
@@ -568,6 +572,19 @@ class FanzinesGridGen ( wx.Frame ):
 
 
 		fgSizer7.Add( fgSizer8, 1, wx.EXPAND, 5 )
+
+		bSizer5 = wx.BoxSizer( wx.VERTICAL )
+
+		self.CFLText = wx.StaticText( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.CFLText.Wrap( -1 )
+
+		self.CFLText.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
+		self.CFLText.SetMinSize( wx.Size( 600,22 ) )
+
+		bSizer5.Add( self.CFLText, 0, wx.ALL, 5 )
+
+
+		fgSizer7.Add( bSizer5, 1, wx.EXPAND, 5 )
 
 
 		bSizer3.Add( fgSizer7, 0, wx.EXPAND, 5 )
@@ -648,3 +665,5 @@ class FanzinesGridGen ( wx.Frame ):
 
 	def OnGridCellRightClick( self, event ):
 		event.Skip()
+
+
