@@ -101,6 +101,43 @@ class ClassicFanzinesLine:
         s=f"{self.DisplayName}  [{self.DisplayNameSort}]     {self._editors}  [{self.EditorsSort}]     {self._dates}  [{self.DatesSort}]     {self._issues} issues     {'(complete)' if self._complete else ''}    Type={self.Type}    {self.LastUpdate} "
         return s
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, ClassicFanzinesLine):
+            return False
+
+        return self._displayName == other._displayName and \
+            self._url == other._url and \
+            self._otherNames == other._otherNames and \
+            self._displayNameSort == other._displayNameSort and \
+            self._editors == other._editors and \
+            self._editorsSort == other._editorsSort and \
+            self._dates == other._dates and \
+            self._datesSort == other._datesSort and \
+            self._type == other._type and \
+            self._issues == other._issues and \
+            self._issuesSort == other._issuesSort and \
+            self._flag == other._flag and \
+            self._flagSort == other._flagSort and \
+            self._complete == other._complete and \
+            self._lastupdate == other._lastupdate
+
+    def __hash__(self) -> int:
+        return hash(self. _displayName) + \
+            hash(self._url) + \
+            hash(self._otherNames) + \
+            hash(self._displayNameSort) + \
+            hash(self._editors) + \
+            hash(self._editorsSort) + \
+            hash(self._dates) + \
+            hash(self._datesSort) + \
+            hash(self._type) + \
+            hash(self._issues) + \
+            hash(self._issuesSort) + \
+            hash(self._flag) + \
+            hash(self._flagSort) + \
+            hash(self._complete)+\
+            hash(self._lastupdate)
+
 
     @property
     def DisplayName(self) -> str:
