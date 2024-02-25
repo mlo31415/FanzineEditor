@@ -73,8 +73,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.serverDir=serverDir
 
         self._AllowFanzineNameEdit=False
-        self._allowEditOfServerDirectoryName=self.IsNewDirectory        # Is the user allowed to edit the fanzine name? On pressing the edit button, can be true even when not a new fanzine.
-        self._manualEntryOfLocalDirectoryName=False
+        self._allowManualEditOfServerDirectoryName=self.IsNewDirectory        # Is the user allowed to edit the fanzine name? On pressing the edit button, can be true even when not a new fanzine.
+        self._manualEditOfServerDirectoryNameBegun=False
+        self._allowManualEntryOfLocalDirectoryName=self.IsNewDirectory
+        self._manualEditOfLocalDirectoryNameBegun=False
         self._uploaded=False
 
         # Used to communicate with the fanzine list editor.  It is set to None, but is filled in with a CFL when something is uploaded.
@@ -214,7 +216,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # This is definitely not enough!!
             self.bUpload.Enabled=True
 
-        self.tFanzineName.Enabled=self.IsNewDirectory or self._allowEditOfServerDirectoryName
+        self.tFanzineName.Enabled=self.IsNewDirectory or self._AllowFanzineNameEdit
         self.tFanzineName.SetEditable(True)
 
         # On an old directory, we always have a target defined, so we can always add new issues
@@ -309,7 +311,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # Allow user to change the fanzine's name
     def OnEditFanzineNameClicked(self, event):
         self.tFanzineName.Enabled=True
-        self._allowEditOfServerDirectoryName=True
+        self._AllowFanzineNameEdit=True
 
 
     #--------------------------
@@ -550,9 +552,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self._uploaded=True
             self.MarkAsSaved()
 
-            # Once a new fanzine has been uploaded, the server directory is no longer changeable
+            # Once a new fanzine has been uploaded, the server and local directories are no longer changeable
             self.IsNewDirectory=False
-            self._allowEditOfServerDirectoryName=False
+            self._allowManualEditOfServerDirectoryName=False
+            self._manualEditOfServerDirectoryNameBegun=False
+            self._allowManualEntryOfLocalDirectoryName=False
+            self._manualEditOfLocalDirectoryNameBegun=False
+            self._AllowFanzineNameEdit=False
 
             self.UpdateEnabledStatus()
 
@@ -622,7 +628,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         fname=self.tFanzineName.GetValue()
 
         # Compute the Server Directory name from the fanzine directory name if the user has not taken over editing of that field
-        if self.tServerDirectory.IsEditable() and not self._allowEditOfServerDirectoryName:
+        if self.tServerDirectory.IsEditable() and not self._manualEditOfServerDirectoryNameBegun:
             # Strip leading "The", etc
             sname=RemoveArticles(fname).strip()
             if len(sname) > 0:
@@ -642,7 +648,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     sname="_".join(sname)
             self.tServerDirectory.SetValue(sname)
 
-        if self.tLocalDirectory.IsEditable() and not self._manualEntryOfLocalDirectoryName:
+        if self.tLocalDirectory.IsEditable() and not self._manualEditOfLocalDirectoryNameBegun:
             # Strip leading "The", etc
             lname=RemoveArticles(fname).strip()
             lname=re.sub("[^a-zA-Z0-9-]+", "_", lname)  # Replace all spans of not-listed chars with underscore
@@ -667,7 +673,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tServerDirectory.SetValue(fname)
         self.tServerDirectory.SetInsertionPoint(cursorloc)
 
-        self._allowEditOfServerDirectoryName=True
+        self._manualEditOfServerDirectoryNameBegun=True
         return
 
 
@@ -679,7 +685,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tLocalDirectory.SetValue(fname)
         self.tLocalDirectory.SetInsertionPoint(cursorloc)
 
-        self._manualEntryOfLocalDirectoryName=True
+        self._manualEditOfLocalDirectoryNameBegun=True
         return
 
 
