@@ -58,24 +58,25 @@ class LastUpdateDate:
 #==========================================================================================================
 # A class to holdthe information in a single like of the classic Fanzines page
 class ClassicFanzinesLine:
-    def __init__(self, clf=None):
-        # Initialize from another CLF by deep copying
-        if type(clf) is ClassicFanzinesLine:
-            self._displayName: str=clf._displayName
-            self._url: str=clf._url
-            self._otherNames: str=clf._otherNames       # Alternate names for this fanzine
-            self._displayNameSort: str=clf._displayNameSort
-            self._editors: str=clf._editors
-            self._editorsSort: str=clf._editorsSort
-            self._dates: str=clf._dates
-            self._datesSort: str=clf._datesSort
-            self._type: str=clf._type
-            self._issues: str=clf._issues
-            self._issuesSort: str=clf._issuesSort
-            self._flag: str=clf._flag
-            self._flagSort: str=clf._flagSort
-            self._complete: bool=clf._complete
-            self._lastupdate: datetime=clf._lastupdate
+
+    def __init__(self, cfl=None):
+        # Initialize from another CFL by deep copying
+        if isinstance(cfl, ClassicFanzinesLine):
+            self._displayName: str=cfl._displayName
+            self._url: str=cfl._url
+            self._otherNames: str=cfl._otherNames       # Alternate names for this fanzine
+            self._displayNameSort: str=cfl._displayNameSort
+            self._editors: str=cfl._editors
+            self._editorsSort: str=cfl._editorsSort
+            self._dates: str=cfl._dates
+            self._datesSort: str=cfl._datesSort
+            self._type: str=cfl._type
+            self._issues: str=cfl._issues
+            self._issuesSort: str=cfl._issuesSort
+            self._flag: str=cfl._flag
+            self._flagSort: str=cfl._flagSort
+            self._complete: bool=cfl._complete
+            self._lastupdate: datetime=cfl._lastupdate
             return
 
         # Otherwise, just fill it with empty strings
