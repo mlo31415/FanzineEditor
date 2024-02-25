@@ -616,6 +616,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     # This method updates the local directory name by computing it from the fanzine name.  It only applies when creating a new fanzine index page
     def OnFanzineNameChar(self, event):
+        # Now do routine character handling
+        event.Skip()
 
         # Requests from Edie:
         # Suppress leading articles, eg The or A
