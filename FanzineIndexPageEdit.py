@@ -13,14 +13,13 @@ from bs4 import BeautifulSoup
 import bs4
 
 from GenGUIClass import FanzineIndexPageEditGen
-from ClassicFanzinesLine import ClassicFanzinesLine, LastUpdateDate
+from ClassicFanzinesLine import ClassicFanzinesLine, ClassicFanzinesDate
 
 from FTP import FTP
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
-from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, AddChar, ProcessChar
+from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, ProcessChar
 from WxHelpers import ModalDialogManager
-from HelpersPackage import MessageBox
 from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
@@ -545,7 +544,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             cfl.Dates=self.tDates.GetValue()
             cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
             cfl.Complete=self.cbComplete.GetValue()
-            cfl.LastUpdate=datetime.now()
+            cfl.Updated=datetime.now()
+            if cfl.Created == ClassicFanzinesDate("1900-01-01"):
+                cfl.Created=datetime.now()
             cfl.TopComments=self.tTopComments.GetValue()
             self.CFL=cfl
 
@@ -1409,7 +1410,7 @@ class FanzineIndexPage(GridDataSource):
         self.Complete=False     # Is this fanzine series complete?
         self.AlphabetizeIndividually=False      # Treat all issues as part of main series
         self.Credits=""         # Who is to be credited for this affair?
-        self.Updated: LastUpdateDate=LastUpdateDate(None)
+        self.Updated: ClassicFanzinesDate=ClassicFanzinesDate(None)
 
 
     def Signature(self) -> int:        # FanzineIndexPage(GridDataSource)
@@ -1666,7 +1667,8 @@ class FanzineIndexPage(GridDataSource):
         # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
         self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.No)])+self._colDefs
 
-        self.Updated=LastUpdateDate(ExtractInvisibleTextInsideFanacComment(html, "updated"))
+        self.Created=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(html, "created"))
+        self.Updated=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(html, "updated"))
 
         # Now the rows
         rows=ExtractHTMLUsingFanacComments(html, "table-rows")
@@ -1747,7 +1749,7 @@ class FanzineIndexPage(GridDataSource):
         output=temp
 
         # Insert an invisible updated datetime
-        output=InsertInvisibleTextInsideFanacComment(output, "updated", f"{LastUpdateDate().Now()}")
+        output=InsertInvisibleTextInsideFanacComment(output, "updated", f"{ClassicFanzinesDate().Now()}")
 
         # Now interpret the table to generate the column headers and data rows
         # The 1st col is the URL and it gets mixed with ther 2nd to form an Href.

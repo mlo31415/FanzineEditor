@@ -8,7 +8,8 @@ PDF Source Path=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\\Python\\FanacLSTG
 Server To Local Table Name=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\Python\FanzineEditor\ServerToLocal Conversion.txt
 
 # For how many days should updated FIP's be tagged as updated on the classic fanzines list?
-How old is old=90
+How old is new=90
+How old is updated=90
 
 
 #Show log window=0

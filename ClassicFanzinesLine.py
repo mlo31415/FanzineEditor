@@ -8,51 +8,72 @@ from FanzineIssueSpecPackage import FanzineDate
 
 ########################################################################
 # A class to hold the updated date in standard ConEditor format
-class LastUpdateDate:
+class ClassicFanzinesDate:
     def __init__(self, val: datetime|str|None=None):
-        self._updated=self.Set(val)
+        self.Set(val)       # The date is stored as a datetime
 
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, ClassicFanzinesDate):
+            other=ClassicFanzinesDate(other)
+        return self._date == other._date
+
+    def __hash__(self) -> int:
+        return self._date.__hash__()
 
     @property
-    def Updated(self) -> datetime:
-        if self._updated is None:
+    def Date(self) -> datetime:
+        if self._date is None:
             return datetime(1900, 1, 1)
-        return self._updated
-    @Updated.setter
-    def Updated(self, val: datetime|str|None) -> None:
-        self._updated=self.Set(val)
+        return self._date
+    @Date.setter
+    def Date(self, val: datetime|str|None) -> None:
+        self._date=self.Set(val)
 
     # Turn any input value into the proper internal format
-    def Set(self, val: datetime|str|None) -> datetime|None:
-        if isinstance(val, datetime):
-            return val
+    def Set(self, val: datetime|str|None) -> None:
         if val is None:
-            return None
+            self._date=None
+            return
+
+        if isinstance(val, datetime):
+            self._date=val
+            return
+
+        if isinstance(val, ClassicFanzinesDate):
+            self._date=val.Date
+            return
+
         if isinstance(val, str):    # Required format: 'September 27, 1977' or empty string
             if val == "":
-                return None
+                self._date=None
             else:
                 try:
-                    return datetime.strptime(val, '%B %d, %Y')
+                    self._date=datetime.strptime(val, "%Y-%m-%d")
                 except ValueError:
-                    # In desperation, try FanzineDate's general date matcher
-                    return FanzineDate().Match(val).DateTime
+                    try:
+                        self._date=datetime.strptime(val, '%B %d, %Y')
+                    except ValueError:
+                        # In desperation, try FanzineDate's general date matcher
+                        self._date=FanzineDate().Match(val).DateTime
+            return
         assert False
 
 
     def __str__(self) -> str:
-        if self._updated is None or self._updated == "":
+        if self._date is None or self._date == "":
             return ""
-        return f"{self._updated:%B %d, %Y}"
+        return f"{self._date:%B %d, %Y}"
 
 
     def Now(self) -> str:
         return f"{datetime.now():%B %d, %Y}"
 
-    def DaysBeforeNow(self) -> int|None:
-        if self._updated is None:
+
+    def DaysAgo(self) -> int|None:
+        if self._date is None:
             return None
-        return (datetime.now()-self._updated).days
+        return (datetime.now()-self._date).days
 
 
 #==========================================================================================================
@@ -60,26 +81,7 @@ class LastUpdateDate:
 class ClassicFanzinesLine:
 
     def __init__(self, cfl=None):
-        # Initialize from another CFL by deep copying
-        if isinstance(cfl, ClassicFanzinesLine):
-            self._displayName: str=cfl._displayName
-            self._url: str=cfl._url
-            self._otherNames: str=cfl._otherNames       # Alternate names for this fanzine
-            self._displayNameSort: str=cfl._displayNameSort
-            self._editors: str=cfl._editors
-            self._editorsSort: str=cfl._editorsSort
-            self._dates: str=cfl._dates
-            self._datesSort: str=cfl._datesSort
-            self._type: str=cfl._type
-            self._issues: str=cfl._issues
-            self._issuesSort: str=cfl._issuesSort
-            self._flag: str=cfl._flag
-            self._flagSort: str=cfl._flagSort
-            self._complete: bool=cfl._complete
-            self._lastupdate: datetime=cfl._lastupdate
-            return
-
-        # Otherwise, just fill it with empty strings
+        # OCreate empty CFL
         self._displayName: str=""
         self._url: str=""
         self._otherNames: str=""
@@ -91,14 +93,35 @@ class ClassicFanzinesLine:
         self._type: str=""
         self._issues: str=""
         self._issuesSort: str=""
-        self._flag: str=""
         self._flagSort: str=""
-        self._complete=False
-        self._lastupdate=None
+        self._complete: bool=False
+        self._created: ClassicFanzinesDate|None=None
+        self._updated: ClassicFanzinesDate|None=None
+
+        # Initialize from another CFL by deep copying
+        if isinstance(cfl, ClassicFanzinesLine):
+            self._displayName=cfl._displayName
+            self._url=cfl._url
+            self._otherNames=cfl._otherNames       # Alternate names for this fanzine
+            self._displayNameSort=cfl._displayNameSort
+            self._editors=cfl._editors
+            self._editorsSort=cfl._editorsSort
+            self._dates=cfl._dates
+            self._datesSort=cfl._datesSort
+            self._type=cfl._type
+            self._issues=cfl._issues
+            self._issuesSort=cfl._issuesSort
+            self._flagSort: str=cfl._flagSort
+            self._complete=cfl._complete
+            self._created=cfl._created
+            self._updated=cfl._updated
+            return
+
 
 
     def __str__(self) -> str:
-        s=f"{self.DisplayName}  [{self.DisplayNameSort}]     {self._editors}  [{self.EditorsSort}]     {self._dates}  [{self.DatesSort}]     {self._issues} issues     {'(complete)' if self._complete else ''}    Type={self.Type}    {self.LastUpdate} "
+        s=f"{self.DisplayName}  [{self.DisplayNameSort}]     {self._editors}  [{self.EditorsSort}]     {self._dates}  [{self.DatesSort}]     "
+        s+=f"{self._issues} issues    Type={self.Type}     Flags: {'(Complete)' if self._complete else ''}      Created={self.Created}       Updated={self.Updated} "
         return s
 
     def __eq__(self, other) -> bool:
@@ -116,13 +139,14 @@ class ClassicFanzinesLine:
             self._type == other._type and \
             self._issues == other._issues and \
             self._issuesSort == other._issuesSort and \
-            self._flag == other._flag and \
             self._flagSort == other._flagSort and \
             self._complete == other._complete and \
-            self._lastupdate == other._lastupdate
+            self._updated == other._updated and \
+            self._created == other._created
+
 
     def __hash__(self) -> int:
-        return hash(self. _displayName) + \
+        return hash(self._displayName) + \
             hash(self._url) + \
             hash(self._otherNames) + \
             hash(self._displayNameSort) + \
@@ -133,10 +157,10 @@ class ClassicFanzinesLine:
             hash(self._type) + \
             hash(self._issues) + \
             hash(self._issuesSort) + \
-            hash(self._flag) + \
             hash(self._flagSort) + \
-            hash(self._complete)+\
-            hash(self._lastupdate)
+            hash(self._complete) + \
+            hash(self._created) + \
+            hash(self._updated)
 
 
     @property
@@ -245,10 +269,20 @@ class ClassicFanzinesLine:
         self._complete=val
 
     @property
-    def LastUpdate(self) -> LastUpdateDate:
-        return self._lastupdate
-    @LastUpdate.setter
-    def LastUpdate(self, val: LastUpdateDate|datetime):
-        if isinstance(val, datetime):
-            val=LastUpdateDate(val)
-        self._lastupdate=val
+    def Created(self) -> ClassicFanzinesDate:
+        if self._created is None:
+            return ClassicFanzinesDate("1900-01-01")
+        return self._created
+    @Created.setter
+    def Created(self, val: ClassicFanzinesDate):
+        self._created=ClassicFanzinesDate(val)
+
+    @property
+    def Updated(self) -> ClassicFanzinesDate:
+        if self._updated is None:
+            return ClassicFanzinesDate("1900-01-01")
+        return self._updated
+    @Updated.setter
+    def Updated(self, val: ClassicFanzinesDate):
+        self._updated=ClassicFanzinesDate(val)
+

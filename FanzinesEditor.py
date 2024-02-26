@@ -8,7 +8,6 @@ import wx.grid
 import sys
 import re
 
-import FanzineIssueSpecPackage
 from FTP import FTP
 from bs4 import BeautifulSoup
 
@@ -20,7 +19,7 @@ from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
 
-from FanzineIndexPageEdit import FanzineIndexPageWindow, LastUpdateDate
+from FanzineIndexPageEdit import FanzineIndexPageWindow, ClassicFanzinesDate
 from GenGUIClass import FanzinesGridGen
 from GenLogDialogClass import LogDialog
 from ClassicFanzinesLine import ClassicFanzinesLine
@@ -223,22 +222,23 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
                     cfl.Flag=""
                 else:
                     cfl.Flag=m.groups()[1]
-            else:
-                m=re.search(r'<x class="complete">Complete</x>', row[6], flags=re.IGNORECASE)
-                if m is not None:
-                    cfl._complete=True
-                else:
-                    m=re.search(r'<x class="updated">Updated</x>', row[6], flags=re.IGNORECASE)
-                    if m is not None:
-                        cfl.Flag="Updated"
-                    else:
-                        m=re.search(r'<x class="new">New</x>', row[6], flags=re.IGNORECASE)
-                        if m is not None:
-                            cfl.Flag="New"
+
+            m=re.search(r'<x class="complete">Complete</x>', row[6], flags=re.IGNORECASE)
+            if m is not None:
+                cfl._complete=True
+
+            cfl.Updated=""
+            val=ExtractInvisibleTextInsideFanacComment(html, "updated")
+            if len(val) > 0:
+                cfl.Updated=val
+
+
+            val=ExtractInvisibleTextInsideFanacComment(html, "created")
+            if len(val) > 0:
+                cfl.Created=val
 
         # Look for an invisible Updated flag somewhere in the row
-        updated=LastUpdateDate(ExtractInvisibleTextInsideFanacComment(str(row), "updated"))
-        cfl.LastUpdate=updated
+        cfl.Updated=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(str(row), "updated"))
 
 
         namelist.append(cfl)
@@ -277,28 +277,40 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
         row+=f'<TD>{fanzine.Type}</TD>\n'
         row+=f'<TD CLASS="right" sorttable_customkey="{fanzine.IssuesSort}">{fanzine.Issues}</TD>\n'
 
-        udate=fanzine.LastUpdate.DaysBeforeNow()
-        updatedFlag=False
-        if udate is not None:
-            updatedFlag=udate < Int0(Settings().Get("How old is old", 90))
+        updatedFlag=fanzine.Updated.DaysAgo() < Int0(Settings().Get("How old is updated", 90))
+        newFlag=fanzine.Created.DaysAgo() < Int0(Settings().Get("How old is new", 90))
 
-        flagged=fanzine.Complete or updatedFlag
-        if not flagged:
-            row+=f'<TD sorttable_customkey="zzzz"><BR></TD>'
-        elif fanzine.Complete and not updatedFlag:
-            row+=f'<TD sorttable_customkey="complete"><X CLASS="complete">Complete</X></TD>\n'
-        elif not fanzine.Complete and updatedFlag:
-            row+=f'<TD sorttable_customkey="updated"><X CLASS="updated">Updated</X></TD>\n'
-        else:
-            row+=f'<TD sorttable_customkey="complete+updated"><X CLASS="complete">Updated+Complete</X></TD>\n'
+        flags=("n" if newFlag else "")+("u" if updatedFlag else "")+("c" if fanzine.Complete else "")
+
+        match flags:
+            case "":
+                row+=f'<TD sorttable_customkey="zzzz"><BR>&nbsp;</TD>\n'
+            case "c":
+                row+=f'<TD sorttable_customkey="complete"><X CLASS="complete">Complete</X></TD>\n'
+            case "u":
+                row+=f'<TD sorttable_customkey="updated"><X CLASS="updated">Updated</X></TD>\n'
+            case "n":
+                row+=f'<TD sorttable_customkey="new"><X CLASS="new">New</X></TD>\n'
+            case "uc":
+                row+=f'<TD sorttable_customkey="complete+updated"><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X></TD>\n'
+            case "nc":
+                row+=f'<TD sorttable_customkey="complete+new"><X CLASS="complete">New+Complete</X><X CLASS="new">New</X><X CLASS="complete">Complete</X></TD>\n'
+            case "nu":
+                row+=f'<TD sorttable_customkey="new+updated"><X CLASS="updated">Updated</X><X CLASS="new">New</X></TD>\n'
+            case "ncu":
+                row+=f'<TD sorttable_customkey="complete+updated+new"><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X><X CLASS="new">New</X></TD>\n'
 
         flu=""
-        if fanzine.LastUpdate is not None:
-            flu=str(fanzine.LastUpdate)
+        if fanzine.Updated is not None:
+            flu=str(fanzine.Updated)
         row+=f'<!-- fanac-updated {flu} -->\n'
 
+        flu=""
+        if fanzine.Created is not None:
+            flu=str(fanzine.Created)
+        row+=f'<!-- fanac-created {flu} -->\n'
+
         row+=f'</TR>\n'
-        #Log(str(row))
         insert+=row
 
     temp=InsertHTMLUsingFanacComments(output, "table", insert)
@@ -307,7 +319,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
         return False
     output=temp
 
-    insert=f"Updated {LastUpdateDate().Now()}"
+    insert=f"Updated {ClassicFanzinesDate().Now()}"
     temp=InsertHTMLUsingFanacComments(output, "updated", insert)
     if temp == "":
         LogError(f"Could not InsertUsingFanacComments('updated')")
@@ -325,7 +337,7 @@ class FanzineEditorWindow(FanzinesGridGen):
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
-        self._fanzinesList: ClassicFanzinesLine=[]        # This holds the linear list of fanzines that gets folded into the rectangular grid
+        self._fanzinesList: list[ClassicFanzinesLine]=[]        # This holds the linear list of fanzines that gets folded into the rectangular grid
 
         # Position the window on the screen it was on before at the size it was before
         tlwp=Settings("FanzinesEditor positions.json").Get("Top Level Window Position")
