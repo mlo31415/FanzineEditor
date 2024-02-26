@@ -629,9 +629,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Ability to manually delete text for the server and local directories (eg fanzine title: Prolapse / Relapse ; server directory Prolapse)
 
         # Pick up the current value of the fanzine name field
-        fname=self.tFanzineName.GetValue()
+        fname, cursorloc=ProcessChar(self.tFanzineName.GetValue(), event.GetKeyCode(), self.tFanzineName.GetInsertionPoint())
 
-        # Compute the Server Directory name from the fanzine directory name if the user has not taken over editing of that field
+        Log(f"OnFanzineNameChar: Local directory name updated to '{fname}'")
+
+        self.UpdateServerAndLocalDirNames(fname)
+
+
+    def UpdateServerAndLocalDirNames(self, fname):
+        # If this is a new fanzine, and if the user has not overridden the default server directory name by editing it himself, update the Server Directory name
+        Log(f"OnFanzineNameChar: {self.tServerDirectory.Enabled=}    {self._manualEditOfServerDirectoryNameBegun=}'")
         if self.tServerDirectory.Enabled and not self._manualEditOfServerDirectoryNameBegun:
             # Strip leading "The", etc
             sname=RemoveArticles(fname).strip()
@@ -640,18 +647,22 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     sname=sname.upper()
                 else:
                     sname=sname[0].upper()+sname[1:].lower()
-                    sname=re.sub("[^a-zA-Z0-9-]+", "_", sname)      # Replace all spans of not-listed chars with underscore
+                    sname=re.sub("[^a-zA-Z0-9-]+", "_", sname)  # Replace all spans of not-listed chars with underscore
                     sname=sname.strip("_")  # Do not start or end names with underscores
-                    sname=[capwords(x) for x in sname.split("_")]   # Split the name on underscores and capitolize all words
+                    sname=[capwords(x) for x in sname.split("_")]  # Split the name on underscores and capitolize all words
+
                     def capit(s: str):
                         lcwords=["And", "The", "A", "An", "With", "To", "From", "Over", "Of", "In", "Without"]  # Words which should be lower case if they are not the first word
                         if s in lcwords:
                             s=s.lower()
                         return s
-                    sname=[capit(x) for x in sname]     # Swap special words back to lower case
+
+                    sname=[capit(x) for x in sname]  # Swap special words back to lower case
                     sname="_".join(sname)
             self.tServerDirectory.SetValue(sname)
-
+            Log(f"OnFanzineNameChar: Server directory name updated to '{sname}'")
+        # If this is a new fanzine, and if the user has not overridden the default local directory name by editing it himself, update the Local Directory name
+        Log(f"OnFanzineNameChar: {self.tLocalDirectory.Enabled=}    {self._manualEditOfLocalDirectoryNameBegun=}'")
         if self.tLocalDirectory.Enabled and not self._manualEditOfLocalDirectoryNameBegun:
             # Strip leading "The", etc
             lname=RemoveArticles(fname).strip()
@@ -659,16 +670,19 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             lname=lname.strip("_")  # Do not start or end names with underscores
             lname=lname.upper()
             self.tLocalDirectory.SetValue(lname)
-
-
+            Log(f"OnFanzineNameChar: Local directory name updated to '{lname}'")
 
 
     def OnFanzineNameText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self.Datasource.FanzineName=self.tFanzineName.GetValue()
+        Log(f"OnFanzineNameText: Fanzine name updated to '{self.Datasource.FanzineName}'")
+        self.UpdateServerAndLocalDirNames(self.Datasource.FanzineName)
         self.RefreshWindow(DontRefreshGrid=True)
+        # Note that we don;t call self.Skip() so we don't use default processing for this event
 
 
     def OnServerDirectoryChar(self, event):
+        Log(f"OnServerDirectoryChar: triggered")
         if not self.IsNewDirectory:
             return
 
@@ -677,11 +691,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tServerDirectory.SetInsertionPoint(cursorloc)
 
         self._manualEditOfServerDirectoryNameBegun=True
+        Log(f"OnServerDirectoryChar: updated to '{fname}'")
         return
 
 
     def OnLocalDirectoryChar( self, event ):
-        if not self.IsNewDirectory:
+        Log(f"OnLocalDirectoryChar: triggered")
+        if not self.IsNewDirectory:     # Only for new fanzines can the local directory name be updated
             return
 
         fname, cursorloc=ProcessChar(self.tLocalDirectory.GetValue(), event.GetKeyCode(), self.tLocalDirectory.GetInsertionPoint())
@@ -689,6 +705,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tLocalDirectory.SetInsertionPoint(cursorloc)
 
         self._manualEditOfLocalDirectoryNameBegun=True
+        Log(f"OnLocalDirectoryChar: updated to '{fname}'")
         return
 
 
