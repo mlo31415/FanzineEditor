@@ -908,7 +908,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if self._dataGrid.clickedColumn > 1:
             Enable("Insert Column to Left")
 
-        # We only allow a column to be deleted if the cursor is in a column with more than one highlighted cell and no hiughlif=ghted cells in other columns.
+        # We only allow a column to be deleted if the cursor is in a column with more than one highlighted cell and no highlighted cells in other columns.
         if self.Datasource.Element.CanDeleteColumns:
             top, left, bottom, right=self._dataGrid.SelectionBoundingBox()
             if right == left and bottom-top > 0:
