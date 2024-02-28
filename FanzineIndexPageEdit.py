@@ -891,8 +891,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if self.Datasource.Rows[top][0].lower().endswith(".pdf") and not self.Datasource.Rows[bottom][0].lower().endswith(".pdf") or \
                     not self.Datasource.Rows[top][0].lower().endswith(".pdf") and self.Datasource.Rows[bottom][0].lower().endswith(".pdf"):
                     # Enable Merge if exactly two rows are highlighted and if exactly one of them is a PDF
-                    Enable("Merge")
                     Enable("Merge Adjacent Rows")
+
+        # If cell 0 is clicked on, and it contains the URL of a PDF or an HTML page, allow it to be replaced by a PDF.
+        if self._dataGrid.clickedColumn == 0:
+            irow=self._dataGrid.clickedRow
+            if "pdf" in self.Datasource.Rows[irow][0].lower() or "html" in self.Datasource.Rows[irow][0].lower():
+                Enable("Replace PDF")
 
         if not isGridCellClick:
             Enable("Sort on Selected Column") # It's a label click, so sorting on the column is always OK
@@ -1106,6 +1111,29 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.Grid.ClearSelection()
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
+
+
+    # Replace the URL of a PDF or HTML page in the 1st column with a PDF
+    def OnPopupReplace(self, event):
+        # Call the File Open dialog to select a single PDF file
+        with wx.FileDialog(self,
+                           message="Select one PDF file to replace existing target",
+                           defaultDir=self.PDFSourcePath,
+                           wildcard="PDF files (*.pdf)|*.pdf",
+                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.STAY_ON_TOP) as dlg:
+
+            if dlg.ShowModal() != wx.ID_OK:
+                return  # Quit unless OK was pressed.
+
+            newfile=dlg.GetFilenames()
+
+        if len(newfile) != 1:     # Should never happen as there's no way to return from dlg w/o selecting pdfs or hitting cancel.  But just in case...
+            return
+
+        oldfile=self.Datasource.Rows[event.GetRow()][0]
+        self.Datasource.Rows[event.GetRow()][0]=newfile[0]
+        self.deltaTracker.Replace(oldfile, newfile[0])
+        event.Skip()
 
 
     # Clear links in the selected row
