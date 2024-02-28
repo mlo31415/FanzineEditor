@@ -894,7 +894,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     Enable("Merge")
 
         if not isGridCellClick:
-            Enable("Sort on Selected Column") # It's a label click, so sorting on gthe column is always OK
+            Enable("Sort on Selected Column") # It's a label click, so sorting on the column is always OK
 
         if self._dataGrid.clipboard is not None:
             Enable("Paste")
@@ -956,6 +956,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         "editor " in note:
                     Enable("Extract Editor")
                     break
+
+        # If this is a cell in a column tagged as IsEditable=Maybe, enable allow editing
+        if self.Datasource.ColDefs[self._dataGrid.clickedColumn].IsEditable == IsEditable.Maybe:
+            Enable("Allow Editing")
 
         Enable("Tidy Up Columns")
 
@@ -1217,6 +1221,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.FillInPDFColumn()
         self.FillInPagesColumn()
         self.StandardizeColumns()
+        self.RefreshWindow()
+
+
+    def OnPopupAllowEditing(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+        self.wxGrid.SaveEditControlValue()
+        self._dataGrid.AllowCellEdit(self._dataGrid.clickedRow, self._dataGrid.clickedColumn)
         self.RefreshWindow()
 
 
@@ -1648,7 +1658,7 @@ class FanzineIndexPage(GridDataSource):
         # And construct the grid
         # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
         # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
-        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.No)])
+        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.Maybe)])
         self._colDefs.append(ColNamesToColDefs(headers))
 
         rows: list[list[str]]=[]
@@ -1762,7 +1772,7 @@ class FanzineIndexPage(GridDataSource):
         self._colDefs=ColNamesToColDefs(headers)
         # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
         # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
-        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.No)])+self._colDefs
+        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.Maybe)])+self._colDefs
 
         self.Created=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(html, "created"))
         self.Updated=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(html, "updated"))
