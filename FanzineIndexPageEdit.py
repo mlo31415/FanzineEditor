@@ -892,6 +892,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     not self.Datasource.Rows[top][0].lower().endswith(".pdf") and self.Datasource.Rows[bottom][0].lower().endswith(".pdf"):
                     # Enable Merge if exactly two rows are highlighted and if exactly one of them is a PDF
                     Enable("Merge")
+                    Enable("Merge Adjacent Rows")
 
         if not isGridCellClick:
             Enable("Sort on Selected Column") # It's a label click, so sorting on the column is always OK

@@ -281,7 +281,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_menuItemPopupPropagateEditor = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Propagate Editor", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupPropagateEditor )
 
-		self.m_menuItemMerge = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Merge", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItemMerge = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Merge Adjacent Rows", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemMerge )
 
 		self.m_menuItemAllowEditing = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Allow Editing", wx.EmptyString, wx.ITEM_NORMAL )
@@ -343,6 +343,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.Bind( wx.EVT_MENU, self.OnPopupExtractEditor, id = self.m_menuItemPopupExtractEditor.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupPropagateEditor, id = self.m_menuItemPopupPropagateEditor.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupMerge, id = self.m_menuItemMerge.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnPopupReplace, id = self.m_menuItemReplace.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupAllowEditing, id = self.m_menuItemAllowEditing.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupClearAllLinks, id = self.m_menuItemClearLinks.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupAddLink, id = self.m_menuItemAddLink.GetId() )
