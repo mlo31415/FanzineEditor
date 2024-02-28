@@ -14,6 +14,7 @@ import bs4
 
 from GenGUIClass import FanzineIndexPageEditGen
 from ClassicFanzinesLine import ClassicFanzinesLine, ClassicFanzinesDate
+from DeltaTracker import DeltaTracker
 
 from FTP import FTP
 
@@ -70,6 +71,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if serverDir == "":
             self.IsNewDirectory=True
         self.serverDir=serverDir
+
+        # A list of changes to the file stored on the website which will need to be made upon upload.
+        self.deltaTracker=DeltaTracker()
 
         self._AllowFanzineNameEdit=False
         self._allowManualEditOfServerDirectoryName=self.IsNewDirectory        # Is the user allowed to edit the fanzine name? On pressing the edit button, can be true even when not a new fanzine.
@@ -302,6 +306,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.FillInPDFColumn()
         self.FillInPagesColumn()
 
+        # And add these files to the changelist
+        for file in files:
+            self.deltaTracker.Add(file)
+
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
 
@@ -459,6 +467,57 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             self.serverDir=self.tServerDirectory.GetValue()
 
+            # Now execute the delta list on the files.
+            failure=False
+            for delta in self.deltaTracker.Deltas:
+                match delta.Verb:
+                    case "add":
+                        # Copy file to server, possibly renaming it
+                        path=delta.SourcePath
+                        filename=delta.SourceFilename
+                        pathfilename=os.path.join(path, filename)
+                        serverpathfile=f"/Fanzines-test/{self.serverDir}/{delta.SourceFilename}"
+                        if delta.NewSourceFilename != "":
+                            serverpathfile=f"/Fanzines-test/{self.serverDir}/{delta.NewSourceFilename}"
+                        progressMessage.Show(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
+                        if not FTP().PutFile(pathfilename, serverpathfile):
+                            dlg=wx.MessageDialog(self, f"Y+Unable to upload {pathfilename}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+                            result=dlg.ShowModal()
+                            dlg.Destroy()
+                            if result != wx.ID_YES:
+                                failure=True
+                                break
+                        continue
+
+                    case "delete":
+                        # Delete a file on the server
+                        servername=delta.SourceFilename
+                        serverpathfile=f"/Fanzines-test/{self.serverDir}/{servername}"
+                        progressMessage.Show(f"Deleting {serverpathfile} from server")
+                        if not FTP().DeleteFile(serverpathfile):
+                            dlg=wx.MessageDialog(self, f"Y+Unable to delete {serverpathfile}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+                            result=dlg.ShowModal()
+                            dlg.Destroy()
+                            if result != wx.ID_YES:
+                                failure=True
+                                break
+                        continue
+                    case "rename":
+                        # Rename file on the server
+                        assert delta.NewSourceFilename != ""
+                        oldserverpathfile=f"/Fanzines-test/{self.serverDir}/{delta.SourceFilename}"
+                        newserverpathfile=f"/Fanzines-test/{self.serverDir}/{delta.NewSourceFilename}"
+                        progressMessage.Show(f"Renaming {oldserverpathfile} as {newserverpathfile}")
+                        if not FTP().Rename(oldserverpathfile, newserverpathfile):
+                            dlg=wx.MessageDialog(self, f"Y+Unable to rename {oldserverpathfile} to {newserverpathfile}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+                            result=dlg.ShowModal()
+                            dlg.Destroy()
+                            if result != wx.ID_YES:
+                                failure=True
+                                break
+                        continue
+
+
             # If this is a new fanzine, it needs to be in a new directory.  Check it.
             if self.IsNewDirectory:
                 path=f"/Fanzines-test/{self.serverDir}"
@@ -562,6 +621,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self._AllowFanzineNameEdit=False
 
             self.UpdateEnabledStatus()
+
+
 
 
 
@@ -768,9 +829,18 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     #------------------
     def OnGridCellChanged(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+        # If the change is to col 0 -- the URL -- then we need to queue a Delta so the change actually gets made. Save the old name.
+        oldURL=""
+        if event.GetCol() == 0:
+            oldURL=self.Datasource.Rows[event.GetRow()][0]
+
         self._dataGrid.OnGridCellChanged(event)  # Pass event handling to WxDataGrid
 
-        if event.GetCol() == 0:    # If the Filename changes, we may need to fill in the PDF column
+        # If needed, queue the Delta
+        if event.GetCol() == 0:
+            self.deltaTracker.Rename(oldURL, self.Datasource.Rows[event.GetRow()][0])
+
+        if event.GetCol() == 0:    # If the Filename changes, we may need to update the PDF and the Pages columns
             self.FillInPDFColumn()
             self.FillInPagesColumn()
         self.RefreshWindow()
@@ -972,6 +1042,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     def OnPopupDelRow(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+        # Add the deletions to the delta tracker
+        top, _, bottom, _=self._dataGrid.SelectionBoundingBox()
+        if top == -1 or bottom == -1:
+            top=self._dataGrid.clickedRow
+            bottom=self._dataGrid.clickedRow
+        urlCol=self.Datasource.ColHeaderIndex("URL")
+        assert urlCol != -1
+        for irow in range(top, bottom+1):
+            self.deltaTracker.Delete(self.Datasource.Rows[irow][urlCol])
+
         self._dataGrid.DeleteSelectedRows() # Pass event to WxDataGrid to handle
         self.RefreshWindow()
 
