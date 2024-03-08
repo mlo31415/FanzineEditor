@@ -1,7 +1,7 @@
 # Use this to fill in a Fanzine Index Page dialog for a new fanzine
 Scanning credits default=Scanned by Joe Siclari
 
-# Directpory to initially point the dialog to add PDFs to a FIP
+# Directory to initially point the dialog to add PDFs to a FIP
 PDF Source Path=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\\Python\\FanacLSTGenerator\\Root\\PAS-TELL
 
 # Pathname of the (local) table relating server directories to local directories
