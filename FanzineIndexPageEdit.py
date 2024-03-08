@@ -465,6 +465,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             Log(f"Uploading Fanzine Index Page: {self.serverDir}")
             self.failure=False
 
+            # Make a dated backup copy of the existing page
+            ProgressMessage(self).UpdateMessage(f"Backing up FanzineIndexPage")
+            ret=FTP().CopyAndRenameFile(f"/Fanzines-test/{self.serverDir}", "index.html",
+                                    f"/Fanzines-test/{self.serverDir}", f"index - {datetime.now()}.html")
+            if not ret:
+                Log(f"Could not make a backup copy: Fanzines-test/{self.serverDir}/index - {datetime.now()}.html")
+                self.failure=True
+                return
+
             self.serverDir=self.tServerDirectory.GetValue()
 
             # Now execute the delta list on the files.
