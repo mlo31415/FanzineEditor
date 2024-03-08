@@ -11,6 +11,9 @@ Server To Local Table Name=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\Python\
 How old is new=90
 How old is updated=90
 
+# Should we do logging of FTP progress. (This generates a lot of cruft which is useful priimarily for debugging.)
+FTP Logging=False
+
 
 #Show log window=0
 
