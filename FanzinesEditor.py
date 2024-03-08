@@ -66,6 +66,8 @@ def main():
     global g_debug
     g_debug=Settings().Get("Debug Mode", False)
 
+    FTP.g_dologging=Settings().Get("FTP Logging", False)
+
     if not os.path.exists("FTP Credentials.json"):
         msg=f"Unable to find file 'FTP Credentials.json' file.  Expected to find it in {os.getcwd()}"
         MessageBox(msg, ignoredebugger=True)
