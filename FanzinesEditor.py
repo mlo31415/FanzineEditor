@@ -214,6 +214,8 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
 
         # Column 6: Flag
         # '<td sorttable_customkey="zzzz"><br/>'
+        if len(row) < 7:
+            row.append("")
         if row[6] != "":
             m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[6], flags=re.IGNORECASE)
             if m is not None:
