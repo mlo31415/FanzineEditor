@@ -10,6 +10,7 @@ import re
 
 from FTP import FTP
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMsg
@@ -65,7 +66,9 @@ def main():
     # Set the debug/production mode
     global g_debug
     g_debug=Settings().Get("Debug Mode", False)
+    g_testServer=Settings().Get("Test server Directory", "")
 
+    # Allow turning off of routine FTP logging
     FTP.g_dologging=Settings().Get("FTP Logging", False)
 
     if not os.path.exists("FTP Credentials.json"):
@@ -395,7 +398,6 @@ class FanzineEditorWindow(FanzinesGridGen):
 
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
 
-        #self.ClearMainWindow()
         self.MarkAsSaved()
         self.RefreshWindow()
 
