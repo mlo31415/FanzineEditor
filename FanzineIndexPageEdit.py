@@ -72,6 +72,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.IsNewDirectory=True
         self.serverDir=serverDir
 
+        # Figure out the root directory which depends on whether we are in test mode or not
+        self.RootDir="Fanzines"
+        if Settings().IsTrue("Test mode"):
+            self.RootDir=Settings().Get("Test Server Directory", self.RootDir)
+
         # A list of changes to the file stored on the website which will need to be made upon upload.
         self.deltaTracker=DeltaTracker()
 
@@ -81,6 +86,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._allowManualEntryOfLocalDirectoryName=self.IsNewDirectory
         self._manualEditOfLocalDirectoryNameBegun=False
         self._uploaded=False
+
 
         # Used to communicate with the fanzine list editor.  It is set to None, but is filled in with a CFL when something is uploaded.
         self.CFL: ClassicFanzinesLine|None=None
@@ -467,8 +473,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             # Make a dated backup copy of the existing page
             ProgressMessage(self).UpdateMessage(f"Backing up FanzineIndexPage")
-            ret=FTP().CopyAndRenameFile(f"/Fanzines-test/{self.serverDir}", "index.html",
-                                    f"/Fanzines-test/{self.serverDir}", f"index - {datetime.now()}.html")
+            ret=FTP().CopyAndRenameFile(f"/{self.RootDir}/{self.serverDir}", "index.html",
+                                    f"/{self.RootDir}/{self.serverDir}", f"index - {datetime.now()}.html")
             if not ret:
                 Log(f"Could not make a backup copy: Fanzines-test/{self.serverDir}/index - {datetime.now()}.html")
                 self.failure=True
@@ -485,9 +491,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         path=delta.SourcePath
                         filename=delta.SourceFilename
                         pathfilename=os.path.join(path, filename)
-                        serverpathfile=f"/Fanzines-test/{self.serverDir}/{delta.SourceFilename}"
+                        serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
                         if delta.NewSourceFilename != "":
-                            serverpathfile=f"/Fanzines-test/{self.serverDir}/{delta.NewSourceFilename}"
+                            serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
                         progressMessage.Show(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
                         if not FTP().PutFile(pathfilename, serverpathfile):
                             dlg=wx.MessageDialog(self, f"Y+Unable to upload {pathfilename}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
@@ -501,7 +507,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     case "delete":
                         # Delete a file on the server
                         servername=delta.SourceFilename
-                        serverpathfile=f"/Fanzines-test/{self.serverDir}/{servername}"
+                        serverpathfile=f"/{self.RootDir}/{self.serverDir}/{servername}"
                         progressMessage.Show(f"Deleting {serverpathfile} from server")
                         if not FTP().DeleteFile(serverpathfile):
                             dlg=wx.MessageDialog(self, f"Y+Unable to delete {serverpathfile}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
@@ -514,8 +520,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     case "rename":
                         # Rename file on the server
                         assert delta.NewSourceFilename != ""
-                        oldserverpathfile=f"/Fanzines-test/{self.serverDir}/{delta.SourceFilename}"
-                        newserverpathfile=f"/Fanzines-test/{self.serverDir}/{delta.NewSourceFilename}"
+                        oldserverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
+                        newserverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
                         progressMessage.Show(f"Renaming {oldserverpathfile} as {newserverpathfile}")
                         if not FTP().Rename(oldserverpathfile, newserverpathfile):
                             dlg=wx.MessageDialog(self, f"Y+Unable to rename {oldserverpathfile} to {newserverpathfile}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
@@ -529,7 +535,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             # If this is a new fanzine, it needs to be in a new directory.  Check it.
             if self.IsNewDirectory:
-                path=f"/Fanzines-test/{self.serverDir}"
+                path=f"/{self.RootDir}/{self.serverDir}"
                 if FTP().PathExists(path):
                     wx.MessageBox(f"'Directory {path}' already exists.  Please change the server directory name.", parent=self)
                     self.failure=True
@@ -585,7 +591,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     wx.MessageBox("Warning: One or more of the years in the table are outside the date range given fore this fanzine.", parent=self)
 
             # Put the FanzineIndexPage on the server as an HTML file
-            if not self.Datasource.PutFanzineIndexPage(self.serverDir):
+            if not self.Datasource.PutFanzineIndexPage(self.RootDir, self.serverDir):
                 self.failure=True
                 Log("Failed\n")
                 return
@@ -593,7 +599,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if row.FileSourcePath != "":
                     ProgressMessage(self).UpdateMessage(f"Uploading file: {row.FileSourcePath}")
                     Log(f"Uploading file: {row.FileSourcePath}")
-                    if not FTP().PutFile(row.FileSourcePath, f"/Fanzines-test/{self.serverDir}/{row.Cells[0]}"):
+                    if not FTP().PutFile(row.FileSourcePath, f"/{self.RootDir}/{self.serverDir}/{row.Cells[0]}"):
                         Log("Failed\n")
                         self.failure=True
                         return
@@ -1855,7 +1861,7 @@ class FanzineIndexPage(GridDataSource):
 
 
     # Using the fanzine index page template, create a page and upload it.
-    def PutFanzineIndexPage(self, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
+    def PutFanzineIndexPage(self, root: str, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
 
         if not os.path.exists("Template - Fanzine Index Page.html"):
             LogError(f"PutFanzineIndexPage() can't find ';'Template - Fanzine Index Page.html' at {os.path.curdir}")
@@ -1938,7 +1944,7 @@ class FanzineIndexPage(GridDataSource):
         if len(temp) > 0:
             output=temp
 
-        FTP().PutFileAsString("/Fanzines-test/"+url, "index.html", output, create=True)
+        FTP().PutFileAsString(f"/{root}/{url}", "index.html", output, create=True)
         return True
 
 

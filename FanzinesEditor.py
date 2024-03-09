@@ -251,7 +251,7 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
     return namelist
 
 
-def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
+def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str) -> bool:
     if not os.path.exists("Template - Classic_Fanzines.html"):
         LogError(f"PutFanzineIndexPage() can't find 'Template - Classic_Fanzines.html' at {os.path.curdir}")
         return False
@@ -331,7 +331,17 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine]) -> bool:
     output=temp
 
     with ProgressMsg(None, f"Uploading 'Classic_Fanzines.html'"):
-        FTP().PutFileAsString("/Fanzines-test/", "Classic_Fanzines.html", output, create=True)
+        ret=FTP().CopyAndRenameFile(f"/{rootDir}/", "Classic_Fanzines.html",
+                                    f"/{rootDir}/", f"Classic_Fanzines - {datetime.now()}.html")
+        if not ret:
+            Log(f"Could not make a backup copy: {rootDir}/Classic_Fanzines - {datetime.now()}.html")
+            return False
+
+        ret=FTP().PutFileAsString(f"/{rootDir}", "Classic_Fanzines.html", output, create=True)
+        if not ret:
+            Log(f"Could not FTP().PutFileAsString: /{rootDir}/Classic_Fanzines.html")
+            return False
+    return True
 
 
 #==========================================================================================================
@@ -364,6 +374,12 @@ class FanzineEditorWindow(FanzinesGridGen):
         if not Settings("ServerToLocal").Load(s2LDir):
             Log(f"Can't open/read {os.getcwd()}/{s2LDir}")
             exit(999)
+
+
+        # Figure out the server directory
+        self.RootDir="Fanzines"
+        if Settings().IsTrue("Test mode"):
+            self.RootDir=Settings().Get("Test Server Directory", self.RootDir)
 
 
         with ProgressMsg(self, "Downloading main fanzine page"):
@@ -515,7 +531,7 @@ class FanzineEditorWindow(FanzinesGridGen):
     #-------------------
     # Upload the fanzines list to the classic fanzine page
     def OnUploadPressed( self, event ):       # FanzineEditor(FanzineGrid)
-        PutClassicFanzineList(self._fanzinesList)
+        PutClassicFanzineList(self._fanzinesList, self.RootDir)
         self.MarkAsSaved()
 
 
