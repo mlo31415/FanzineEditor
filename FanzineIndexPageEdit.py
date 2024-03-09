@@ -983,7 +983,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     Enable("Extract Editor")
                     break
 
-        # If this is a cell in a column tagged as IsEditable=Maybe, enable allow editing
+        # If this is a cell in a column tagged as IsEditable=Maybe, enable the "allow editing" popup menu item
         if self.Datasource.ColDefs[self._dataGrid.clickedColumn].IsEditable == IsEditable.Maybe:
             Enable("Allow Editing")
 
