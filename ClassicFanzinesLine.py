@@ -271,7 +271,7 @@ class ClassicFanzinesLine:
     @property
     def Created(self) -> ClassicFanzinesDate:
         if self._created is None:
-            return ClassicFanzinesDate("1900-01-01")
+            return ClassicFanzinesDate("1900-01-01")        # "Empty" date
         return self._created
     @Created.setter
     def Created(self, val: ClassicFanzinesDate):
@@ -280,7 +280,7 @@ class ClassicFanzinesLine:
     @property
     def Updated(self) -> ClassicFanzinesDate:
         if self._updated is None:
-            return ClassicFanzinesDate("1900-01-01")
+            return ClassicFanzinesDate("1900-01-01")        # "Empty" date
         return self._updated
     @Updated.setter
     def Updated(self, val: ClassicFanzinesDate):
