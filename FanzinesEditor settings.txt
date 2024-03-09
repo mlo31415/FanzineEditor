@@ -18,8 +18,11 @@ FTP Logging=False
 #Show log window=0
 
 # Debug/test controls
+Debug Mode=False
+
 # When in test mode, use this server directory as the root
-Test server directory=Fanzines-test
+Test mode=True
+Test server directory=Fanzines-test		# Ignored if Test Mode is not Trues
 
 # Obsolete?
 #Template directory=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\\Python\\FanacLSTGenerator\\Templates

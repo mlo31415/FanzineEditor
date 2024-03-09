@@ -325,7 +325,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnGridCellLeftClick )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnGridCellDoubleClick )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_RIGHT_CLICK, self.OnGridCellRightClick )
-		self.wxGrid.Bind( wx.grid.EVT_GRID_EDITOR_HIDDEN, self.OnGridEditorShown )
+		self.wxGrid.Bind( wx.grid.EVT_GRID_EDITOR_SHOWN, self.OnGridEditorShown )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self.OnGridLabelLeftClick )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_LABEL_RIGHT_CLICK, self.OnGridLabelRightClick )
 		self.wxGrid.Bind( wx.EVT_KEY_DOWN, self.OnKeyDown )

@@ -1921,7 +1921,7 @@
                                         <event name="OnGridCellLeftClick">OnGridCellLeftClick</event>
                                         <event name="OnGridCellLeftDClick">OnGridCellDoubleClick</event>
                                         <event name="OnGridCellRightClick">OnGridCellRightClick</event>
-                                        <event name="OnGridEditorHidden">OnGridEditorShown</event>
+                                        <event name="OnGridEditorShown">OnGridEditorShown</event>
                                         <event name="OnGridLabelLeftClick">OnGridLabelLeftClick</event>
                                         <event name="OnGridLabelRightClick">OnGridLabelRightClick</event>
                                         <event name="OnKeyDown">OnKeyDown</event>

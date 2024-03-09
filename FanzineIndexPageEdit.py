@@ -34,7 +34,7 @@ from FanzineIssueSpecPackage import MonthNameToInt
 
 # Create default column headers
 gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
-    ColDefinition("Filename", Type="str"),
+    ColDefinition("Filename", Type="str", IsEditable=IsEditable.Maybe),
     ColDefinition("Issue", Type="required str"),
     ColDefinition("Title", Type="str", preferred="Issue"),
     ColDefinition("Whole", Type="int", Width=75),
@@ -861,6 +861,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # Call the RMB handler
         self.RMBHandler(event, True)
+
+    #--------------------------
+    def OnGridEditorShown(self, event):      # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+        # Use Generic handling
+        self._dataGrid.OnGridEditorShown(event)
 
     # ------------------
     def OnGridLabelLeftClick(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
