@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 
 from FTP import FTP
+from WxDataGrid import ColDefinitionsList
 
 
 # # An individual file to be listed under a convention
@@ -42,11 +43,13 @@ from FTP import FTP
 #   for the upload so that all the accumulated edits get up there.
 
 class Delta:
-    def __init__(self, verb: str, sourceFilename: str, sourcePath:str="", newSourceFilename: str=""):
+    def __init__(self, verb: str, sourceFilename: str, sourcePath:str="", newSourceFilename: str="", row: list[str]=None, coldefs: ColDefinitionsList=None):
         self.Verb: str=verb
         self.SourceFilename: str=sourceFilename     # The name of the file
         self.SourcePath: str=sourcePath     # The path (no filename) of the file on the local disk
         self.NewSourceFilename: str=newSourceFilename       # A new name for the file on the server (needed only for a rename)
+        self.Row: list[str]=row
+        self.ColDefs: ColDefinitionsList=coldefs
 
 
     def __str__(self) -> str:
@@ -74,9 +77,9 @@ class DeltaTracker:
             s+=">>"+str(d)+"\n"
         return s
 
-    def Add(self, sourceFilepathname: str) -> None:
+    def Add(self, sourceFilepathname: str, row: list[str]=None, coldefs: ColDefinitionsList=None) -> None:
         path, filename=os.path.split(sourceFilepathname)
-        self._deltas.append(Delta("add", filename, sourcePath=path))
+        self._deltas.append(Delta("add", filename, sourcePath=path, row=row, coldefs=coldefs))
 
 
     def Delete(self, sourceFilename: str) -> None:
