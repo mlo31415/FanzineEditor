@@ -549,7 +549,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         filename=delta.SourceFilename
                         # Update the PDF's metadata
                         tempfilepath=self.SetPDFMetadata(os.path.join(path, filename), cfl, delta.Row, delta.ColDefs)
-                        Log(f"{tempfilepath=}")
+                        Log(f"{tempfilepath=}")     #TODO delete these logging messages once sure that this code is working
 
                         serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
                         Log(f"{serverpathfile=}")
