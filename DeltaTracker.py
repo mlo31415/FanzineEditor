@@ -119,7 +119,7 @@ class DeltaTracker:
 
 
     # We want to replace one file with another
-    def Replace(self, str, sourceFilename: str, newname: str):
+    def Replace(self, sourceFilename: str, newname: str):
         # Check to see if the replacement is in a row to be renamed.
         for i, item in enumerate(self._deltas):
             if item.Verb == "rename":
