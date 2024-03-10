@@ -8,9 +8,11 @@ import re
 from datetime import datetime
 from string import capwords
 from math import floor, ceil
+from tempfile import gettempdir
 
 from bs4 import BeautifulSoup
 import bs4
+from pypdf import PdfWriter
 
 from GenGUIClass import FanzineIndexPageEditGen
 from ClassicFanzinesLine import ClassicFanzinesLine, ClassicFanzinesDate
@@ -313,8 +315,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.FillInPagesColumn()
 
         # And add these files to the changelist
-        for file in files:
-            self.deltaTracker.Add(file)
+        for i, file in enumerate(files):
+            self.deltaTracker.Add(file, newrows[i].Cells, self.Datasource.ColDefs)
 
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
@@ -463,9 +465,64 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.MarkAsSaved()
 
 
+    def SetPDFMetadata(self, pdfPathname: str, cfl: ClassicFanzinesLine, row: list[str], colNames: ColDefinitionsList) -> str:
+
+        writer=PdfWriter(clone_from=pdfPathname)
+
+        # Title, issue, date, editors, country code, apa
+        metadata={"/Title": row[colNames.index("Issue")], "/Author": cfl.Editors.replace("<br>", ", ")}
+        if "Editor" in colNames:        # Editor in the row overrides editors for the whole zine series
+            metadata["/Author"]=row[colNames.index("Editor")]
+
+        keywords=f"{cfl.DisplayName}, "
+        if "Year" in colNames:
+            keywords+=f", {row[colNames.index('Year')]}"
+        if "Mailing" in colNames:
+            keywords+=f", {row[colNames.index('Mailing')]}"
+        if len(cfl.Country) > 0:
+            keywords+=f", {cfl.Country}"
+        metadata["/Keywords"]=keywords
+
+        # Add the metadata.
+        try:
+            writer.add_metadata(metadata)
+        except:
+            LogError(f"SetPDFMetadata().writer.add_metadata(metadata) with file {pdfPathname} threw an exception: Ignored")
+
+        # Create a temporary directory
+        tmpdirname=gettempdir()
+        Log(f"Temporary directory: {tmpdirname}")
+        filename=os.path.basename(pdfPathname)
+        Log(f"{filename=}")
+        newfilepath=os.path.join(tmpdirname, filename)
+        Log(f"{newfilepath=}")
+
+        with open(newfilepath, 'wb') as fp:
+            writer.write(fp)
+        return newfilepath
+
+
     #------------------
     # Upload the current FanzineIndexPage (including any added fanzines) to the server
     def OnUpload(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+
+        # Save the fanzine's values to return to the main fanzines page.
+        cfl=ClassicFanzinesLine()
+        cfl.Issues=self.Datasource.NumRows
+        cfl.Editors=self.tEditors.GetValue().replace("\n", "<br>")
+        cfl.ServerDir=self.tServerDirectory.GetValue()
+
+        cfl.DisplayName=self.tFanzineName.GetValue()
+        cfl.OtherNames="??"
+        cfl.Dates=self.tDates.GetValue()
+        cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
+        cfl.Complete=self.cbComplete.GetValue()
+        cfl.Updated=datetime.now()
+        if cfl.Created == ClassicFanzinesDate("1900-01-01"):
+            cfl.Created=datetime.now()
+        cfl.TopComments=self.tTopComments.GetValue()
+        cfl.Country=self.tLocaleText.GetValue()
+
         with ModalDialogManager(ProgressMessage, self) as progressMessage:
             progressMessage.Show(f"Uploading Fanzine Index Page: {self.serverDir}")
             Log(f"Uploading Fanzine Index Page: {self.serverDir}")
@@ -490,18 +547,26 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         # Copy file to server, possibly renaming it
                         path=delta.SourcePath
                         filename=delta.SourceFilename
-                        pathfilename=os.path.join(path, filename)
+                        # Update the PDF's metadata
+                        tempfilepath=self.SetPDFMetadata(os.path.join(path, filename), cfl, delta.Row, delta.ColDefs)
+                        Log(f"{tempfilepath=}")
+
                         serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
+                        Log(f"{serverpathfile=}")
+
                         if delta.NewSourceFilename != "":
                             serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
+                            Log(f"Renamed {serverpathfile=}")
+
                         progressMessage.Show(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
-                        if not FTP().PutFile(pathfilename, serverpathfile):
-                            dlg=wx.MessageDialog(self, f"Y+Unable to upload {pathfilename}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+                        if not FTP().PutFile(tempfilepath, serverpathfile):
+                            dlg=wx.MessageDialog(self, f"Y+Unable to upload {tempfilepath}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
                             dlg.Destroy()
                             if result != wx.ID_YES:
                                 failure=True
                                 break
+                        del tempfilepath
                         continue
 
                     case "delete":
@@ -517,6 +582,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                 failure=True
                                 break
                         continue
+
                     case "rename":
                         # Rename file on the server
                         assert delta.NewSourceFilename != ""
@@ -607,21 +673,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             Log("All uploads succeeded.")
 
-            # Save the fanzine's uploaded values to return to the main fanzines page.
-            cfl=ClassicFanzinesLine()
-            cfl.Issues=self.Datasource.NumRows
-            cfl.Editors=self.tEditors.GetValue().replace("\n", "<br>")
-            cfl.ServerDir=self.tServerDirectory.GetValue()
-
-            cfl.DisplayName=self.tFanzineName.GetValue()
-            cfl.OtherNames="??"
-            cfl.Dates=self.tDates.GetValue()
-            cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
-            cfl.Complete=self.cbComplete.GetValue()
-            cfl.Updated=datetime.now()
-            if cfl.Created == ClassicFanzinesDate("1900-01-01"):
-                cfl.Created=datetime.now()
-            cfl.TopComments=self.tTopComments.GetValue()
             self.CFL=cfl
 
             self._uploaded=True
