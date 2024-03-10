@@ -61,7 +61,7 @@ def main():
     Settings().Load(os.path.join(homedir, "FanzinesEditor settings.txt"), MustExist=True)
     Log(Settings().Dump())
     Settings("FanzinesEditor positions.json").Load(os.path.join(homedir, "FanzinesEditor positions.json"), MustExist=True)
-    Log(Settings().Dump())
+    Log(Settings("FanzinesEditor positions.json").Dump())
 
     # Set the debug/production mode
     global g_debug
@@ -363,10 +363,6 @@ class FanzineEditorWindow(FanzinesGridGen):
         tlws=Settings("FanzinesEditor positions.json").Get("Top Level Window Size")
         if tlws:
             self.SetSize(tlws)
-
-        # Open the settings file
-        # Load the global settings dictionary
-        Settings().Load("FanzinesEditor settings.txt")
 
         # Load the server->local directory table
         s2LDir=Settings().Get("Server To Local Table Name")
