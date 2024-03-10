@@ -93,6 +93,8 @@ class ClassicFanzinesLine:
         self._type: str=""
         self._issues: str=""
         self._issuesSort: str=""
+        self._topcomments: str=""
+        self._country: str=""
         self._flagSort: str=""
         self._complete: bool=False
         self._created: ClassicFanzinesDate|None=None
@@ -111,6 +113,8 @@ class ClassicFanzinesLine:
             self._type=cfl._type
             self._issues=cfl._issues
             self._issuesSort=cfl._issuesSort
+            self._topcomments=cfl._topcomments
+            self._country=cfl._country
             self._flagSort: str=cfl._flagSort
             self._complete=cfl._complete
             self._created=cfl._created
@@ -139,6 +143,8 @@ class ClassicFanzinesLine:
             self._type == other._type and \
             self._issues == other._issues and \
             self._issuesSort == other._issuesSort and \
+            self._topcomments == other._topcomments and \
+            self._country == other._country and \
             self._flagSort == other._flagSort and \
             self._complete == other._complete and \
             self._updated == other._updated and \
@@ -157,6 +163,8 @@ class ClassicFanzinesLine:
             hash(self._type) + \
             hash(self._issues) + \
             hash(self._issuesSort) + \
+            hash(self._topcomments) + \
+            hash(self._country) + \
             hash(self._flagSort) + \
             hash(self._complete) + \
             hash(self._created) + \
@@ -251,6 +259,20 @@ class ClassicFanzinesLine:
     @IssuesSort.setter
     def IssuesSort(self, val: str):
         assert False
+
+    @property
+    def TopComments(self) -> str:
+        return self._topcomments
+    @TopComments.setter
+    def TopComments(self, val: str):
+        self._topcomments=val
+
+    @property
+    def Country(self) -> str:
+        return self._country
+    @Country.setter
+    def Country(self, val: str):
+        self._country=val
 
     @property
     def Flag(self) -> str:
