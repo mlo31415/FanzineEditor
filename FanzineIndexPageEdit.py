@@ -2043,3 +2043,8 @@ def SetPDFMetadata(pdfPathname: str, cfl: ClassicFanzinesLine, row: list[str], c
         keywords+=f", {cfl.Country}"
     metadata["/Keywords"]=keywords
 
+    # Add the metadata.
+    try:
+        writer.add_metadata(metadata)
+    except:
+        LogError(f"SetPDFMetadata().writer.add_metadata(metadata) with file {pdfPathname} threw an exception: Ignored")
