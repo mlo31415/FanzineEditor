@@ -1246,6 +1246,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         val=f'<a href="https:{ret}">{val}</a>'
         row[self._dataGrid.clickedColumn]=val
+        self.Datasource.Rows[self._dataGrid.clickedRow].IsLinkRow=True
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
 
