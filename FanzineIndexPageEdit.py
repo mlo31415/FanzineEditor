@@ -234,18 +234,18 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.bAddNewIssues.Enable(True)
 
 
-
-    #------------------
-    # An override of DataGrids's method ColorCellsByValue() for columns 0 and 1 only
-    def ColorCells01ByValue(self, icol: int, irow: int):            # FanzineIndexPageWindow(FanzineIndexPageEditGen)
-        if icol != 0 and icol != 1:
-            return
-        if icol < 0 or icol >= self.Datasource.NumCols:
-            return
-        if irow < 0 or irow >= self.Datasource.NumRows:
-            return
-
-        return
+    #
+    # #------------------
+    # # An override of DataGrids's method ColorCellsByValue() for columns 0 and 1 only
+    # def ColorCells01ByValue(self, icol: int, irow: int):            # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    #     if icol != 0 and icol != 1:
+    #         return
+    #     if icol < 0 or icol >= self.Datasource.NumCols:
+    #         return
+    #     if irow < 0 or irow >= self.Datasource.NumRows:
+    #         return
+    #
+    #     return
 
 
 
