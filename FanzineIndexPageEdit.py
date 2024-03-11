@@ -654,9 +654,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self._manualEditOfLocalDirectoryNameBegun=False
             self._AllowFanzineNameEdit=False
 
-            self.UpdateEnabledStatus()
-
-
+            self.UpdateDialogComponentEnabledStatus()
 
 
 
@@ -667,7 +665,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.SetTitle(s)
 
 
-    def UpdateEnabledStatus(self):
+    def UpdateDialogComponentEnabledStatus(self):
         # The server directory can be edited iff this is a new directory
         self.tServerDirectory.Enabled=self.IsNewDirectory
 
@@ -688,7 +686,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self.UpdateNeedsSavingFlag()
-        self.UpdateEnabledStatus()
+        self.UpdateDialogComponentEnabledStatus()
 
         if not DontRefreshGrid:
             self._dataGrid.RefreshWxGridFromDatasource()
