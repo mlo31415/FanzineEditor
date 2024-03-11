@@ -1475,9 +1475,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow()
 
 
-    # Run through the rows and columns and look at the Notes column  If an APA mailing note is present,
-    # move it to a "Mailing" column (which may need to be created).  Remove the text from the Notes column.
-    # Find the Notes column. If there is none, we're done.
+    # If there is an editors column and if editors have been specific for the whole run, replace all blank cells in the editors column with th series editors.
     def OnPopupPropagateEditor(self, event):  # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self.wxGrid.SaveEditControlValue()
 
