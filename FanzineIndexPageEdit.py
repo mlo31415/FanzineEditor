@@ -467,44 +467,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Set the signature to the current (empty) state so any change will trigger a request to save on exit
         self.MarkAsSaved()
 
-
-    def SetPDFMetadata(self, pdfPathname: str, cfl: ClassicFanzinesLine, row: list[str], colNames: ColDefinitionsList) -> str:
-
-        writer=PdfWriter(clone_from=pdfPathname)
-
-        # Title, issue, date, editors, country code, apa
-        metadata={"/Title": row[colNames.index("Issue")], "/Author": cfl.Editors.replace("<br>", ", ")}
-        if "Editor" in colNames:        # Editor in the row overrides editors for the whole zine series
-            metadata["/Author"]=row[colNames.index("Editor")]
-
-        keywords=f"{cfl.DisplayName}, "
-        if "Year" in colNames:
-            keywords+=f", {row[colNames.index('Year')]}"
-        if "Mailing" in colNames:
-            keywords+=f", {row[colNames.index('Mailing')]}"
-        if len(cfl.Country) > 0:
-            keywords+=f", {cfl.Country}"
-        metadata["/Keywords"]=keywords
-
-        # Add the metadata.
-        try:
-            writer.add_metadata(metadata)
-        except:
-            LogError(f"SetPDFMetadata().writer.add_metadata(metadata) with file {pdfPathname} threw an exception: Ignored")
-
-        # Create a temporary directory
-        tmpdirname=gettempdir()
-        Log(f"Temporary directory: {tmpdirname}")
-        filename=os.path.basename(pdfPathname)
-        Log(f"{filename=}")
-        newfilepath=os.path.join(tmpdirname, filename)
-        Log(f"{newfilepath=}")
-
-        with open(newfilepath, 'wb') as fp:
-            writer.write(fp)
-        return newfilepath
-
-
     #------------------
     # Upload the current FanzineIndexPage (including any added fanzines) to the server
     def OnUpload(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
