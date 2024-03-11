@@ -245,8 +245,11 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_menuItemPopupPaste = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Paste", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupPaste )
 
-		self.m_menuItemPopupEraseSelection = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Erase Selection", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItemPopupEraseSelection = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Erase Selection", u"Erase (but do not delete) the selected cells.", wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupEraseSelection )
+
+		self.m_menuItemPopupInsertText = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Insert a Text Line", u"Insert a new text line at the selected location.", wx.ITEM_NORMAL )
+		self.m_GridPopup.Append( self.m_menuItemPopupInsertText )
 
 		self.m_menuItemPopupDelCol = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Delete Column", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupDelCol )
@@ -263,25 +266,22 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_menuItemPopupInsertColLeft = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Insert Column to Left", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupInsertColLeft )
 
-		self.m_menuItemPopupInsertText = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Insert a Text Line", wx.EmptyString, wx.ITEM_NORMAL )
-		self.m_GridPopup.Append( self.m_menuItemPopupInsertText )
-
 		self.m_menuItemPopupInsertColRight = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Insert Column to Right", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupInsertColRight )
 
 		self.m_menuItemPopupSortOnCol = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Sort on Selected Column", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupSortOnCol )
 
-		self.m_menuItemPopupExtractScanner = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Extract Scanner", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItemPopupExtractScanner = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Extract Scanner", u"If ther Notes column contains information on who did the scanning, extract that information and add it to a Scanned By column, creating it if needed.", wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupExtractScanner )
 
-		self.m_menuItemPopupTidyUpColumns = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Tidy Up Columns", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItemPopupTidyUpColumns = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Tidy Up Columns", u"Standardize columns:\n* Extract APA mailing info and add to a Milaings column\n* If there is a PDF column, fill it in with \"PDF\" as appropriate\n* Fill in the Pages column as apporpriate\n* Standardize column names", wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupTidyUpColumns )
 
-		self.m_menuItemPopupExtractEditor = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Extract Editor", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItemPopupExtractEditor = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Extract Editor", u"If ther Notes column contains information on the issue's editor, extract that information and add it to an Editors column, creating it if needed.", wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupExtractEditor )
 
-		self.m_menuItemPopupPropagateEditor = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Propagate Editor", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItemPopupPropagateEditor = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Propagate Editor", u"If there is an editors column and if editors have been specific for the whole run, replace all blank cells in the editors column with the series editors.", wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupPropagateEditor )
 
 		self.m_menuItemMerge = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Merge Adjacent Rows", wx.EmptyString, wx.ITEM_NORMAL )
@@ -293,10 +293,10 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_menuItemAllowEditing = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Allow Editing", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemAllowEditing )
 
-		self.m_menuItemClearLinks = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Clear All Links", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItemClearLinks = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Clear All Links", u"Remove hyperlinks from selected row.", wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemClearLinks )
 
-		self.m_menuItemAddLink = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Add a Link", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItemAddLink = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Add a Link", u"Add a link to the selected row.", wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemAddLink )
 
 		self.Bind( wx.EVT_RIGHT_DOWN, self.FanzineIndexPageEditGenOnContextMenu )
@@ -337,12 +337,12 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.Bind( wx.EVT_MENU, self.OnPopupCopy, id = self.m_menuItemPopupCopy.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupPaste, id = self.m_menuItemPopupPaste.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupEraseSelection, id = self.m_menuItemPopupEraseSelection.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnPopupInsertText, id = self.m_menuItemPopupInsertText.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupDelCol, id = self.m_menuItemPopupDelCol.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupDelRow, id = self.m_menuItemPopupDelRow.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupInsertRow, id = self.m_menuItemPopupInsertRow.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupRenameCol, id = self.m_menuItemPopupRenameCol.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupInsertColLeft, id = self.m_menuItemPopupInsertColLeft.GetId() )
-		self.Bind( wx.EVT_MENU, self.OnPopupInsertText, id = self.m_menuItemPopupInsertText.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupInsertColRight, id = self.m_menuItemPopupInsertColRight.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupSortOnSelectedColumn, id = self.m_menuItemPopupSortOnCol.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupExtractScanner, id = self.m_menuItemPopupExtractScanner.GetId() )
@@ -454,6 +454,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnPopupEraseSelection( self, event ):
 		event.Skip()
 
+	def OnPopupInsertText( self, event ):
+		event.Skip()
+
 	def OnPopupDelCol( self, event ):
 		event.Skip()
 
@@ -467,9 +470,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnPopupInsertColLeft( self, event ):
-		event.Skip()
-
-	def OnPopupInsertText( self, event ):
 		event.Skip()
 
 	def OnPopupInsertColRight( self, event ):
