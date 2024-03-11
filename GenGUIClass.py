@@ -263,6 +263,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_menuItemPopupInsertColLeft = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Insert Column to Left", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupInsertColLeft )
 
+		self.m_menuItemPopupInsertText = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Insert a Text Line", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_GridPopup.Append( self.m_menuItemPopupInsertText )
+
 		self.m_menuItemPopupInsertColRight = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Insert Column to Right", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupInsertColRight )
 
@@ -339,6 +342,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.Bind( wx.EVT_MENU, self.OnPopupInsertRow, id = self.m_menuItemPopupInsertRow.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupRenameCol, id = self.m_menuItemPopupRenameCol.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupInsertColLeft, id = self.m_menuItemPopupInsertColLeft.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnPopupInsertText, id = self.m_menuItemPopupInsertText.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupInsertColRight, id = self.m_menuItemPopupInsertColRight.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupSortOnSelectedColumn, id = self.m_menuItemPopupSortOnCol.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupExtractScanner, id = self.m_menuItemPopupExtractScanner.GetId() )
@@ -463,6 +467,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnPopupInsertColLeft( self, event ):
+		event.Skip()
+
+	def OnPopupInsertText( self, event ):
 		event.Skip()
 
 	def OnPopupInsertColRight( self, event ):

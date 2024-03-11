@@ -1039,6 +1039,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             Enable("Allow Editing")
 
         Enable("Tidy Up Columns")
+        Enable("Insert a Text Line")
 
         if self.Datasource.ColHeaders[self._dataGrid.clickedColumn] == "Editor" and self.tEditors.GetValue() is not None and len(self.tEditors.GetValue()) > 0:
             Enable("Propagate Editor")
@@ -1302,6 +1303,20 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         self.Datasource.Rows.sort(key=lambda x:x[col])
         self.RefreshWindow()
 
+
+    # ------------------
+    def OnPopupInsertText(self, event):
+        irow=self._dataGrid.clickedRow
+        if irow > self.Datasource.NumRows:
+            self._dataGrid.ExpandDataSourceToInclude(irow, 0)   # If we're inserting past the end of the datasource, insert empty rows as necessary to fill in between
+        self._dataGrid.InsertEmptyRows(irow, 1)     # Insert the new empty row
+        self.Datasource.Rows[irow].IsTextRow=True
+        self._dataGrid.Grid.SetCellSize(irow, 0, 1, self._dataGrid.NumCols)
+        for icol in range(self._dataGrid.NumCols):
+            self._dataGrid.AllowCellEdit(irow, icol)
+        self.RefreshWindow()
+
+
     def OnPopupInsertColLeft(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self._dataGrid.OnPopupInsertColLeft(event) # Pass event to WxDataGrid to handle
         self.RefreshWindow()
@@ -1495,6 +1510,13 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         else:
             self._cells=row
 
+        self._isText: bool=False        # Is this a piece of text rather than a convention?
+        self._isLink: bool=False        # Is this a link?
+
+        self._URL: str=""               # The URL to be used for a link. (This is ignored if _isLink == False.)
+                                        # It will be displayed using the localfilename as the link text.
+                                        # Note that this is different than the URL method in the other frames
+
 
     def __str__(self):      # FanzineTableRow(GridDataRowClass)
         return str(self._cells)
@@ -1576,6 +1598,15 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         index=self._tableColdefs.index(index)
         self._cells[index]=value
         return
+
+
+
+    @property
+    def IsTextRow(self) -> bool:      # FanzineTableRow(GridDataRowClass)
+        return self._isText
+    @IsTextRow.setter
+    def IsTextRow(self, val: bool) -> None:
+        self._isText=val
 
 
     def IsEmptyRow(self) -> bool:      # FanzineTableRow(GridDataRowClass)
