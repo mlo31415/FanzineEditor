@@ -590,7 +590,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         newserverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
                         progressMessage.Show(f"Renaming {oldserverpathfile} as {newserverpathfile}")
                         if not FTP().Rename(oldserverpathfile, newserverpathfile):
-                            dlg=wx.MessageDialog(self, f"Y+Unable to rename {oldserverpathfile} to {newserverpathfile}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+                            dlg=wx.MessageDialog(self, f"Unable to rename {oldserverpathfile} to {newserverpathfile}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
                             dlg.Destroy()
                             if result != wx.ID_YES:
@@ -1916,6 +1916,15 @@ class FanzineIndexPage(GridDataSource):
             return False
         # Interpret the rows
         for row in rows:
+            # First look for a row which is a text row
+            m=re.match(r'<TD colspan=\"[0-9]+\">(.*?)</TD>', row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
+            if m is not None:
+                fipr=FanzineIndexPageTableRow(self._colDefs)
+                fipr.Cells[0]=m.groups()[0]
+                fipr.IsTextRow=True
+                self.Rows.append(fipr)
+                continue
+
             row=re.findall(r"<TD(:?.*?)>(.*?)</TD>", row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
             cols=[x[1] for x in row]
             # We treat column 0 specially, extracting its hyperref and turning it into two
@@ -2009,6 +2018,9 @@ class FanzineIndexPage(GridDataSource):
         insert=""
         for row in self.Rows:
             if row.IsEmptyRow():
+                continue
+            if row.IsTextRow:
+                insert+=f'\n<TR><TD colspan="{self.NumCols}">{row.Cells[0]}</TD></TR>'
                 continue
             insert+="\n<TR>"
             insert+=f"\n<TD><a href='{row.Cells[0]}'>{row.Cells[1]}</A></TD>\n"
