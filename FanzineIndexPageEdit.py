@@ -1618,7 +1618,7 @@ class FanzineIndexPageTableRow(GridDataRowClass):
 
 
     def IsEmptyRow(self) -> bool:      # FanzineTableRow(GridDataRowClass)
-        return all([cell == "" for cell in self._cells])
+        return all([cell.strip() == "" for cell in self._cells])
 
 
 
