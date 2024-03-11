@@ -336,6 +336,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         iPdf=self.AddOrDeletePDFColumnIfNeeded()
         if iPdf != -1:
             for i, row in enumerate(self.Datasource.Rows):
+                if row.IsTextRow or row.IsLinkRow:   # Ignore text and URL rows
+                    continue
+
                 filename=row[0]
                 if filename.lower().endswith(".pdf"):
                     row[iPdf]="PDF"
