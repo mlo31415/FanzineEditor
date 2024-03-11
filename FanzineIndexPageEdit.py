@@ -601,6 +601,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                 break
                         continue
 
+            if failure:
+                dlg=wx.MessageDialog(self, f"Upload failed")
+                result=dlg.ShowModal()
 
             # If this is a new fanzine, it needs to be in a new directory.  Check it.
             if self.IsNewDirectory:
