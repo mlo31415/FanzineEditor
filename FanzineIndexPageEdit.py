@@ -2048,3 +2048,15 @@ def SetPDFMetadata(pdfPathname: str, cfl: ClassicFanzinesLine, row: list[str], c
         writer.add_metadata(metadata)
     except:
         LogError(f"SetPDFMetadata().writer.add_metadata(metadata) with file {pdfPathname} threw an exception: Ignored")
+
+    # Use the temporary directory
+    tmpdirname=gettempdir()
+    Log(f"Temporary directory: {tmpdirname}")
+    filename=os.path.basename(pdfPathname)
+    Log(f"{filename=}")
+    newfilepath=os.path.join(tmpdirname, filename)
+    Log(f"{newfilepath=}")
+
+    with open(newfilepath, 'wb') as fp:
+        writer.write(fp)
+    return newfilepath
