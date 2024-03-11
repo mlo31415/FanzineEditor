@@ -551,7 +551,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         path=delta.SourcePath
                         filename=delta.SourceFilename
                         # Update the PDF's metadata
-                        tempfilepath=self.SetPDFMetadata(os.path.join(path, filename), cfl, delta.Row, delta.ColDefs)
+                        tempfilepath=SetPDFMetadata(os.path.join(path, filename), cfl, delta.Row, delta.ColDefs)
                         Log(f"{tempfilepath=}")     #TODO delete these logging messages once sure that this code is working
 
                         serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
@@ -2065,4 +2065,21 @@ class FanzineIndexPage(GridDataSource):
 
 
 
+def SetPDFMetadata(pdfPathname: str, cfl: ClassicFanzinesLine, row: list[str], colNames: ColDefinitionsList) -> str:
+
+    writer=PdfWriter(clone_from=pdfPathname)
+
+    # Title, issue, date, editors, country code, apa
+    metadata={"/Title": row[colNames.index("Issue")], "/Author": cfl.Editors.replace("<br>", ", ")}
+    if "Editor" in colNames:        # Editor in the row overrides editors for the whole zine series
+        metadata["/Author"]=row[colNames.index("Editor")]
+
+    keywords=f"{cfl.DisplayName}, "
+    if "Year" in colNames:
+        keywords+=f", {row[colNames.index('Year')]}"
+    if "Mailing" in colNames:
+        keywords+=f", {row[colNames.index('Mailing')]}"
+    if len(cfl.Country) > 0:
+        keywords+=f", {cfl.Country}"
+    metadata["/Keywords"]=keywords
 
