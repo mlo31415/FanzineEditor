@@ -201,7 +201,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     # Look at information available and color buttons and fields accordingly.
-    def ColorAndEnableFields(self):                      # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def EnableFields(self):                      # FanzineIndexPageWindow(FanzineIndexPageEditGen)
 
         # Some things are turned on for both editing an old FIP and creating a new one
         self.tEditors.SetEditable(True)
@@ -727,7 +727,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         if not DontRefreshGrid:
             self._dataGrid.RefreshWxGridFromDatasource()
-        self.ColorAndEnableFields()
+        self.EnableFields()
 
 
     # ----------------------------------------------
