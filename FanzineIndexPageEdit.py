@@ -1584,6 +1584,9 @@ class FanzineIndexPageTableRow(GridDataRowClass):
     def IsTextRow(self, val: bool) -> None:
         self._isText=val
 
+    @property
+    def IsNormalRow(self) -> bool:
+        return not self.IsLinkRow and not self.IsTextRow
 
     def IsEmptyRow(self) -> bool:      # FanzineTableRow(GridDataRowClass)
         return all([cell.strip() == "" for cell in self._cells])
