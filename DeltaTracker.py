@@ -44,7 +44,7 @@ from WxDataGrid import ColDefinitionsList
 
 class Delta:
     def __init__(self, verb: str, sourceFilename: str, sourcePath:str="", newSourceFilename: str="", row: list[str]=None, coldefs: ColDefinitionsList=None):
-        self.Verb: str=verb
+        self.Verb: str=verb     # Verb is add, rename, delete, replace
         self.SourceFilename: str=sourceFilename     # The name of the file
         self.SourcePath: str=sourcePath     # The path (no filename) of the file on the local disk
         self.NewSourceFilename: str=newSourceFilename       # A new name for the file on the server (needed only for a rename)
