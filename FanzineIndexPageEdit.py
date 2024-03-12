@@ -1199,7 +1199,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         row=self.Datasource.Rows[self._dataGrid.clickedRow]
         val=row[self._dataGrid.clickedColumn]
         # Create text input
-        dlg=wx.TextEntryDialog(self, 'Turn cell text into a hyperlink', 'URL to be used: ')
+        dlg=wx.TextEntryDialog(self, 'Enter the URL to be used (just the URL, no HTML): ', 'Turn cell text into a hyperlink')
         #dlg.SetValue("Turn a cell into a link")
         if dlg.ShowModal() != wx.ID_OK:
             event.Skip()
