@@ -872,7 +872,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.OnGridCellChanged(event)  # Pass event handling to WxDataGrid
 
         # If needed, queue the Delta
-        if event.GetCol() == 0:
+        if event.GetCol() == 0 and self.Datasource.Rows[event.GetRow()].IsNormalRow:
             self.deltaTracker.Rename(oldURL, self.Datasource.Rows[event.GetRow()][0])
 
         if event.GetCol() == 0:    # If the Filename changes, we may need to update the PDF and the Pages columns
