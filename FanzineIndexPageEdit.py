@@ -1101,7 +1101,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         urlCol=self.Datasource.ColHeaderIndex("URL")
         assert urlCol != -1
         for irow in range(top, bottom+1):
-            self.deltaTracker.Delete(self.Datasource.Rows[irow][urlCol])
+            if self.Datasource.Rows[irow].IsNormalRow and not self.Datasource.Rows[irow].IsEmptyRow():
+                self.deltaTracker.Delete(self.Datasource.Rows[irow][urlCol])
 
         self._dataGrid.DeleteSelectedRows() # Pass event to WxDataGrid to handle
         self.RefreshWindow()
