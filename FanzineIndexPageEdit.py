@@ -1102,7 +1102,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         urlCol=self.Datasource.ColHeaderIndex("URL")
         assert urlCol != -1
         for irow in range(top, bottom+1):
-            if self.Datasource.Rows[irow].IsNormalRow and not self.Datasource.Rows[irow].IsEmptyRow():
+            if self.Datasource.Rows[irow].IsNormalRow and not self.Datasource.Rows[irow].IsEmptyRow:
                 self.deltaTracker.Delete(self.Datasource.Rows[irow][urlCol])
 
         self._dataGrid.DeleteSelectedRows() # Pass event to WxDataGrid to handle
@@ -1588,6 +1588,7 @@ class FanzineIndexPageTableRow(GridDataRowClass):
     def IsNormalRow(self) -> bool:
         return not self.IsLinkRow and not self.IsTextRow
 
+    @property
     def IsEmptyRow(self) -> bool:      # FanzineTableRow(GridDataRowClass)
         return all([cell.strip() == "" for cell in self._cells])
 
@@ -2010,7 +2011,7 @@ class FanzineIndexPage(GridDataSource):
         insert=""
         for row in self.Rows:
 
-            if row.IsEmptyRow():
+            if row.IsEmptyRow:
                 insert+=f"\n<TR>"
                 for i in range(self.NumCols-1):
                     insert+=f"<TD>&nbsp;</TD>\n"

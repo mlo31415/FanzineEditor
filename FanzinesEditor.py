@@ -634,6 +634,7 @@ class FanzinesPageRow(GridDataRowClass):
             return
         raise KeyError
 
+    &property
     def IsEmptyRow(self) -> bool:      # FanzineTableRow(GridDataRowClass)
         return all([cell.strip() == "" for cell in self._cells])
 
