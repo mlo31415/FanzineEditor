@@ -1878,7 +1878,8 @@ class FanzineIndexPage(GridDataSource):
         # f "\n<TR>\n<TH>{self.ColHeaders[1]}</TH>\n"...insert+=f"<TH>{header}</TH>\n" (repeats)..."</TR>\n"
         headers=re.findall(r"<TH>(.+?)</TH>", headers, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
         self._colDefs=ColNamesToColDefs(headers)
-        # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
+        # In a normal row, column #1 is always a link to the fanzine, and so for every row, we split this into two parts,
+        # the URL and the display text.
         # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
         self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.Maybe)])+self._colDefs
 
