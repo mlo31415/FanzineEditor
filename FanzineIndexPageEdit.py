@@ -1894,7 +1894,19 @@ class FanzineIndexPage(GridDataSource):
             return False
         # Interpret the rows
         for row in rows:
-            # First look for a row which is a text row
+            # First look for a link row
+            # This starts with colspan= and is followed by <a href="col 0">col 1</a></TD>
+            m=re.match(r'<TD colspan=\"[0-9]+\"><a href=\"(.*?)">(.*?)</a></TD>', row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
+            if m is not None:
+                fipr=FanzineIndexPageTableRow(self._colDefs)
+                fipr.Cells[0]=m.groups()[0]
+                fipr.Cells[1]=m.groups()[1]
+                fipr.IsLinkRow=True
+                self.Rows.append(fipr)
+                continue
+
+            # Next look for a row which is a pure text row
+            # We detect the colspan= which merges all the row's cells into one, and since it isn't a link row, it's a text row
             m=re.match(r'<TD colspan=\"[0-9]+\">(.*?)</TD>', row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
             if m is not None:
                 fipr=FanzineIndexPageTableRow(self._colDefs)
@@ -2003,12 +2015,11 @@ class FanzineIndexPage(GridDataSource):
                     insert+=f"<TD>&nbsp;</TD>\n"
                 insert+=f"</TR>\n"
                 continue
-            if row.IsTextRow:
+
+            if row.IsTextRow or row.IsLinkRow:
                 insert+=f'\n<TR><TD colspan="{self.NumCols}">{row.Cells[0]}</TD></TR>'
                 continue
-            if row.IsLinkRow:
-                insert+=f'\n<TR><TD colspan="{self.NumCols}"><a href="{row.Cells[0]}">{row.Cells[1]}</a></TD></TR>'
-                continue
+
             # OK, it's an ordinary row
             insert+=f"\n<TR>"
             insert+=f"\n<TD><a href='{row.Cells[0]}'>{row.Cells[1]}</A></TD>\n"
