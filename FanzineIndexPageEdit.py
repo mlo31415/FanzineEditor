@@ -202,6 +202,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     # Look at information available and color buttons and fields accordingly.
     def EnableDialogFields(self):                      # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+        # See also UpdateDialogComponentEnabledStatus
 
         # Some things are turned on for both editing an old FIP and creating a new one
         self.tEditors.SetEditable(True)
@@ -668,7 +669,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.SetTitle(s)
 
 
-    def UpdateDialogComponentEnabledStatus(self):
+    def UpdateDialogComponentEnabledStatus(self):       # (See also EnableDialogFields)
         # The server directory can be edited iff this is a new directory
         self.tServerDirectory.Enabled=self.IsNewDirectory
 
