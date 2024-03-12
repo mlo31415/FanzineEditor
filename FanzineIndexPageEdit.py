@@ -1211,7 +1211,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             event.Skip()
             return
 
-        val=f'<a href="https:{ret}">{val}</a>'
+        val=f'<a href="https://{ret}">{val}</a>'
         row[self._dataGrid.clickedColumn]=val
         self.Datasource.Rows[self._dataGrid.clickedRow].IsLinkRow=True
         self._dataGrid.RefreshWxGridFromDatasource()
