@@ -1576,7 +1576,6 @@ class FanzineIndexPageTableRow(GridDataRowClass):
     def IsLinkRow(self, val: bool) -> None:
         self._isLink=val
 
-
     @property
     def IsTextRow(self) -> bool:      # FanzineTableRow(GridDataRowClass)
         return self._isText
@@ -1590,7 +1589,6 @@ class FanzineIndexPageTableRow(GridDataRowClass):
 
     def IsEmptyRow(self) -> bool:      # FanzineTableRow(GridDataRowClass)
         return all([cell.strip() == "" for cell in self._cells])
-
 
 
 #*******************************************
@@ -1997,6 +1995,7 @@ class FanzineIndexPage(GridDataSource):
         # Accumulate the table lines in <insert>
         insert=""
         for row in self.Rows:
+
             if row.IsEmptyRow():
                 insert+=f"\n<TR>"
                 for i in range(self.NumCols-1):
@@ -2015,6 +2014,7 @@ class FanzineIndexPage(GridDataSource):
             for cell in row.Cells[2:]:
                 insert+=f"<TD CLASS='left'>{cell}</TD>\n"
             insert+=f"</TR>\n"
+
         # Insert the accumulated table lines into the template
         temp=InsertHTMLUsingFanacComments(output, "table-rows", insert)
         if temp == "":
