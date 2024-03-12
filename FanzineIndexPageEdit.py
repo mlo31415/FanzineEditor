@@ -563,6 +563,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                 break
                         continue
 
+                    case "replace":
+                        i=0
+
             if failure:
                 dlg=wx.MessageDialog(self, f"Upload failed")
                 dlg.ShowModal()
