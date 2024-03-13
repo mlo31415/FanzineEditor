@@ -5,7 +5,7 @@ Scanning credits default=Scanned by Joe Siclari
 PDF Source Path=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\\Python\\FanacLSTGenerator\\Root\\PAS-TELL
 
 # Pathname of the (local) table relating server directories to local directories
-Server To Local Table Name=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\Python\FanzineEditor\ServerToLocal Conversion.txt
+Server To Local Table Name=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\Python\FanzinesEditor\ServerToLocal Conversion.txt
 
 # For how many days should updated FIP's be tagged as updated on the classic fanzines list?
 How old is new=90
@@ -26,4 +26,4 @@ Test server directory=Fanzines-test		# Ignored if Test Mode is not Trues
 
 # Obsolete?
 #Template directory=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\\Python\\FanacLSTGenerator\\Templates
-#Local Directory Root=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\\Python\\FanzineEditor\\Root
+#Local Directory Root=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\\Python\\FanzinesEditor\\Root
