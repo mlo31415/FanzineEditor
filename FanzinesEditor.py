@@ -371,7 +371,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
             Settings().Put("Server To Local Table Name", "s2LDir")
 
         if not Settings("ServerToLocal").Load(s2LDir):
-            Log(f"Can't open/read {os.getcwd()}/{s2LDir}")
+            LogError(f"Can't open/read {os.getcwd()}/{s2LDir}")
             exit(999)
 
 
