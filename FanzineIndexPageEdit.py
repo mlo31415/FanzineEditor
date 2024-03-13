@@ -1898,11 +1898,10 @@ class FanzineIndexPage(GridDataSource):
         for row in rows:
             # First look for a link row
             # This starts with colspan= and is followed by <a href="col 0">col 1</a></TD>
-            m=re.match(r'<TD colspan=\"[0-9]+\"><a href=\"(.*?)">(.*?)</a></TD>', row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
+            m=re.match(r'<TD colspan=\"[0-9]+\">(<a href=\"(.*?)">(.*?)</a>)</TD>', row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
             if m is not None:
                 fipr=FanzineIndexPageTableRow(self._colDefs)
                 fipr.Cells[0]=m.groups()[0]
-                fipr.Cells[1]=m.groups()[1]
                 fipr.IsLinkRow=True
                 self.Rows.append(fipr)
                 continue
