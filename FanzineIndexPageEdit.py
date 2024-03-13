@@ -372,16 +372,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     #           If there is, if necessary, move the column to the far right
     #       Return the index of the column containing the PDF flags or -1 if there is none.
     def AddOrDeletePDFColumnIfNeeded(self) -> int:              # FanzineIndexPageWindow(FanzineIndexPageEditGen)
-        # Are any of the files PDFs?
-        noPDFs=not any([row[0].lower().endswith(".pdf") for row in self.Datasource.Rows])
-        allPDFs=all([row[0].lower().endswith(".pdf") for row in self.Datasource.Rows])
+        # Are any or all of the files PDFs?  (We must exclude text lines, empty lines and URL lines)
+        noPDFs=not any([row[0].lower().endswith(".pdf") for row in self.Datasource.Rows if row.IsNormalRow])
+        allPDFs=all([row[0].lower().endswith(".pdf") for row in self.Datasource.Rows if row.IsNormalRow])
         ipdfcol=self.Datasource.ColHeaderIndex("pdf")
 
         # We need do nothing in two cases: There are no PDFs or everything is a PDF and there is no PDF column
         # Then return -1
-        if allPDFs and ipdfcol == -1:
+        if allPDFs and ipdfcol == -1:   # If all the lines are PDFs and there is no column labelled PDF, we need do nothing
             return -1
-        if noPDFs:
+        if noPDFs:      # If there are no PDFs, we need do nothing. (We choose to leave a PDF column is one is already present.)
             return -1
 
         # If they are all PDFs and there is a PDF column, it is redundant and should be removed
@@ -391,18 +391,18 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # OK, there are *some* PDFs.
 
-        # If there is a PDF column, we must move it to the right
+        # If there is a PDF column, and it is the extreme right column, we're done.
         if ipdfcol == self.Datasource.NumCols-1:
             # We have a PDF column and it is on the right.  All's well. Just return its index.
             return ipdfcol
 
-        # Is there no PDF column?
+        # Is there no PDF column, we add one on the right.
         if ipdfcol == -1:
             # Add one on the right and return its index
             self.Datasource.InsertColumn(self.Datasource.NumCols, ColDefinition("PDF"))
             return self.Datasource.NumCols-1
 
-        # So we have one, but it is in the wrong place: Move it to the end
+        # So we have one, but it is in the wrong place, we move it to be the extreme right column
         self.Datasource.MoveColumns(self.Datasource.ColHeaderIndex("pdf"), 1, self.Datasource.NumCols-1)
         return self.Datasource.NumCols-1
 
