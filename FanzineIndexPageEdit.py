@@ -1729,7 +1729,7 @@ class FanzineIndexPage(GridDataSource):
         tables=body[0].findAll("table")
         top=tables[0]
         theTable=tables[2]
-        bottom=tables[3]
+        #bottom=tables[3]
 
         locale="(not found)"
         localeStuff=body[0].findAll("fanac-type")
