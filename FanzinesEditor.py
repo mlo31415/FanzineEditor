@@ -10,12 +10,11 @@ import re
 
 from FTP import FTP
 from bs4 import BeautifulSoup
-from datetime import datetime
 
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMsg
 from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll, ExtractInvisibleTextInsideFanacComment
-from HelpersPackage import InsertHTMLUsingFanacComments, UnicodeToHtml, StripSpecificTag, Int0
+from HelpersPackage import InsertHTMLUsingFanacComments, UnicodeToHtml, StripSpecificTag, Int0, TimestampFilename
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
@@ -335,9 +334,9 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
 
     with ProgressMsg(None, f"Uploading 'Classic_Fanzines.html'"):
         ret=FTP().CopyAndRenameFile(f"/{rootDir}/", "Classic_Fanzines.html",
-                                    f"/{rootDir}/", f"Classic_Fanzines - {datetime.now():%Y-%m-%d %H-%M-%S}.html")
+                                    f"/{rootDir}/", TimestampFilename('Classic_Fanzines.html'))
         if not ret:
-            Log(f"Could not make a backup copy: {rootDir}/Classic_Fanzines - {datetime.now():%Y-%m-%d %H-%M-%S}.html")
+            Log(f"Could not make a backup copy: {rootDir}/{TimestampFilename('Classic_Fanzines.html')}")
             return False
 
         ret=FTP().PutFileAsString(f"/{rootDir}", "Classic_Fanzines.html", output, create=True)
@@ -368,18 +367,16 @@ class FanzinesEditorWindow(FanzinesGridGen):
         s2LDir=Settings().Get("Server To Local Table Name")
         if s2LDir is None:
             s2LDir="ServerToLocalTable.txt"
-            Settings().Put("Server To Local Table Name", "s2LDir")
+            Settings().Put("Server To Local Table Name", s2LDir)
 
         if not Settings("ServerToLocal").Load(s2LDir):
             LogError(f"Can't open/read {os.getcwd()}/{s2LDir}")
             exit(999)
 
-
         # Figure out the server directory
         self.RootDir="Fanzines"
         if Settings().IsTrue("Test mode"):
             self.RootDir=Settings().Get("Test Server Directory", self.RootDir)
-
 
         with ProgressMsg(self, "Downloading main fanzine page"):
             cfllist=GetFanzinesList()

@@ -5,6 +5,7 @@ import os
 import wx
 import wx.grid
 import re
+import shutil
 from datetime import datetime
 from string import capwords
 from math import floor, ceil
@@ -28,7 +29,7 @@ from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndex
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList
 from HelpersPackage import InsertInvisibleTextUsingFanacComments, InsertHTMLUsingFanacComments, ExtractHTMLUsingFanacComments, ExtractInvisibleTextUsingFanacComments
-from HelpersPackage import  InsertInvisibleTextInsideFanacComment, ExtractInvisibleTextInsideFanacComment
+from HelpersPackage import  InsertInvisibleTextInsideFanacComment, ExtractInvisibleTextInsideFanacComment, TimestampFilename
 from PDFHelpers import GetPdfPageCount
 from Log import Log, LogError
 from Settings import Settings
@@ -253,6 +254,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def OnClose(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         if not self.OKToClose(event):
             return
+
+        # Save the local directory name/server dir name correspondences table
+        s2LDirFilename=Settings().Get("Server To Local Table Name")
+        shutil.copyfile(s2LDirFilename, TimestampFilename(s2LDirFilename))        # Make a timestamped backup copy of the table
+        Settings("ServerToLocal").Load(s2LDirFilename)
+        Settings("ServerToLocal").Put(self.tServerDirectory.GetValue().strip(), self.tLocalDirectory.GetValue().strip())
+        Settings("ServerToLocal").Save()
 
         # Save the window's position
         pos=self.GetPosition()
@@ -497,9 +505,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # Make a dated backup copy of the existing page
             ProgressMessage(self).UpdateMessage(f"Backing up FanzineIndexPage")
             ret=FTP().CopyAndRenameFile(f"/{self.RootDir}/{self.serverDir}", "index.html",
-                                    f"/{self.RootDir}/{self.serverDir}", f"index - {datetime.now():%Y-%m-%d %H-%M-%S}.html")
+                                    f"/{self.RootDir}/{self.serverDir}", TimestampFilename("index.html"))
             if not ret:
-                Log(f"Could not make a backup copy: Fanzines-test/{self.serverDir}/index - {datetime.now():%Y-%m-%d %H-%M-%S}.html")
+                Log(f"Could not make a backup copy: Fanzines-test/{self.serverDir}/{TimestampFilename('index.html')}")
                 self.failure=True
                 return
 
