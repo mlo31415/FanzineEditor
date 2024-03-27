@@ -2,10 +2,10 @@
 Scanning credits default=Scanned by Joe Siclari
 
 # Directory to initially point the dialog to add PDFs to a FIP
-PDF Source Path=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\\Python\\FanacLSTGenerator\\Root\\PAS-TELL
+PDF Source Path=C:\Users\mlo\Documents\usr\Fancyclopedia\Python\FanacLSTGenerator\Root\PAS-TELL
 
 # Pathname of the (local) table relating server directories to local directories
-Server To Local Table Name=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\Python\FanzinesEditor\ServerToLocal Conversion.txt
+Server To Local Table Name=C:\Users\mlo\Documents\usr\Fancyclopedia\Python\FanzinesEditor\ServerToLocal Conversion.txt
 
 # For how many days should updated FIP's be tagged as updated on the classic fanzines list?
 How old is new=90
