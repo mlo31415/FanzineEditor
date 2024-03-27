@@ -4,37 +4,6 @@ from datetime import datetime
 import os
 
 from FTP import FTP
-from WxDataGrid import ColDefinitionsList
-
-
-# # An individual file to be listed under a convention
-# # This is a single row
-# class PDFFile:
-#     def __init__(self):
-#         self._issue: str=""             # The name which goes in the 1st column and names the issue
-#         self._sourceFilename: str=""    # The filename in the local directory
-#
-#
-#
-#     def Signature(self) -> int:      # ConFile
-#        return hash(self._issue.strip()+self._sourceFilename.strip())
-#
-#
-#     @property
-#     def Issue(self) -> str:      # ConFile
-#         return self._issue
-#     @Issue.setter
-#     def Issue(self, val: str) -> None:      # ConFile
-#         self._issue=val
-#
-#
-#     @property
-#     def SourceFilename(self) -> str:      # ConFile
-#         return self._sourceFilename
-#     @SourceFilename.setter
-#     def SourceFilename(self, val: str) -> None:      # ConFile
-#         self._sourceFilename=val
-
 
 
 # These classes track changes to the list of files for a particular Con Instance
@@ -43,13 +12,13 @@ from WxDataGrid import ColDefinitionsList
 #   for the upload so that all the accumulated edits get up there.
 
 class Delta:
-    def __init__(self, verb: str, sourceFilename: str, sourcePath:str="", newSourceFilename: str="", row: list[str]=None, coldefs: ColDefinitionsList=None):
+    def __init__(self, verb: str, sourceFilename: str, sourcePath: str="", newSourceFilename: str="", rowIndex: int=-1):
         self.Verb: str=verb     # Verb is add, rename, delete, replace
         self.SourceFilename: str=sourceFilename     # The name of the file
         self.SourcePath: str=sourcePath     # The path (no filename) of the file on the local disk
         self.NewSourceFilename: str=newSourceFilename       # A new name for the file on the server (needed only for a rename)
-        self.Row: list[str]=row
-        self.ColDefs: ColDefinitionsList=coldefs
+        self.RowIndex: int=rowIndex
+        self.Uploaded: bool=False       # As an upload proceeds, successful deltas are flagged as uploaded, so if it fails later and the upload is re-run, it isn't duplocated
 
 
     def __str__(self) -> str:
@@ -77,9 +46,9 @@ class DeltaTracker:
             s+=">>"+str(d)+"\n"
         return s
 
-    def Add(self, sourceFilepathname: str, row: list[str]=None, coldefs: ColDefinitionsList=None) -> None:
+    def Add(self, sourceFilepathname: str, irow: int) -> None:
         path, filename=os.path.split(sourceFilepathname)
-        self._deltas.append(Delta("add", filename, sourcePath=path, row=row, coldefs=coldefs))
+        self._deltas.append(Delta("add", filename, sourcePath=path, rowIndex=irow))
 
 
     def Delete(self, sourceFilename: str) -> None:
@@ -104,39 +73,51 @@ class DeltaTracker:
         for item in self._deltas:
             if item.Verb == "rename":
                 if item.SourceFilename == sourceFilename:
-                    self.NewSourceFilename=newname
+                    item.NewSourceFilename=newname
                     return
 
         # Now check to see if this is a rename of a file that is on the delta list to be added.  If so, we just modify the add Delta
         for item in self._deltas:
             if item.Verb == "add":
                 if item.SourceFilename == sourceFilename:
-                    item.NewSourceFilename=newname  # Now it will get renamed int he process of being added
+                    item.NewSourceFilename=newname  # Now it will get renamed in the process of being added
                     return
 
         # If it doesn't match anything in the delta list, then it must be a rename of an existing file.
         self._deltas.append(Delta("rename", sourceFilename, newSourceFilename=newname))
 
 
-    # We want to replace one file with another
-    def Replace(self, sourceFilename: str, newname: str):
-        # Check to see if the replacement is in a row to be renamed.
+    # We want to replace one file on the server with another, leaving the rest of the data unchanged
+    # This will cause a new upload and may change the name of the pdf on the server
+    def Replace(self, oldSourceFilename: str, newfilepathname: str):
+        newfilepath, newfilename=os.path.split(newfilepathname)
+        # Check to see if the replacement is in a row already scheduled to be renamed.
         for i, item in enumerate(self._deltas):
-            if item.Verb == "rename":
-                if item.SourceFilename == sourceFilename:
-                    self._deltas[i].NewSourceFilename=newname
-                    return
-        # Now check to see if this is a rename of a newly-added file
-        for i, item in enumerate(self._deltas):
-            if item.Verb == "add":
-                if item.SourceFilename == sourceFilename:
-                    # Just update the local pathname in the add entry
-                    self._deltas[i].SourceFilename=newname
-                    return
+            if item.Verb == "rename" and item.SourceFilename == oldSourceFilename:
+                # This is a bit ugly, as it's not completely clear what is intended.
+                # First, the user elected to change an existing filename on the server and later decided to replace it by uploading a new file.
+                # Question: Is the new file supposed to be given the new name, also?  It's hard to see why, so we'll change this to:
+                # Upload the new file
+                self.Add(newfilepathname)
+                # Delete the old file
+                self.Delete(oldSourceFilename)
+                # Delete the rename request
+                del self._deltas[i]
+                return
 
-        # If it doesn't match anything in the delta list, then it must be a new local file to replace an old one in an existing entry
-        # We need to delete the old file and then upload the new.
-        self._deltas.append(Delta("replace", sourceFilename, newname))
+        # Check to see if this is a replacement of a file scheduled to be added
+        for item in self._deltas:
+            if item.Verb == "add" and item.SourceFilename == oldSourceFilename:
+                # Just update the local pathname in the add entry
+                item.SourceFilename=newfilename
+                return
+
+        # If it doesn't match anything in the delta list, then it must be a new local file to replace the server file in an existing entry
+        # Delete the old server file and add the new
+        self.Add(newfilepathname)
+        # Delete the old file
+        self.Delete(oldSourceFilename)
+
 
 
     @property

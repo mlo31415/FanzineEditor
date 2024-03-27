@@ -311,21 +311,18 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 self.Datasource.Rows.append(last)
                 break
 
-        # Sort the new files by name and add them to the rows at the bottom
+        # Sort the new files by name and add them to the rows at the bottom, and add them to the changelist
         files.sort()
         newrows=self.Datasource.AppendEmptyRows(len(files))
         for i, file in enumerate(files):
             newrows[i].FileSourcePath=files[i]
             newrows[i][0]=os.path.basename(files[i])
-
+            self.deltaTracker.Add(file, i)
 
         # Add a PDF column (if needed) and fill in the PDF column and page counts
         self.FillInPDFColumn()
         self.FillInPagesColumn()
 
-        # And add these files to the changelist
-        for i, file in enumerate(files):
-            self.deltaTracker.Add(file, newrows[i].Cells, self.Datasource.ColDefs)
 
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
@@ -522,7 +519,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         path=delta.SourcePath
                         filename=delta.SourceFilename
                         # Update the PDF's metadata
-                        tempfilepath=SetPDFMetadata(os.path.join(path, filename), cfl, delta.Row, delta.ColDefs)
+                        tempfilepath=SetPDFMetadata(os.path.join(path, filename), cfl, self.Datasource.Rows[delta.RowIndex].Cells, self.Datasource.ColDefs)
                         Log(f"{tempfilepath=}")     #TODO delete these logging messages once sure that this code is working
 
                         serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
@@ -541,6 +538,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                 failure=True
                                 break
                         del tempfilepath
+                        delta.Uploaded=True
                         continue
 
                     case "delete":
@@ -555,6 +553,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             if result != wx.ID_YES:
                                 failure=True
                                 break
+                        delta.Uploaded=True
                         continue
 
                     case "rename":
@@ -570,16 +569,47 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             if result != wx.ID_YES:
                                 failure=True
                                 break
+                        delta.Uploaded=True
                         continue
 
                     case "replace":
-                        i=0
+                        # Copy file to server, possibly renaming it
+                        path=delta.SourcePath
+                        assert False
+                        filename=delta.SourceFilename
+                        # Update the PDF's metadata
+                        tempfilepath=SetPDFMetadata(os.path.join(path, filename), cfl, delta.Row, delta.ColDefs)
+                        Log(f"{tempfilepath=}")     #TODO delete these logging messages once sure that this code is working
+
+                        serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
+                        Log(f"{serverpathfile=}")
+
+                        if delta.NewSourceFilename != "":
+                            serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
+                            Log(f"Renamed {serverpathfile=}")
+
+                        progressMessage.Show(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
+                        if not FTP().PutFile(tempfilepath, serverpathfile):
+                            dlg=wx.MessageDialog(self, f"Y+Unable to replace {tempfilepath}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+                            result=dlg.ShowModal()
+                            dlg.Destroy()
+                            if result != wx.ID_YES:
+                                failure=True
+                                break
+                        del tempfilepath
+                        delta.Uploaded=True
+                        continue
 
             if failure:
                 dlg=wx.MessageDialog(self, f"Upload failed")
                 dlg.ShowModal()
 
-            self.deltaTracker=DeltaTracker()   # The delats ahave been uploaded.  Clear the tracked
+            # Delete all deltas which were uploaded
+            oldDeltas=self.deltaTracker
+            self.deltaTracker=DeltaTracker()
+            for delta in oldDeltas.Deltas:
+                if not delta.Uploaded:
+                    self.deltaTracker.Deltas.append(delta)
 
             # If this is a new fanzine, it needs to be in a new directory.  Check it.
             if self.IsNewDirectory:
@@ -1178,15 +1208,17 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if dlg.ShowModal() != wx.ID_OK:
                 return  # Quit unless OK was pressed.
 
-            newfile=dlg.GetFilenames()
+            filepath=dlg.Paths
 
-        if len(newfile) != 1:     # Should never happen as there's no way to return from dlg w/o selecting pdfs or hitting cancel.  But just in case...
+        if len(filepath) != 1:     # Should never happen as there's no way to return from dlg w/o selecting pdfs or hitting cancel.  But just in case...
             return
 
-        oldfile=self.Datasource.Rows[event.GetRow()][0]
-        self.Datasource.Rows[event.GetRow()][0]=newfile[0]
-        self.deltaTracker.Replace(oldfile, newfile[0])
+        oldfile=self.Datasource.Rows[self._dataGrid.clickedRow][0]
+        newfilepath, newfilename=os.path.split(filepath[0])
+        self.Datasource.Rows[self._dataGrid.clickedRow][0]=newfilename
+        self.deltaTracker.Replace(oldfile, filepath[0])
         self.RefreshWindow()
+
         event.Skip()
 
 
