@@ -1186,6 +1186,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         oldfile=self.Datasource.Rows[event.GetRow()][0]
         self.Datasource.Rows[event.GetRow()][0]=newfile[0]
         self.deltaTracker.Replace(oldfile, newfile[0])
+        self.RefreshWindow()
         event.Skip()
 
 
