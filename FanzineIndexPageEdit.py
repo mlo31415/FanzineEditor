@@ -579,6 +579,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 dlg=wx.MessageDialog(self, f"Upload failed")
                 dlg.ShowModal()
 
+            self.deltaTracker=DeltaTracker()   # The delats ahave been uploaded.  Clear the tracked
+
             # If this is a new fanzine, it needs to be in a new directory.  Check it.
             if self.IsNewDirectory:
                 path=f"/{self.RootDir}/{self.serverDir}"
