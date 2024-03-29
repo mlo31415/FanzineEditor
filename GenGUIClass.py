@@ -43,11 +43,11 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		bSizerMain = wx.BoxSizer( wx.VERTICAL )
 
-		fgSizer8 = wx.FlexGridSizer( 0, 2, 0, 0 )
+		fgSizer8 = wx.FlexGridSizer( 0, 3, 0, 0 )
 		fgSizer8.SetFlexibleDirection( wx.BOTH )
 		fgSizer8.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		fgSizer4 = wx.FlexGridSizer( 2, 6, 0, 0 )
+		fgSizer4 = wx.FlexGridSizer( 2, 4, 0, 0 )
 		fgSizer4.SetFlexibleDirection( wx.BOTH )
 		fgSizer4.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
@@ -79,19 +79,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		fgSizer4.Add( self.tDates, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, 0 )
 
-		self.m_staticText7 = wx.StaticText( self, wx.ID_ANY, u"Fanzine Type", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_staticText7.Wrap( -1 )
-
-		self.m_staticText7.SetMinSize( wx.Size( 200,-1 ) )
-		self.m_staticText7.SetMaxSize( wx.Size( -1,50 ) )
-
-		fgSizer4.Add( self.m_staticText7, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.FIXED_MINSIZE, 5 )
-
-		tFanzineTypeChoices = [ u" ", u"Genzine", u"Apazine", u"Perzine", u"Newszine", u"Collection", u"Related", u"Clubzine", u"Adzine", u"Reference" ]
-		self.tFanzineType = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, tFanzineTypeChoices, 0 )
-		self.tFanzineType.SetSelection( 0 )
-		fgSizer4.Add( self.tFanzineType, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 0 )
-
 		self.cbComplete = wx.CheckBox( self, wx.ID_ANY, u"Complete", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.cbComplete.SetToolTip( u"Is this fanzine series complete on fanac.org?" )
 
@@ -104,6 +91,40 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 
 		fgSizer8.Add( fgSizer4, 0, wx.EXPAND, 5 )
+
+		fgSizer91 = wx.FlexGridSizer( 0, 2, 0, 0 )
+		fgSizer91.SetFlexibleDirection( wx.BOTH )
+		fgSizer91.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		bSizer6 = wx.BoxSizer( wx.VERTICAL )
+
+		fgSizer10 = wx.FlexGridSizer( 0, 2, 0, 0 )
+		fgSizer10.SetFlexibleDirection( wx.BOTH )
+		fgSizer10.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
+
+		self.m_staticText13 = wx.StaticText( self, wx.ID_ANY, u"Fanzine Type:   ", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText13.Wrap( -1 )
+
+		fgSizer10.Add( self.m_staticText13, 0, wx.ALL, 5 )
+
+		tFanzineTypeChoices = [ u" ", u"Genzine", u"Apazine", u"Perzine", u"Newszine", u"Collection", u"Related", u"Clubzine", u"Adzine", u"Reference" ]
+		self.tFanzineType = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, tFanzineTypeChoices, 0 )
+		self.tFanzineType.SetSelection( 0 )
+		fgSizer10.Add( self.tFanzineType, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 0 )
+
+
+		bSizer6.Add( fgSizer10, 1, wx.EXPAND, 5 )
+
+		self.tClubname = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.tClubname.SetMinSize( wx.Size( 200,-1 ) )
+
+		bSizer6.Add( self.tClubname, 0, wx.ALL, 5 )
+
+
+		fgSizer91.Add( bSizer6, 1, wx.EXPAND, 5 )
+
+
+		fgSizer8.Add( fgSizer91, 1, wx.EXPAND, 5 )
 
 		fgSizer9 = wx.FlexGridSizer( 2, 2, 0, 0 )
 		fgSizer9.SetFlexibleDirection( wx.BOTH )
@@ -254,20 +275,23 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_menuItemPopupDelCol = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Delete Column", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupDelCol )
 
+		self.m_menuItemClearAllLinks = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Clear All Links", u"Remove hyperlinks from selected row.", wx.ITEM_NORMAL )
+		self.m_GridPopup.Append( self.m_menuItemClearAllLinks )
+
 		self.m_menuItemPopupDelRow = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Delete Row(s)", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupDelRow )
 
 		self.m_menuItemPopupInsertRow = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Insert a Row", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupInsertRow )
 
-		self.m_menuItemPopupRenameCol = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Rename Column", wx.EmptyString, wx.ITEM_NORMAL )
-		self.m_GridPopup.Append( self.m_menuItemPopupRenameCol )
+		self.m_menuItemPopupInsertColRight = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Insert Column to Right", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_GridPopup.Append( self.m_menuItemPopupInsertColRight )
 
 		self.m_menuItemPopupInsertColLeft = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Insert Column to Left", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupInsertColLeft )
 
-		self.m_menuItemPopupInsertColRight = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Insert Column to Right", wx.EmptyString, wx.ITEM_NORMAL )
-		self.m_GridPopup.Append( self.m_menuItemPopupInsertColRight )
+		self.m_menuItemPopupRenameCol = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Rename Column", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_GridPopup.Append( self.m_menuItemPopupRenameCol )
 
 		self.m_menuItemPopupSortOnCol = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Sort on Selected Column", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupSortOnCol )
@@ -284,17 +308,14 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_menuItemPopupPropagateEditor = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Propagate Editor", u"If there is an editors column and if editors have been specific for the whole run, replace all blank cells in the editors column with the series editors.", wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupPropagateEditor )
 
-		self.m_menuItemMerge = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Merge Adjacent Rows", wx.EmptyString, wx.ITEM_NORMAL )
-		self.m_GridPopup.Append( self.m_menuItemMerge )
+		self.m_menuItemPopupMergeRows = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Merge Adjacent Rows", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_GridPopup.Append( self.m_menuItemPopupMergeRows )
 
-		self.m_menuItemReplace = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Replace PDF", wx.EmptyString, wx.ITEM_NORMAL )
-		self.m_GridPopup.Append( self.m_menuItemReplace )
+		self.m_menuItemPopupReplace = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Replace PDF", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_GridPopup.Append( self.m_menuItemPopupReplace )
 
 		self.m_menuItemAllowEditing = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Allow Editing", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemAllowEditing )
-
-		self.m_menuItemClearLinks = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Clear All Links", u"Remove hyperlinks from selected row.", wx.ITEM_NORMAL )
-		self.m_GridPopup.Append( self.m_menuItemClearLinks )
 
 		self.m_menuItemAddLink = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Add a Link", u"Add a link to the selected row.", wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemAddLink )
@@ -312,10 +333,11 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.bExit.Bind( wx.EVT_BUTTON, self.OnClose )
 		self.tFanzineName.Bind( wx.EVT_CHAR, self.OnFanzineNameChar )
 		self.tFanzineName.Bind( wx.EVT_TEXT, self.OnFanzineNameText )
-		self.tDates.Bind( wx.EVT_TEXT, self.OnDatesTexts )
-		self.tFanzineType.Bind( wx.EVT_CHOICE, self.OnFanzineTypeSelect )
+		self.tDates.Bind( wx.EVT_TEXT, self.OnDatesText )
 		self.cbComplete.Bind( wx.EVT_CHECKBOX, self.OnCheckComplete )
 		self.cbAlphabetizeIndividually.Bind( wx.EVT_CHECKBOX, self.OnCheckAlphabetizeIndividually )
+		self.tFanzineType.Bind( wx.EVT_CHOICE, self.OnFanzineTypeSelect )
+		self.tClubname.Bind( wx.EVT_TEXT, self.OnClubname )
 		self.tEditors.Bind( wx.EVT_TEXT, self.OnEditorsText )
 		self.tServerDirectory.Bind( wx.EVT_CHAR, self.OnServerDirectoryChar )
 		self.tServerDirectory.Bind( wx.EVT_TEXT, self.OnServerDirectoryText )
@@ -339,20 +361,20 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.Bind( wx.EVT_MENU, self.OnPopupEraseSelection, id = self.m_menuItemPopupEraseSelection.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupInsertText, id = self.m_menuItemPopupInsertText.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupDelCol, id = self.m_menuItemPopupDelCol.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnPopupClearAllLinks, id = self.m_menuItemClearAllLinks.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupDelRow, id = self.m_menuItemPopupDelRow.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupInsertRow, id = self.m_menuItemPopupInsertRow.GetId() )
-		self.Bind( wx.EVT_MENU, self.OnPopupRenameCol, id = self.m_menuItemPopupRenameCol.GetId() )
-		self.Bind( wx.EVT_MENU, self.OnPopupInsertColLeft, id = self.m_menuItemPopupInsertColLeft.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupInsertColRight, id = self.m_menuItemPopupInsertColRight.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnPopupInsertColLeft, id = self.m_menuItemPopupInsertColLeft.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnPopupRenameCol, id = self.m_menuItemPopupRenameCol.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupSortOnSelectedColumn, id = self.m_menuItemPopupSortOnCol.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupExtractScanner, id = self.m_menuItemPopupExtractScanner.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupTidyUpColumns, id = self.m_menuItemPopupTidyUpColumns.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupExtractEditor, id = self.m_menuItemPopupExtractEditor.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupPropagateEditor, id = self.m_menuItemPopupPropagateEditor.GetId() )
-		self.Bind( wx.EVT_MENU, self.OnPopupMerge, id = self.m_menuItemMerge.GetId() )
-		self.Bind( wx.EVT_MENU, self.OnPopupReplace, id = self.m_menuItemReplace.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnPopupMergeRows, id = self.m_menuItemPopupMergeRows.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnPopupReplace, id = self.m_menuItemPopupReplace.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupAllowEditing, id = self.m_menuItemAllowEditing.GetId() )
-		self.Bind( wx.EVT_MENU, self.OnPopupClearAllLinks, id = self.m_menuItemClearLinks.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupAddLink, id = self.m_menuItemAddLink.GetId() )
 
 	def __del__( self ):
@@ -379,16 +401,19 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnFanzineNameText( self, event ):
 		event.Skip()
 
-	def OnDatesTexts( self, event ):
-		event.Skip()
-
-	def OnFanzineTypeSelect( self, event ):
+	def OnDatesText( self, event ):
 		event.Skip()
 
 	def OnCheckComplete( self, event ):
 		event.Skip()
 
 	def OnCheckAlphabetizeIndividually( self, event ):
+		event.Skip()
+
+	def OnFanzineTypeSelect( self, event ):
+		event.Skip()
+
+	def OnClubname( self, event ):
 		event.Skip()
 
 	def OnEditorsText( self, event ):
@@ -460,19 +485,22 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnPopupDelCol( self, event ):
 		event.Skip()
 
+	def OnPopupClearAllLinks( self, event ):
+		event.Skip()
+
 	def OnPopupDelRow( self, event ):
 		event.Skip()
 
 	def OnPopupInsertRow( self, event ):
 		event.Skip()
 
-	def OnPopupRenameCol( self, event ):
+	def OnPopupInsertColRight( self, event ):
 		event.Skip()
 
 	def OnPopupInsertColLeft( self, event ):
 		event.Skip()
 
-	def OnPopupInsertColRight( self, event ):
+	def OnPopupRenameCol( self, event ):
 		event.Skip()
 
 	def OnPopupSortOnSelectedColumn( self, event ):
@@ -490,16 +518,13 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnPopupPropagateEditor( self, event ):
 		event.Skip()
 
-	def OnPopupMerge( self, event ):
+	def OnPopupMergeRows( self, event ):
 		event.Skip()
 
 	def OnPopupReplace( self, event ):
 		event.Skip()
 
 	def OnPopupAllowEditing( self, event ):
-		event.Skip()
-
-	def OnPopupClearAllLinks( self, event ):
 		event.Skip()
 
 	def OnPopupAddLink( self, event ):

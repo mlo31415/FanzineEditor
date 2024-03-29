@@ -1181,7 +1181,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     # Merge a PDF into a previously non-PDF line
-    def OnPopupMerge(self, event):
+    def OnPopupMergeRows(self, event):
         self.wxGrid.SaveEditControlValue()
         top, _, bottom, _=self._dataGrid.SelectionBoundingBox()
         # Merge is only active when we have two rows selected and exactly one of this is a pdf.
