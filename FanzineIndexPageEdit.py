@@ -733,6 +733,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # The local directory text box is editable in a new directory, but not in an existing one
         self.tLocalDirectory.Enabled=len(self.tLocalDirectory.GetValue()) == 0 or self.IsNewDirectory
 
+        # The Clubname field ois editable only of the fanzine type is "Clubzine"
+        self.tClubname.Enabled="Clubzine" == self.tFanzineType.Items[self.tFanzineType.GetSelection()]
+
 
     def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self.UpdateNeedsSavingFlag()
