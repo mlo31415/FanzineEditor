@@ -317,7 +317,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         for i, file in enumerate(files):
             newrows[i].FileSourcePath=files[i]
             newrows[i][0]=os.path.basename(files[i])
-            self.deltaTracker.Add(file, i)
+            self.deltaTracker.Add(file)
 
         # Add a PDF column (if needed) and fill in the PDF column and page counts
         self.FillInPDFColumn()
