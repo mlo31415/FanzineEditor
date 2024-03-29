@@ -12,12 +12,11 @@ from FTP import FTP
 #   for the upload so that all the accumulated edits get up there.
 
 class Delta:
-    def __init__(self, verb: str, sourceFilename: str, sourcePath: str="", newSourceFilename: str="", rowIndex: int=-1):
+    def __init__(self, verb: str, sourceFilename: str, sourcePath: str="", newSourceFilename: str=""):
         self.Verb: str=verb     # Verb is add, rename, delete, replace
         self.SourceFilename: str=sourceFilename     # The name of the file
         self.SourcePath: str=sourcePath     # The path (no filename) of the file on the local disk
         self.NewSourceFilename: str=newSourceFilename       # A new name for the file on the server (needed only for a rename)
-        self.RowIndex: int=rowIndex
         self.Uploaded: bool=False       # As an upload proceeds, successful deltas are flagged as uploaded, so if it fails later and the upload is re-run, it isn't duplocated
 
 
@@ -46,9 +45,9 @@ class DeltaTracker:
             s+=">>"+str(d)+"\n"
         return s
 
-    def Add(self, sourceFilepathname: str, irow: int) -> None:
+    def Add(self, sourceFilepathname: str) -> None:
         path, filename=os.path.split(sourceFilepathname)
-        self._deltas.append(Delta("add", filename, sourcePath=path, rowIndex=irow))
+        self._deltas.append(Delta("add", filename, sourcePath=path))
 
 
     def Delete(self, sourceFilename: str) -> None:

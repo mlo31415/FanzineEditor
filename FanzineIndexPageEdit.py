@@ -518,9 +518,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         # Copy file to server, possibly renaming it
                         path=delta.SourcePath
                         filename=delta.SourceFilename
+
                         # Update the PDF's metadata
-                        tempfilepath=SetPDFMetadata(os.path.join(path, filename), cfl, self.Datasource.Rows[delta.RowIndex].Cells, self.Datasource.ColDefs)
-                        Log(f"{tempfilepath=}")     #TODO delete these logging messages once sure that this code is working
+                        # First, we figure out what row it's in by comparing URLs
+                        tempfilepath=""
+                        for row in self.Datasource.Rows:
+                            if filename == row.Cells[0]:
+                                tempfilepath=SetPDFMetadata(os.path.join(path, filename), cfl, row.Cells, self.Datasource.ColDefs)
+                                Log(f"{tempfilepath=}")     #TODO delete these logging messages once sure that this code is working
+                        assert tempfilepath != ""
 
                         serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
                         Log(f"{serverpathfile=}")
