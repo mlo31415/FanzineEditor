@@ -983,11 +983,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     # Enable Merge if exactly two rows are highlighted and if exactly one of them is a PDF
                     Enable("Merge Adjacent Rows")
 
-        # If cell 0 is clicked on, and it contains the URL of a PDF or an HTML page, allow it to be replaced by a PDF.
+        # There are RMB actions which happen only for a click on col 0
         if self._dataGrid.clickedColumn == 0:
+            # If cell 0 contains the URL of a PDF or an HTML page, allow it to be replaced by a PDF.
             irow=self._dataGrid.clickedRow
             if "pdf" in self.Datasource.Rows[irow][0].lower() or "html" in self.Datasource.Rows[irow][0].lower():
                 Enable("Replace PDF")
+            # If cell 0 contains a PDF, allow it to be renamed
+            if len(self.Datasource.Rows[irow][0]) > 0 and ".pdf" in self.Datasource.Rows[irow][0].lower():
+                Enable("Rename PDF on Server")
 
         if not isGridCellClick:
             Enable("Sort on Selected Column") # It's a label click, so sorting on the column is always OK
@@ -1020,15 +1024,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         if self._dataGrid.clickedRow >= 0 and self._dataGrid.clickedColumn >= 0:
             Enable("Add a Link")
-
-        # Check to see if there is a hyperlink in this row
-        if self._dataGrid.clickedRow >= 0:
-            row=self.Datasource.Rows[self._dataGrid.clickedRow]
-            for col in row:
-                _, link, _, _=FindLinkInString(col)
-                if link != "":
-                    Enable("Clear All Links")
-                    break
 
         # We only enable Extract Scanner when we're in the Notes column and there's something to extract.
         if self.Datasource.ColDefs[self._dataGrid.clickedColumn].Preferred == "Notes":
@@ -1173,7 +1168,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def OnPopupRenameCol(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self._dataGrid.OnPopupRenameCol(event) # Pass event to WxDataGrid to handle
 
-        # Now we check the column header to see if it iss one of the standard header. If so, we use the std definition for that header
+        # Now we check the column header to see if it is one of the standard header. If so, we use the std definition for that header
         # (We have to do this here because WxDataGrid doesn't know about header semantics.)
         icol=self._dataGrid.clickedColumn
         cd=self.Datasource.ColDefs[icol]
@@ -1227,6 +1222,28 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.Datasource.Rows[self._dataGrid.clickedRow][0]=newfilename
         self.deltaTracker.Replace(oldfile, filepath[0])
         self.RefreshWindow()
+
+        event.Skip()
+
+
+    # Rename the PDF on the server. This does not change its name locally
+    def OnPopupRenamePDF(self, event):
+        oldname=self.Datasource.Rows[self._dataGrid.clickedRow][0]
+        dlg=wx.TextEntryDialog(self, 'Enter the newname of the pdf: ', 'Rename a PS+DF on the server', value=oldname)
+        #dlg.SetValue("Turn a cell into a link")
+        if dlg.ShowModal() != wx.ID_OK:
+            event.Skip()
+            return
+        newname=dlg.GetValue()
+        dlg.Destroy()
+
+        if newname == "" or newname == oldname:
+            event.Skip()
+            return
+
+        self.Datasource.Rows[self._dataGrid.clickedRow][0]=newname
+        self.RefreshWindow()
+        self.deltaTracker.Rename(oldname, newname)
 
         event.Skip()
 

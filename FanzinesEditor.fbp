@@ -2295,12 +2295,26 @@
                     <property name="help"></property>
                     <property name="id">wxID_ANY</property>
                     <property name="kind">wxITEM_NORMAL</property>
-                    <property name="label">Replace PDF</property>
+                    <property name="label">Replace w/PDF</property>
                     <property name="name">m_menuItemPopupReplace</property>
                     <property name="permission">none</property>
                     <property name="shortcut"></property>
                     <property name="unchecked_bitmap"></property>
                     <event name="OnMenuSelection">OnPopupReplace</event>
+                </object>
+                <object class="wxMenuItem" expanded="1">
+                    <property name="bitmap"></property>
+                    <property name="checked">0</property>
+                    <property name="enabled">1</property>
+                    <property name="help"></property>
+                    <property name="id">wxID_ANY</property>
+                    <property name="kind">wxITEM_NORMAL</property>
+                    <property name="label">Rename PDF on Server</property>
+                    <property name="name">m_menuItemPopupRenamePDF</property>
+                    <property name="permission">none</property>
+                    <property name="shortcut"></property>
+                    <property name="unchecked_bitmap"></property>
+                    <event name="OnMenuSelection">OnPopupRenamePDF</event>
                 </object>
                 <object class="wxMenuItem" expanded="1">
                     <property name="bitmap"></property>

@@ -311,8 +311,11 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_menuItemPopupMergeRows = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Merge Adjacent Rows", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupMergeRows )
 
-		self.m_menuItemPopupReplace = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Replace PDF", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItemPopupReplace = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Replace w/PDF", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupReplace )
+
+		self.m_menuItemPopupRenamePDF = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Rename PDF on Server", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_GridPopup.Append( self.m_menuItemPopupRenamePDF )
 
 		self.m_menuItemAllowEditing = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Allow Editing", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemAllowEditing )
@@ -374,6 +377,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.Bind( wx.EVT_MENU, self.OnPopupPropagateEditor, id = self.m_menuItemPopupPropagateEditor.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupMergeRows, id = self.m_menuItemPopupMergeRows.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupReplace, id = self.m_menuItemPopupReplace.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnPopupRenamePDF, id = self.m_menuItemPopupRenamePDF.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupAllowEditing, id = self.m_menuItemAllowEditing.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupAddLink, id = self.m_menuItemAddLink.GetId() )
 
@@ -522,6 +526,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnPopupReplace( self, event ):
+		event.Skip()
+
+	def OnPopupRenamePDF( self, event ):
 		event.Skip()
 
 	def OnPopupAllowEditing( self, event ):
