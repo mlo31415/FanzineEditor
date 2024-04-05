@@ -1926,6 +1926,8 @@ class FanzineIndexPage(GridDataSource):
         self.Editors="\n".join([x.strip() for x in topstuff[1].split(",")])
         self.Dates=topstuff[2]
         self.FanzineType=topstuff[3]
+        if version == "1.1" and self.FanzineType.lower() == "clubzine" and len(topstuff) > 4:
+            self.Clubname=topstuff[4]
 
         # f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
         locale=ExtractHTMLUsingFanacComments(html, "locale")
@@ -2019,6 +2021,7 @@ class FanzineIndexPage(GridDataSource):
 
 
     # Using the fanzine index page template, create a page and upload it.
+    # This puts a Version 1.1 page
     def PutFanzineIndexPage(self, root: str, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
 
         if not os.path.exists("Template - Fanzine Index Page.html"):
@@ -2029,6 +2032,8 @@ class FanzineIndexPage(GridDataSource):
 
         eds=", ".join([x.strip() for x in self.Editors.split("\n")])
         insert=f"{self.FanzineName}<BR><H2>{eds}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
+        if self.FanzineType.lower() == "clubzine" and len(self.Clubname) > 0:
+            insert+=f"<BR><H2>{self.Clubname}"
         temp=InsertHTMLUsingFanacComments(output, "header", insert)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('header')")
