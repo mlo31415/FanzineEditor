@@ -27,7 +27,7 @@ from WxHelpers import ModalDialogManager
 from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
-from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList
+from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, RemoveHxTags
 from HelpersPackage import InsertInvisibleTextUsingFanacComments, InsertHTMLUsingFanacComments, ExtractHTMLUsingFanacComments, ExtractInvisibleTextUsingFanacComments
 from HelpersPackage import  InsertInvisibleTextInsideFanacComment, ExtractInvisibleTextInsideFanacComment, TimestampFilename
 from PDFHelpers import GetPdfPageCount
@@ -143,6 +143,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.tFanzineName.SetValue(self.Datasource.FanzineName)
             if self.Datasource.FanzineType in self.tFanzineType.Items:
                 self.tFanzineType.SetSelection(self.tFanzineType.Items.index(self.Datasource.FanzineType))
+            self.tClubname.SetValue(self.Datasource.Clubname)
             self.tLocaleText.SetValue(self.Datasource.Locale)
             self.tTopComments.SetValue(self.Datasource.TopComments)
 
@@ -463,6 +464,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tEditors.SetValue("")
         self.tDates.SetValue("")
         self.tFanzineType.SetSelection(0)
+        self.tClubname.SetValue("")
         self.tLocaleText.SetValue("")
         self.tCredits.SetValue("")
         self.cbComplete.SetValue(False)
@@ -487,6 +489,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.OtherNames="??"
         cfl.Dates=self.tDates.GetValue()
         cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
+        cfl.Clubname=self.tClubname.GetValue()
         cfl.Complete=self.cbComplete.GetValue()
         cfl.Updated=datetime.now()
         if cfl.Created == ClassicFanzinesDate("1900-01-01"):
@@ -866,8 +869,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     def OnFanzineTypeSelect(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
-
         self.Datasource.FanzineType=self.tFanzineType.GetItems()[self.tFanzineType.GetSelection()]
+        if self.Datasource.FanzineType.lower() != "clubzine":   # If the fanzine type is changed to anything but clubzine, erase the clubname field
+            self.Datasource.Clubname=""
+            self.tClubname.SetValue("")
         self.RefreshWindow(DontRefreshGrid=True)
 
 
@@ -1696,7 +1701,7 @@ class FanzineIndexPage(GridDataSource):
         self.TopComments: str=""
         self.Locale: list[str]=[]
         self.FanzineName: str=""
-        self.Clubname: str=""
+        self._clubname: str=""
         self._Editors: str=""
         self.Dates: str=""
         self.FanzineType: str=""
@@ -1712,7 +1717,7 @@ class FanzineIndexPage(GridDataSource):
             s+=self._colDefs.Signature()
         s+=hash(f"{self._name.strip()};{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
-        s+=hash(f"{self.FanzineName};{self.Editors};{self.Dates};{self.FanzineType};{self.Credits};{self.Complete}{self.AlphabetizeIndividually}")
+        s+=hash(f"{self.FanzineName};{self.Editors};{self.Dates};{self.FanzineType};{self.Clubname};{self.Credits};{self.Complete}{self.AlphabetizeIndividually}")
         s+=sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
         s+=hash(self._specialTextColor)
         return s
@@ -1758,6 +1763,15 @@ class FanzineIndexPage(GridDataSource):
         for i in range(num):
             ftr=FanzineIndexPageTableRow(self._colDefs)
             self._fanzineList.insert(insertat+i, ftr)
+
+    @property
+    def Clubname(self) -> str:
+        if self.FanzineType.lower() == "clubzine":
+            return self._clubname
+        return ""
+    @Clubname.setter
+    def Clubname(self, val: str) -> None:
+        self._clubname=val
 
 
     @staticmethod
@@ -1911,6 +1925,7 @@ class FanzineIndexPage(GridDataSource):
         self._Editors=v
 
 
+
     def GetFanzineIndexPageNew(self, html: str, version: str) -> bool:
 
         # f"{self.FanzineName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
@@ -1922,12 +1937,13 @@ class FanzineIndexPage(GridDataSource):
         topstuff=re.sub(r"(\r|\n|<\\?(br|h2)>)+", "\n", topstuff, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE).split("\n")
         if len(topstuff) != 4:
             topstuff+=["","","",""]
-        self.FanzineName=topstuff[0]
+        self.FanzineName=RemoveHxTags(topstuff[0])
         self.Editors="\n".join([x.strip() for x in topstuff[1].split(",")])
-        self.Dates=topstuff[2]
-        self.FanzineType=topstuff[3]
+        self.Dates=RemoveHxTags(topstuff[2])
+        self.FanzineType=RemoveHxTags(topstuff[3])
         if version == "1.1" and self.FanzineType.lower() == "clubzine" and len(topstuff) > 4:
-            self.Clubname=topstuff[4]
+            self.Clubname=RemoveHxTags(topstuff[4])
+
 
         # f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
         locale=ExtractHTMLUsingFanacComments(html, "locale")
@@ -1935,7 +1951,7 @@ class FanzineIndexPage(GridDataSource):
             LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('Locale')")
             return False
         # Remove the <h2>s that tend to decorate it
-        self.Locale=re.sub(r"</?h2>", "", locale, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE).strip()
+        self.Locale=re.sub(r"</?h[0-9]>", "", locale, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE).strip()
 
         keywords=ExtractInvisibleTextUsingFanacComments(html, "keywords").split(",")
         keywords=[x.strip() for x in keywords]
@@ -2014,6 +2030,7 @@ class FanzineIndexPage(GridDataSource):
         Log(f"     {self.Dates=}")
         Log(f"     {self.Editors=}")
         Log(f"     {self.FanzineType=}")
+        Log(f"     {self.Clubname=}")
         Log(f"     {self.Locale=}")
         Log(f"     {self.FanzineName=}")
 
@@ -2031,16 +2048,17 @@ class FanzineIndexPage(GridDataSource):
             output=f.read()
 
         eds=", ".join([x.strip() for x in self.Editors.split("\n")])
-        insert=f"{self.FanzineName}<BR><H2>{eds}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
-        if self.FanzineType.lower() == "clubzine" and len(self.Clubname) > 0:
-            insert+=f"<BR><H2>{self.Clubname}"
+        insert=f"{self.FanzineName}<BR><H2>{eds}<BR><BR>{self.Dates}</H2><H3><BR>{self.FanzineType}"
+        if len(self.Clubname) > 0:
+            insert+=f"<BR>{self.Clubname}"
+        insert+="</H3>"
         temp=InsertHTMLUsingFanacComments(output, "header", insert)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('header')")
             return False
         output=temp
 
-        insert=f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
+        insert=f"<H3>{TurnPythonListIntoWordList(self.Locale)}</H3>"
         temp=InsertHTMLUsingFanacComments(output, "locale", insert)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('Locale')")

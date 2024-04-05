@@ -91,6 +91,7 @@ class ClassicFanzinesLine:
         self._dates: str=""
         self._datesSort: str=""
         self._type: str=""
+        self._clubname: str=""
         self._issues: str=""
         self._issuesSort: str=""
         self._topcomments: str=""
@@ -245,6 +246,13 @@ class ClassicFanzinesLine:
     @Type.setter
     def Type(self, val: str):
         self._type=val
+
+    @property
+    def Clubname(self) -> str:
+        return self._clubname
+    @Clubname.setter
+    def Clubname(self, val: str):
+        self._clubname=val
 
     @property
     def Issues(self) -> str:
