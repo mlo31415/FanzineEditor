@@ -870,6 +870,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.Datasource.FanzineType=self.tFanzineType.GetItems()[self.tFanzineType.GetSelection()]
         self.RefreshWindow(DontRefreshGrid=True)
 
+
+    def OnClubname(self, event):
+        self.Datasource.Clubname=self.tClubname.GetValue()
+        self.RefreshWindow(DontRefreshGrid=True)
+
+
     #------------------
     def OnTopCommentsText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         if self.Datasource.TopComments is not None and len(self.Datasource.TopComments) > 0:
@@ -1690,6 +1696,7 @@ class FanzineIndexPage(GridDataSource):
         self.TopComments: str=""
         self.Locale: list[str]=[]
         self.FanzineName: str=""
+        self.Clubname: str=""
         self._Editors: str=""
         self.Dates: str=""
         self.FanzineType: str=""
