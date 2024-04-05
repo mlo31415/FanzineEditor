@@ -495,12 +495,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.Country=self.tLocaleText.GetValue()
 
         with ModalDialogManager(ProgressMessage, self) as progressMessage:
-            progressMessage.Show(f"Uploading Fanzine Index Page: {self.serverDir}")
             Log(f"Uploading Fanzine Index Page: {self.serverDir}")
             self.failure=False
 
             # Make a dated backup copy of the existing page
-            ProgressMessage(self).UpdateMessage(f"Backing up FanzineIndexPage")
+            progressMessage.Show(f"Backing up FanzineIndexPage {self.serverDir}")
             ret=FTP().CopyAndRenameFile(f"/{self.RootDir}/{self.serverDir}", "index.html",
                                     f"/{self.RootDir}/{self.serverDir}", TimestampFilename("index.html"))
             if not ret:
@@ -508,6 +507,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 self.failure=True
                 return
 
+            progressMessage.UpdateMessage(f"Uploading new Fanzine Index Page: {self.serverDir}")
             self.serverDir=self.tServerDirectory.GetValue()
 
             # Now execute the delta list on the files.
