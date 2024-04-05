@@ -2048,7 +2048,7 @@ class FanzineIndexPage(GridDataSource):
             output=f.read()
 
         eds=", ".join([x.strip() for x in self.Editors.split("\n")])
-        insert=f"{self.FanzineName}<BR><H2>{eds}<BR><BR>{self.Dates}</H2><H3><BR>{self.FanzineType}"
+        insert=f"{self.FanzineName}<BR><H2>{eds}<BR><BR>{self.Dates}</H2><H3>{self.FanzineType}"
         if len(self.Clubname) > 0:
             insert+=f"<BR>{self.Clubname}"
         insert+="</H3>"
