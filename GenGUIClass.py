@@ -632,7 +632,7 @@ class FanzinesGridGen ( wx.Frame ):
 		self.CFLText.Wrap( -1 )
 
 		self.CFLText.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
-		self.CFLText.SetMinSize( wx.Size( 600,22 ) )
+		self.CFLText.SetMinSize( wx.Size( 600,40 ) )
 
 		bSizer5.Add( self.CFLText, 0, wx.ALL, 5 )
 
