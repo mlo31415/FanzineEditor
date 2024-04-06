@@ -1555,6 +1555,8 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         GridDataRowClass.__init__(self)
         self.FileSourcePath: str=""
         self._tableColdefs=coldefs
+        self._Signature: int=0
+        self._UpdatedComment: str=""
         if row is None:
             self._cells=[""]*len(self._tableColdefs)
         else:
@@ -1796,10 +1798,21 @@ class FanzineIndexPage(GridDataSource):
         # This is the tag that marks a new-style page.  The version number may someday be significant
         #<!-- fanac fanzine index page V1.0-->
         m=re.search(r"<!-- fanac fanzine index page V([0-9]+\.[0-9]+)-->", html, flags=re.IGNORECASE|re.MULTILINE)
+        fip=None
         if m is None:
-            return self.GetFanzineIndexPageOld(html)
-        version=m.groups()[0]
-        return self.GetFanzineIndexPageNew(html, version)
+            success=self.GetFanzineIndexPageOld(html)
+        else:
+            version=m.groups()[0]
+            success=self.GetFanzineIndexPageNew(html, version)
+
+        if not success:
+            return False
+
+        # Get the signatures of each line to later use to see if the line has been updated.
+        for row in self.Rows:
+            row._Signature=row.Signature()
+
+        return True
 
 
     def GetFanzineIndexPageOld(self, html: str) -> bool:  # FanzineIndexPage(GridDataSource)
@@ -2009,8 +2022,16 @@ class FanzineIndexPage(GridDataSource):
                 self.Rows.append(fipr)
                 continue
 
-            row=re.findall(r"<TD(:?.*?)>(.*?)</TD>", row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
-            cols=[x[1] for x in row]
+            # The final "column" is a comment containing an updated time. (It really isn't a table column at all.)
+            # It may or may not exist.  If it exists, save it in a special place and remove the list element so as to not confuse later code
+            updated=""
+            m=re.search(".*(<!-- Up: [0-9 -]*-->)", row)
+            if m is not None:
+                updated=m.groups()[0]
+
+            rowsfound=re.findall(r"<TD(:?.*?)>(.*?)</TD>", row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
+            cols=[x[1] for x in rowsfound]
+
             # We treat column 0 specially, extracting its hyperref and turning it into two
             cols0=str(cols[0])
             _, url, text, _=FindLinkInString(cols0)
@@ -2019,8 +2040,11 @@ class FanzineIndexPage(GridDataSource):
             else:
                 cols=[url, text]+cols[1:]
 
+
             row=[RemoveAllHTMLLikeTags(str(x)) for x in cols]
-            self.Rows.append(FanzineIndexPageTableRow(self._colDefs, row) )
+            fipr=FanzineIndexPageTableRow(self._colDefs, row)
+            fipr._UpdatedComment=updated
+            self.Rows.append(fipr)
 
         self.Credits=ExtractHTMLUsingFanacComments(html, "scan").strip()
 
@@ -2124,6 +2148,11 @@ class FanzineIndexPage(GridDataSource):
             insert+=f"\n<TD><a href='{row.Cells[0]}'>{row.Cells[1]}</A></TD>\n"
             for cell in row.Cells[2:]:
                 insert+=f"<TD CLASS='left'>{cell}</TD>\n"
+
+            # Record the update date of this line
+            if row._Signature != row.Signature():
+                row._UpdatedComment=f"<!-- Up: {datetime.now():%Y-%m-%d}-->"
+            insert+=row._UpdatedComment+"\n"
             insert+=f"</TR>\n"
 
         # Insert the accumulated table lines into the template
