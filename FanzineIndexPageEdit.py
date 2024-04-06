@@ -26,7 +26,7 @@ from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, ProcessChar
 from WxHelpers import ModalDialogManager
 from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
-from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
+from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles, MakeFancyLink, RemoveFancyLink
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, RemoveHxTags
 from HelpersPackage import InsertInvisibleTextUsingFanacComments, InsertHTMLUsingFanacComments, ExtractHTMLUsingFanacComments, ExtractInvisibleTextUsingFanacComments
 from HelpersPackage import  InsertInvisibleTextInsideFanacComment, ExtractInvisibleTextInsideFanacComment, TimestampFilename
@@ -1949,12 +1949,12 @@ class FanzineIndexPage(GridDataSource):
         # Interpret the header
         topstuff=re.sub(r"(\r|\n|<\\?(br|h\d)>)+", "\n", topstuff, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE).split("\n")
         topstuff=[RemoveHxTags(x) for x in topstuff+["","","","", ""]]  # In case we parsed nothing, pad it with blanks, then remove HTML crud
-        self.FanzineName=topstuff[0]
-        self.Editors="\n".join([x.strip() for x in topstuff[1].split(",")])
+        self.FanzineName=RemoveFancyLink(topstuff[0])
+        self.Editors="\n".join([RemoveFancyLink(x).strip() for x in topstuff[1].split(",")])
         self.Dates=topstuff[2]
-        self.FanzineType=topstuff[3]
+        self.FanzineType=RemoveFancyLink(topstuff[3])
         if version == "1.1" and self.FanzineType.lower() == "clubzine":
-            self.Clubname=topstuff[4]
+            self.Clubname=RemoveFancyLink(topstuff[4])
 
 
         # f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
@@ -2070,10 +2070,10 @@ class FanzineIndexPage(GridDataSource):
         with open("Template - Fanzine Index Page.html") as f:
             output=f.read()
 
-        eds=", ".join([x.strip() for x in self.Editors.split("\n")])
-        insert=f"{self.FanzineName}<BR><H2>{eds}<BR><BR>{self.Dates}</H2><H3>{self.FanzineType}"
+        eds=", ".join([MakeFancyLink(x.strip()) for x in self.Editors.split("\n")])
+        insert=f"{MakeFancyLink(self.FanzineName)}<BR><H2>{eds}<BR><BR>{self.Dates}</H2><H3>{self.FanzineType}"
         if len(self.Clubname) > 0:
-            insert+=f"<BR>{self.Clubname}"
+            insert+=f"<BR>{MakeFancyLink(self.Clubname)}"
         insert+="</H3>"
         temp=InsertHTMLUsingFanacComments(output, "header", insert)
         if temp == "":
