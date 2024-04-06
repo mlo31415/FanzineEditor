@@ -1935,14 +1935,13 @@ class FanzineIndexPage(GridDataSource):
             return False
         # Interpret the header
         topstuff=re.sub(r"(\r|\n|<\\?(br|h\d)>)+", "\n", topstuff, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE).split("\n")
-        if len(topstuff) != 4:
-            topstuff+=["","","",""]
-        self.FanzineName=RemoveHxTags(topstuff[0])
+        topstuff=[RemoveHxTags(x) for x in topstuff+["","","","", ""]]  # In case we parsed nothing, pad it with blanks, then remove HTML crud
+        self.FanzineName=topstuff[0]
         self.Editors="\n".join([x.strip() for x in topstuff[1].split(",")])
-        self.Dates=RemoveHxTags(topstuff[2])
-        self.FanzineType=RemoveHxTags(topstuff[3])
-        if version == "1.1" and self.FanzineType.lower() == "clubzine" and len(topstuff) > 4:
-            self.Clubname=RemoveHxTags(topstuff[4])
+        self.Dates=topstuff[2]
+        self.FanzineType=topstuff[3]
+        if version == "1.1" and self.FanzineType.lower() == "clubzine":
+            self.Clubname=topstuff[4]
 
 
         # f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
