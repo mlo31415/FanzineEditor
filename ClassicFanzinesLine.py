@@ -1,3 +1,4 @@
+from __future__ import annotations
 import re
 from datetime import datetime
 
@@ -9,7 +10,8 @@ from FanzineIssueSpecPackage import FanzineDate
 ########################################################################
 # A class to hold the updated date in standard ConEditor format
 class ClassicFanzinesDate:
-    def __init__(self, val: datetime|str|None=None):
+    def __init__(self, val: datetime|str|ClassicFanzinesDate|None=None):
+        self._date: datetime|str|ClassicFanzinesDate|None=None
         self.Set(val)       # The date is stored as a datetime
 
 
