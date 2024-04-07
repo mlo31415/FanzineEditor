@@ -29,8 +29,8 @@ class ClassicFanzinesDate:
             return datetime(1900, 1, 1)
         return self._date
     @Date.setter
-    def Date(self, val: datetime|str|None) -> None:
-        self._date=self.Set(val)
+    def Date(self, val: datetime|str|None):
+        self.Set(val)
 
     # Turn any input value into the proper internal format
     def Set(self, val: datetime|str|None) -> None:
