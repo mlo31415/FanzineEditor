@@ -26,7 +26,8 @@ from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, ProcessChar
 from WxHelpers import ModalDialogManager
 from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
-from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles, MakeFancyLink, RemoveFancyLink
+from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
+from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, WikiPagenameToWikiUrlname
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, RemoveHxTags
 from HelpersPackage import InsertInvisibleTextUsingFanacComments, InsertHTMLUsingFanacComments, ExtractHTMLUsingFanacComments, ExtractInvisibleTextUsingFanacComments
 from HelpersPackage import  InsertInvisibleTextInsideFanacComment, ExtractInvisibleTextInsideFanacComment, TimestampFilename
@@ -59,6 +60,19 @@ gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
     ColDefinition("Mailing", Type="str", Width=75),
     ColDefinition("Repro", Type="str", Width=75)
 ])
+
+
+def SpecialNameFormatToHtmlFancylink(val: str) ->str:
+    # If "|" present, input format is <fancyName|displayName>
+    if "|" in val:
+        fancyName, displayName = val.split("|", 1)
+        return MakeFancyLink(fancyName, displayName)
+
+    return MakeFancyLink(val)
+
+
+def HtmlFancylinkToSpecialNameFormat(val: str) -> str:
+    return WikiUrlnameToWikiPagename(val)
 
 
 class FanzineIndexPageWindow(FanzineIndexPageEditGen):
@@ -2059,7 +2073,6 @@ class FanzineIndexPage(GridDataSource):
 
         return True
 
-
     # Using the fanzine index page template, create a page and upload it.
     # This puts a Version 1.1 page
     def PutFanzineIndexPage(self, root: str, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
@@ -2070,10 +2083,10 @@ class FanzineIndexPage(GridDataSource):
         with open("Template - Fanzine Index Page.html") as f:
             output=f.read()
 
-        eds=", ".join([MakeFancyLink(x.strip()) for x in self.Editors.split("\n")])
-        insert=f"{MakeFancyLink(self.FanzineName)}<BR><H2>{eds}<BR><BR>{self.Dates}</H2><H3>{self.FanzineType}"
+        eds=", ".join([SpecialNameFormatToHtmlFancylink(x.strip()) for x in self.Editors.split("\n")])
+        insert=f"{SpecialNameFormatToHtmlFancylink(self.FanzineName)}<BR><H2>{eds}<BR><BR>{self.Dates}</H2><H3>{self.FanzineType}"
         if len(self.Clubname) > 0:
-            insert+=f"<BR>{MakeFancyLink(self.Clubname)}"
+            insert+=f"<BR>{SpecialNameFormatToHtmlFancylink(self.Clubname)}"
         insert+="</H3>"
         temp=InsertHTMLUsingFanacComments(output, "header", insert)
         if temp == "":
