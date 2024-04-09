@@ -2295,7 +2295,7 @@
                     <property name="help"></property>
                     <property name="id">wxID_ANY</property>
                     <property name="kind">wxITEM_NORMAL</property>
-                    <property name="label">Replace w/PDF</property>
+                    <property name="label">Replace w/new PDF</property>
                     <property name="name">m_menuItemPopupReplace</property>
                     <property name="permission">none</property>
                     <property name="shortcut"></property>

@@ -311,7 +311,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_menuItemPopupMergeRows = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Merge Adjacent Rows", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupMergeRows )
 
-		self.m_menuItemPopupReplace = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Replace w/PDF", wx.EmptyString, wx.ITEM_NORMAL )
+		self.m_menuItemPopupReplace = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Replace w/new PDF", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupReplace )
 
 		self.m_menuItemPopupRenamePDF = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Rename PDF on Server", wx.EmptyString, wx.ITEM_NORMAL )
