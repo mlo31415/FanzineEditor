@@ -333,8 +333,8 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
     output=temp
 
     with ProgressMsg(None, f"Uploading 'Classic_Fanzines.html'"):
-        ret=FTP().CopyAndRenameFile(f"/{rootDir}/", "Classic_Fanzines.html",
-                                    f"/{rootDir}/", TimestampFilename('Classic_Fanzines.html'))
+        ret=FTP().BackupServerFile(f"/{rootDir}/Classic_Fanzines.html")
+
         if not ret:
             Log(f"Could not make a backup copy: {rootDir}/{TimestampFilename('Classic_Fanzines.html')}")
             return False
