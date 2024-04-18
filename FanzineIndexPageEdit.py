@@ -27,7 +27,7 @@ from WxHelpers import ModalDialogManager
 from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
-from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, WikiPagenameToWikiUrlname
+from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, RemoveHxTags
 from HelpersPackage import InsertInvisibleTextUsingFanacComments, InsertHTMLUsingFanacComments, ExtractHTMLUsingFanacComments, ExtractInvisibleTextUsingFanacComments
 from HelpersPackage import  InsertInvisibleTextInsideFanacComment, ExtractInvisibleTextInsideFanacComment, TimestampFilename
