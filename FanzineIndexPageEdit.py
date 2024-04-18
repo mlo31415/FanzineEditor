@@ -1012,11 +1012,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if self._dataGrid.clickedColumn == 0:
             # If cell 0 contains the URL of a PDF or an HTML page, allow it to be replaced by a PDF.
             irow=self._dataGrid.clickedRow
-            if self.Datasource.Rows[irow].IsNormalRow:
-                Enable("Replace w/new PDF")
-            # If cell 0 contains a PDF, allow it to be renamed
-            if len(self.Datasource.Rows[irow][0]) > 0 and ".pdf" in self.Datasource.Rows[irow][0].lower():
-                Enable("Rename PDF on Server")
+            if irow < self.Datasource.NumRows:
+                if self.Datasource.Rows[irow].IsNormalRow:
+                    Enable("Replace w/new PDF")
+                # If cell 0 contains a PDF, allow it to be renamed
+                if len(self.Datasource.Rows[irow][0]) > 0 and ".pdf" in self.Datasource.Rows[irow][0].lower():
+                    Enable("Rename PDF on Server")
 
         if not isGridCellClick:
             Enable("Sort on Selected Column") # It's a label click, so sorting on the column is always OK
