@@ -67,7 +67,7 @@ class ClassicFanzinesDate:
             return ""
         return f"{self._date:%B %d, %Y}"
 
-    # This is defined so that we can get the same format Now string as the __str__
+    # This is defined so that we can get the same time format in the Now string as we do in the __str__
     def Now(self) -> str:
         return f"{datetime.now():%B %d, %Y}"
 
