@@ -515,6 +515,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             Log(f"Uploading Fanzine Index Page: {self.serverDir}")
             self.failure=False
 
+            progressMessage.Show(f"Backing up FanzineIndexPage {self.serverDir}")
+
+            # During the test phase, we have a bogus root directory.  When we edit a new fanzine, we load it from the true root, but save it to the bogus root.
+            # To make the backup work, we need to move the FIP index file to the new folder.
+            # This will go away when we dispense with the bogus root.
+            if not FTP().FileExists(f"/{self.RootDir}/{self.serverDir}/index.html"):
+                FTP().CopyFile(f"/fanzines/{self.serverDir}",
+                               f"/{self.RootDir}/{self.serverDir}", "index.html", Create=True)
+
             # Make a dated backup copy of the existing page
             progressMessage.Show(f"Backing up FanzineIndexPage {self.serverDir}")
             ret=FTP().CopyAndRenameFile(f"/{self.RootDir}/{self.serverDir}", "index.html",
