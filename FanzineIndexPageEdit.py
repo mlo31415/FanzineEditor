@@ -2190,8 +2190,6 @@ class FanzineIndexPage(GridDataSource):
         if len(temp) > 0:
             output=temp
 
-        FTP().PutFileAsString(f"/{root}/{url}", "index.html", output, create=True)
-        return True
         # Update the updated text at the bottom of the page
         insert=f"Updated {ClassicFanzinesDate().Now()}"
         temp=InsertHTMLUsingFanacComments(output, "updated", insert)
@@ -2200,6 +2198,11 @@ class FanzineIndexPage(GridDataSource):
         else:
             output=temp
 
+        ret=FTP().PutFileAsString(f"/{root}/{url}", "index.html", output, create=True)
+        if not ret:
+            LogError(f"Could not FTP().PutFileAsString FIP '/{root}/{url}/index.html'")
+
+        return ret
 
 
 
