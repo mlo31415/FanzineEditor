@@ -517,15 +517,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             progressMessage.Show(f"Backing up FanzineIndexPage {self.serverDir}")
 
-            # During the test phase, we have a bogus root directory.  When we edit a new fanzine, we load it from the true root, but save it to the bogus root.
-            # To make the backup work, we need to move the FIP index file to the new folder.
+            # During the test phase, we have a bogus root directory and the fanzine's directory may noy yet have an idnex file to be backed up.
+            # So, when we edit a new fanzine, we copy it from the true root to the bogus root, giving us an index file to backup..
             # This will go away when we dispense with the bogus root.
-            if not FTP().FileExists(f"/{self.RootDir}/{self.serverDir}/index.html"):
-                FTP().CopyFile(f"/fanzines/{self.serverDir}",
-                               f"/{self.RootDir}/{self.serverDir}", "index.html", Create=True)
+            if self.RootDir.lower() != "fanzines":
+                if not FTP().FileExists(f"/{self.RootDir}/{self.serverDir}/index.html"):    # Check to see if the bigus root already has an index file
+                    FTP().CopyFile(f"/fanzines/{self.serverDir}",   # If not, copy one in.
+                                   f"/{self.RootDir}/{self.serverDir}", "index.html", Create=True)
 
-            # Make a dated backup copy of the existing page
-            #TODO: Use BackupServerFile
+            # Make a dated backup copy of the existing index page
             ret=FTP().BackupServerFile(f"/{self.RootDir}/{self.serverDir}/index.html")
             if not ret:
                 Log(f"Could not make a backup copy: Fanzines-test/{self.serverDir}/{TimestampFilename('index.html')}")
