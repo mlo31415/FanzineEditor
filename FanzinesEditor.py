@@ -654,20 +654,20 @@ class FanzinesPage(GridDataSource):
         self._fanzineList:list[FanzinesPageRow]=[]
 
 
-    def Signature(self) -> int:        # FanzinesPage(GridDataSource)
+    def Signature(self) -> int:        
         return sum([x.__hash__() *(i+1) for i, x in enumerate(self._fanzineList)])
 
 
     # Inherited from GridDataSource
     @property
-    def Rows(self) -> list[FanzinesPageRow]:        # FanzinesPage(GridDataSource)
+    def Rows(self) -> list[FanzinesPageRow]:        
         return self._rows
     @Rows.setter
-    def Rows(self, rows: list) -> None:        # FanzinesPage(GridDataSource)
+    def Rows(self, rows: list) -> None:        
         self._rows=rows
 
     @property
-    def NumRows(self) -> int:        # FanzinesPage(GridDataSource)
+    def NumRows(self) -> int:        
         numcells=len(self._fanzineList)
         if numcells%self._numCols == 0:
             return numcells//self._numCols
@@ -696,20 +696,20 @@ class FanzinesPage(GridDataSource):
 
 
 
-    def __getitem__(self, index: int) -> FanzinesPageRow:        # FanzinesPage(GridDataSource)
+    def __getitem__(self, index: int) -> FanzinesPageRow:        
         return self.Rows[index]
 
-    def __setitem__(self, index: int, val: FanzinesPageRow) -> None:        # FanzinesPage(GridDataSource)
+    def __setitem__(self, index: int, val: FanzinesPageRow) -> None:        
         self._fanzineList[index]=val
 
-    def CanAddColumns(self) -> bool:        # FanzinesPage(GridDataSource)
+    def CanAddColumns(self) -> bool:        
         return False
 
-    def CanMoveColumns(self) -> bool:     # FanzinesPage(GridDataSource)
+    def CanMoveColumns(self) -> bool:     
         return False             # Override if columns can't be moved
 
 
-    def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        # FanzinesPage(GridDataSource)
+    def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        
         for i in range(num):
             ftr=FanzinesPageRow([""]*self.NumCols)
             self._fanzineList.insert(insertat+i, ftr)
