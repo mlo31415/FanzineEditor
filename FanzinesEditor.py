@@ -399,7 +399,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
 
     @property
-    def Datasource(self) -> FanzinesPage:       # FanzinesEditor(FanzineGrid)
+    def Datasource(self) -> FanzinesPage:       
         return self._Datasource
     @Datasource.setter
     def Datasource(self, val: FanzinesPage):
@@ -413,7 +413,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
     def OnExitPressed( self, event ):
         self.OnClose(event)
 
-    def OnClose(self, event):       # FanzinesEditor(FanzineGrid)
+    def OnClose(self, event):       
         if OnCloseHandling(event, self.NeedsSaving(), "The list of fanzines has been updated and not yet saved. Exit anyway?"):
             return
         self.MarkAsSaved()  # The contents have been declared doomed
@@ -429,14 +429,14 @@ class FanzinesEditorWindow(FanzinesGridGen):
         sys.exit(1)
 
 
-    def UpdateNeedsSavingFlag(self):       # FanzinesEditor(FanzineGrid)
+    def UpdateNeedsSavingFlag(self):       
         s="Editing Fanzines "
         if self.NeedsSaving():
             s=s+" *"        # Add on a change marker if needed
         self.SetTitle(s)
 
 
-    def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # FanzinesEditor(FanzineGrid)
+    def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       
         self.UpdateNeedsSavingFlag()
         if not DontRefreshGrid:
             self._dataGrid.RefreshWxGridFromDatasource()
@@ -444,23 +444,23 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
     # ----------------------------------------------
     # Used to determine if anything has been updated
-    def Signature(self) -> int:       # FanzinesEditor(FanzineGrid)
+    def Signature(self) -> int:       
         return self.Datasource.Signature()
 
 
-    def MarkAsSaved(self):       # FanzinesEditor(FanzineGrid)
+    def MarkAsSaved(self):       
         self._signature=self.Signature()
 
 
-    def NeedsSaving(self):       # FanzinesEditor(FanzineGrid)
+    def NeedsSaving(self):       
         return self._signature != self.Signature()
 
 
-    def OnSearchText(self, event):       # FanzinesEditor(FanzineGrid)
+    def OnSearchText(self, event):       
         self.SearchFanzineList()
 
 
-    def SearchFanzineList(self):       # FanzinesEditor(FanzineGrid)
+    def SearchFanzineList(self):       
         searchtext=self.tSearch.GetValue()
         if searchtext != "":
             fanzinelist=[x for x in self._fanzinesList if searchtext.casefold().replace("_", " ") in x.ServerDir.casefold().replace("_", " ") or searchtext.casefold() in x.DisplayName.casefold()]
@@ -468,13 +468,13 @@ class FanzinesEditorWindow(FanzinesGridGen):
             self.RefreshWindow()
 
 
-    def OnClearSearch( self, event ):       # FanzinesEditor(FanzineGrid)
+    def OnClearSearch( self, event ):       
         self.Datasource.FanzineList=self._fanzinesList
         self.tSearch.SetValue("")
         self.RefreshWindow()
 
 
-    def OnAddNewFanzine(self, event):       # FanzinesEditor(FanzineGrid)
+    def OnAddNewFanzine(self, event):       
         fsw=FanzineIndexPageWindow(None)
         if fsw.failure:
             MessageBox(f"Unable to load new fanzine window", Title="Loading Fanzine Index page", ignoredebugger=True)
@@ -504,7 +504,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
 
     #-------------------
-    def OnGridCellDoubleClick(self, event):       # FanzinesEditor(FanzineGrid)
+    def OnGridCellDoubleClick(self, event):       
         self._dataGrid.SaveClickLocation(event, "double")
         serverDir=self._Datasource.Rows[event.Row][event.Col]
         with FanzineIndexPageWindow(None, serverDir) as fsw:
@@ -526,7 +526,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
     #-------------------
     # Upload the fanzines list to the classic fanzine page
-    def OnUploadPressed( self, event ):       # FanzinesEditor(FanzineGrid)
+    def OnUploadPressed( self, event ):       
         PutClassicFanzineList(self._fanzinesList, self.RootDir)
         self.MarkAsSaved()
 
@@ -559,7 +559,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
     # ------------------
     # Initialize the main window to empty
     # This also initiazes the datasource
-    def ClearMainWindow(self):       # FanzinesEditor(FanzineGrid)
+    def ClearMainWindow(self):       
 
         # Re-initialize the form
 
