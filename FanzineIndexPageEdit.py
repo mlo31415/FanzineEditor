@@ -203,6 +203,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.RefreshWxGridFromDatasource()
         self.MarkAsSaved()
         self.RefreshWindow()
+        self.Raise()
         self.failure=False
 
 

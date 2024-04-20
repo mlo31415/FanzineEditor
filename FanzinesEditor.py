@@ -395,6 +395,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self.RefreshWindow()
 
         self.Show(True)
+        self.Raise()
 
 
     @property
