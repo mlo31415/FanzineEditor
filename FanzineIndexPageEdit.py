@@ -22,8 +22,8 @@ from DeltaTracker import DeltaTracker
 from FTP import FTP
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
-from WxHelpers import OnCloseHandling, ProgressMsg, ProgressMessage, ProcessChar
-from WxHelpers import ModalDialogManager
+from WxHelpers import OnCloseHandling, ProcessChar
+from WxHelpers import ModalDialogManager, ProgressMessage2
 from HelpersPackage import IsInt, Int0, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
@@ -144,7 +144,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         else:
             # This is not a new directory
             # Load the fanzine index page
-            with ProgressMsg(parent, f"Downloading Fanzine Index Page: {serverDir}"):
+            with ModalDialogManager(ProgressMessage2,f"Downloading Fanzine Index Page: {serverDir}", parent=parent) as pm:
                 self.failure=False
                 if not self.Datasource.GetFanzineIndexPage(serverDir):
                     self.failure=True
@@ -512,11 +512,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.TopComments=self.tTopComments.GetValue()
         cfl.Country=self.tLocaleText.GetValue()
 
-        with ModalDialogManager(ProgressMessage, self) as progressMessage:
+        with ModalDialogManager(ProgressMessage2, f"Backing up FanzineIndexPage {self.serverDir}", self) as pm:
             Log(f"Uploading Fanzine Index Page: {self.serverDir}")
             self.failure=False
-
-            progressMessage.Show(f"Backing up FanzineIndexPage {self.serverDir}")
 
             # During the test phase, we have a bogus root directory and the fanzine's directory may noy yet have an idnex file to be backed up.
             # So, when we edit a new fanzine, we copy it from the true root to the bogus root, giving us an index file to backup..
@@ -533,7 +531,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 self.failure=True
                 return
 
-            progressMessage.UpdateMessage(f"Uploading new Fanzine Index Page: {self.serverDir}")
+            pm.UpdateMessage(f"Uploading new Fanzine Index Page: {self.serverDir}")
             self.serverDir=self.tServerDirectory.GetValue()
 
             # Now execute the delta list on the files.
@@ -561,7 +559,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
                             Log(f"Renamed {serverpathfile=}")
 
-                        progressMessage.Show(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
+                        pm.UpdateMessage(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
                         if not FTP().PutFile(tempfilepath, serverpathfile):
                             dlg=wx.MessageDialog(self, f"Y+Unable to upload {tempfilepath}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
@@ -577,7 +575,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         # Delete a file on the server
                         servername=delta.SourceFilename
                         serverpathfile=f"/{self.RootDir}/{self.serverDir}/{servername}"
-                        progressMessage.Show(f"Deleting {serverpathfile} from server")
+                        pm.UpdateMessage(f"Deleting {serverpathfile} from server")
                         if not FTP().DeleteFile(serverpathfile):
                             dlg=wx.MessageDialog(self, f"Y+Unable to delete {serverpathfile}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
@@ -593,7 +591,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         assert delta.NewSourceFilename != ""
                         oldserverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
                         newserverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
-                        progressMessage.Show(f"Renaming {oldserverpathfile} as {newserverpathfile}")
+                        pm.UpdateMessage(f"Renaming {oldserverpathfile} as {newserverpathfile}")
                         if not FTP().Rename(oldserverpathfile, newserverpathfile):
                             dlg=wx.MessageDialog(self, f"Unable to rename {oldserverpathfile} to {newserverpathfile}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
@@ -620,7 +618,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
                             Log(f"Renamed {serverpathfile=}")
 
-                        progressMessage.Show(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
+                        pm.Show(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
                         if not FTP().PutFile(tempfilepath, serverpathfile):
                             dlg=wx.MessageDialog(self, f"Y+Unable to replace {tempfilepath}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
@@ -707,7 +705,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 return
             for row in self.Datasource.Rows:
                 if row.FileSourcePath != "":
-                    ProgressMessage(self).UpdateMessage(f"Uploading file: {row.FileSourcePath}")
+                    pm.UpdateMessage(f"Uploading file: {row.FileSourcePath}")
                     Log(f"Uploading file: {row.FileSourcePath}")
                     if not FTP().PutFile(row.FileSourcePath, f"/{self.RootDir}/{self.serverDir}/{row.Cells[0]}"):
                         Log("Failed\n")

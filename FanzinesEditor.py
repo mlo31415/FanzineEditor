@@ -12,7 +12,7 @@ from FTP import FTP
 from bs4 import BeautifulSoup
 
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
-from WxHelpers import OnCloseHandling, ProgressMsg
+from WxHelpers import OnCloseHandling, ProgressMessage2, ModalDialogManager
 from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll, ExtractInvisibleTextInsideFanacComment
 from HelpersPackage import InsertHTMLUsingFanacComments, UnicodeToHtml, StripSpecificTag, Int0, TimestampFilename
 from Log import LogOpen, LogClose, LogError
@@ -332,7 +332,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
         return False
     output=temp
 
-    with ProgressMsg(None, f"Uploading 'Classic_Fanzines.html'"):
+    with ModalDialogManager(ProgressMessage2, None, f"Uploading 'Classic_Fanzines.html'"):
         ret=FTP().BackupServerFile(f"/{rootDir}/Classic_Fanzines.html")
 
         if not ret:
@@ -378,7 +378,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
         if Settings().IsTrue("Test mode"):
             self.RootDir=Settings().Get("Test Server Directory", self.RootDir)
 
-        with ProgressMsg(self, "Downloading main fanzine page"):
+        with ModalDialogManager(ProgressMessage2, "Downloading main fanzine page", parent=self):
             cfllist=GetFanzinesList()
             if cfllist is None or len(cfllist) == 0:
                 return
