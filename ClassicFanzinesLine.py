@@ -4,7 +4,7 @@ from datetime import datetime
 
 from unidecode import unidecode
 
-from HelpersPackage import SortPersonsName, Int0, FindAnyBracketedText
+from HelpersPackage import SortPersonsName, Int0, FindNextBracketedText
 from FanzineIssueSpecPackage import FanzineDate
 
 ########################################################################
@@ -183,7 +183,7 @@ class ClassicFanzinesLine:
 
     @property
     def DisplayNameSort(self) -> str:
-        pre, _, mid, post=FindAnyBracketedText(self.DisplayName)
+        pre, _, mid, post=FindNextBracketedText(self.DisplayName)
         return unidecode(f"{pre} {mid} {post}".strip().casefold())
     @DisplayNameSort.setter
     def DisplayNameSort(self, val: str):
