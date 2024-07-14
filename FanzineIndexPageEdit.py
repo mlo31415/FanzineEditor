@@ -1906,6 +1906,7 @@ class FanzineIndexPage(GridDataSource):
                 cols0=str(cols[0])
                 _, url, text, _=FindLinkInString(cols0)
                 if url == "" and text == "":
+                    cols0=RemoveAllHTMLLikeTags(cols0)
                     row=["", cols0]
                 else:
                     row=[url, text]
