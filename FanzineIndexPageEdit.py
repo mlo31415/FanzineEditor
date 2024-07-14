@@ -39,8 +39,9 @@ from FanzineIssueSpecPackage import MonthNameToInt
 # Create default column headers
 gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
     ColDefinition("Filename", Type="str", IsEditable=IsEditable.Maybe),
-    ColDefinition("Issue", Type="required str"),
-    ColDefinition("Title", Type="str", preferred="Issue"),
+    ColDefinition("Display Text", Type="str"),
+    ColDefinition("Link", Type="url"),
+    ColDefinition("Text", Type="required str"),
     ColDefinition("Title", Type="str", Preferred="Display Text"),
     ColDefinition("Whole", Type="int", Width=75),
     ColDefinition("WholeNum", Type="int", Width=75, Preferred="Whole"),
@@ -131,7 +132,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # Create default column headers
             self._Datasource.ColDefs=ColDefinitionsList([
                 gStdColHeaders["Filename"],
-                gStdColHeaders["Issue"],
+                gStdColHeaders["Display Text"],
                 gStdColHeaders["Whole"],
                 gStdColHeaders["Vol"],
                 gStdColHeaders["Number"],
@@ -1177,7 +1178,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if top == -1 or bottom == -1:
             top=self._dataGrid.clickedRow
             bottom=self._dataGrid.clickedRow
-        urlCol=self.Datasource.ColHeaderIndex("URL")
+        urlCol=self.Datasource.ColHeaderIndex("Link")
         assert urlCol != -1
         for irow in range(top, bottom+1):
             if self.Datasource.Rows[irow].IsNormalRow and not self.Datasource.Rows[irow].IsEmptyRow:
@@ -1703,8 +1704,11 @@ class FanzineIndexPageTableRow(GridDataRowClass):
 def ColNamesToColDefs(headers: list[str]) -> ColDefinitionsList:
     colDefs: ColDefinitionsList=ColDefinitionsList([])
     for header in headers:
-        # First cannonicize the header
-        header=CanonicizeColumnHeaders(header)
+        # First canonicize the header
+        if header == "Issue":
+            header="Display Text"   # Display text is unique to Fanzines Index Page??
+        else:
+            header=CanonicizeColumnHeaders(header)
         scd=ColDefinition(f"({header})", Type="str", Width=75)  # The default when it's unrecognizable
         if header in gStdColHeaders:
             scd=gStdColHeaders[gStdColHeaders.index(header)]
@@ -1797,6 +1801,11 @@ class FanzineIndexPage(GridDataSource):
     @Clubname.setter
     def Clubname(self, val: str) -> None:
         self._clubname=val
+
+
+    @property
+    def TextAndHrefCols(self) -> (int, int):
+        return self._colDefs.index("Display Text"), self._colDefs.index("Link")
 
 
     @staticmethod
@@ -1894,7 +1903,7 @@ class FanzineIndexPage(GridDataSource):
         # And construct the grid
         # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
         # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
-        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.Maybe)])
+        self._colDefs=ColDefinitionsList([ColDefinition("Link", 100, "url", IsEditable.Maybe)])
         self._colDefs.append(ColNamesToColDefs(headers))
 
         rows: list[list[str]]=[]
@@ -2013,7 +2022,7 @@ class FanzineIndexPage(GridDataSource):
         # In a normal row, column #1 is always a link to the fanzine, and so for every row, we split this into two parts,
         # the URL and the display text.
         # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
-        self._colDefs=ColDefinitionsList([ColDefinition("URL", 100, "URL", IsEditable.Maybe)])+self._colDefs
+        self._colDefs=ColDefinitionsList([ColDefinition("Link", 100, "url", IsEditable.Maybe)])+self._colDefs
 
         self.Created=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(html, "created"))
         self.Updated=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(html, "updated"))
@@ -2041,7 +2050,7 @@ class FanzineIndexPage(GridDataSource):
             m=re.match(r'<TD colspan=\"[0-9]+\">(.*?)</TD>', row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
             if m is not None:
                 fipr=FanzineIndexPageTableRow(self._colDefs)
-                fipr.Cells[0]=m.groups()[0]
+                fipr.Cells[1]=m.groups()[0]
                 fipr.IsTextRow=True
                 self.Rows.append(fipr)
                 continue
@@ -2211,7 +2220,7 @@ def SetPDFMetadata(pdfPathname: str, cfl: ClassicFanzinesLine, row: list[str], c
     writer=PdfWriter(clone_from=pdfPathname)
 
     # Title, issue, date, editors, country code, apa
-    metadata={"/Title": row[colNames.index("Issue")], "/Author": cfl.Editors.replace("<br>", ", ")}
+    metadata={"/Title": row[colNames.index("Display Text")], "/Author": cfl.Editors.replace("<br>", ", ")}
     if "Editor" in colNames:        # Editor in the row overrides editors for the whole zine series
         metadata["/Author"]=row[colNames.index("Editor")]
 
