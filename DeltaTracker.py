@@ -131,16 +131,21 @@ class DeltaTracker:
 class UpdateFTPLog:
     g_ID: str|None=None
 
-    def Init(self, id: str):
+    @staticmethod
+    def Init(id: str):
         UpdateFTPLog.g_ID=id
         pass
 
-    def Log(self, series: str, con: str = "", deltas: Delta|None = None):
+
+    @staticmethod
+    def Log(series: str, con: str = "", deltas: Delta|None = None):
         lines="Uploaded ConInstance: "+series+":"+con+"   "+"["+UpdateFTPLog.g_ID+"  "+datetime.now().strftime("%A %B %d, %Y  %I:%M:%S %p")+" EST]\n"
         if deltas is not None:
-            lines+="^^deltas by "+FTP().GetEditor()+":\n"+str(deltas)+"\n"
+            lines+="^^deltas by "+FTP.GetEditor()+":\n"+str(deltas)+"\n"
         FTP().AppendString("/updatelog.txt", lines)
         pass
 
-    def LogText(self, txt: str):
-        FTP().AppendString("/updatelog.txt", txt+"   ["+UpdateFTPLog.g_ID+"  "+FTP().GetEditor()+"  "+datetime.now().strftime("%A %B %d, %Y  %I:%M:%S %p")+" EST]\n")
+
+    @staticmethod
+    def LogText(txt: str):
+        FTP().AppendString("/updatelog.txt", txt+"   ["+UpdateFTPLog.g_ID+"  "+FTP.GetEditor()+"  "+datetime.now().strftime("%A %B %d, %Y  %I:%M:%S %p")+" EST]\n")
