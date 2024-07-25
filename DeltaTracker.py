@@ -58,7 +58,7 @@ class DeltaTracker:
                     del self._deltas[i]
                     return
 
-        # OK, the item is not queued to be added so it must already be on the website: add a delete action to the deltas list
+        # OK, the item is not queued to be added, so it must already be on the website: add a delete action to the deltas list
         self._deltas.append(Delta("delete", sourceFilename))
 
 
