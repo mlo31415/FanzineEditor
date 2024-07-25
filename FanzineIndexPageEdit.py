@@ -146,7 +146,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         else:
             # This is not a new directory
             # Load the fanzine index page
-            with ModalDialogManager(ProgressMessage2,f"Downloading Fanzine Index Page: {serverDir}", parent=parent) as pm:
+            with ModalDialogManager(ProgressMessage2,f"Downloading Fanzine Index Page: {serverDir}", parent=parent):
                 self.failure=False
                 if not self.Datasource.GetFanzineIndexPage(serverDir):
                     self.failure=True
@@ -514,7 +514,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.TopComments=self.tTopComments.GetValue()
         cfl.Country=self.tLocaleText.GetValue()
 
-        with ModalDialogManager(ProgressMessage2, f"Backing up FanzineIndexPage {self.serverDir}", self) as pm:
+        with ModalDialogManager(ProgressMessage2, f"Backing up FanzineIndexPage {self.serverDir}", parent=self) as pm:
             Log(f"Uploading Fanzine Index Page: {self.serverDir}")
             self.failure=False
 
@@ -533,7 +533,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 self.failure=True
                 return
 
-            pm.UpdateMessage(f"Uploading new Fanzine Index Page: {self.serverDir}")
+            pm.Update(f"Uploading new Fanzine Index Page: {self.serverDir}")
             self.serverDir=self.tServerDirectory.GetValue()
 
             # Now execute the delta list on the files.
@@ -561,7 +561,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
                             Log(f"Renamed {serverpathfile=}")
 
-                        pm.UpdateMessage(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
+                        pm.Update(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
                         if not FTP().PutFile(tempfilepath, serverpathfile):
                             dlg=wx.MessageDialog(self, f"Y+Unable to upload {tempfilepath}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
@@ -577,7 +577,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         # Delete a file on the server
                         servername=delta.SourceFilename
                         serverpathfile=f"/{self.RootDir}/{self.serverDir}/{servername}"
-                        pm.UpdateMessage(f"Deleting {serverpathfile} from server")
+                        pm.Update(f"Deleting {serverpathfile} from server")
                         if not FTP().DeleteFile(serverpathfile):
                             dlg=wx.MessageDialog(self, f"Y+Unable to delete {serverpathfile}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
@@ -593,7 +593,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         assert delta.NewSourceFilename != ""
                         oldserverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
                         newserverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
-                        pm.UpdateMessage(f"Renaming {oldserverpathfile} as {newserverpathfile}")
+                        pm.Update(f"Renaming {oldserverpathfile} as {newserverpathfile}")
                         if not FTP().Rename(oldserverpathfile, newserverpathfile):
                             dlg=wx.MessageDialog(self, f"Unable to rename {oldserverpathfile} to {newserverpathfile}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
@@ -610,7 +610,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         assert False
                         filename=delta.SourceFilename
                         # Update the PDF's metadata
-                        tempfilepath=SetPDFMetadata(os.path.join(path, filename), cfl, delta.Row, delta.ColDefs)
+                        tempfilepath=SetPDFMetadata(str(os.path.join(path, filename)), cfl, delta.Row, delta.ColDefs)
                         Log(f"{tempfilepath=}")     #TODO delete these logging messages once sure that this code is working
 
                         serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
@@ -620,7 +620,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
                             Log(f"Renamed {serverpathfile=}")
 
-                        pm.Show(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
+                        pm.Update(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
                         if not FTP().PutFile(tempfilepath, serverpathfile):
                             dlg=wx.MessageDialog(self, f"Y+Unable to replace {tempfilepath}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
@@ -707,7 +707,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 return
             for row in self.Datasource.Rows:
                 if row.FileSourcePath != "":
-                    pm.UpdateMessage(f"Uploading file: {row.FileSourcePath}")
+                    pm.Update(f"Uploading file: {row.FileSourcePath}")
                     Log(f"Uploading file: {row.FileSourcePath}")
                     if not FTP().PutFile(row.FileSourcePath, f"/{self.RootDir}/{self.serverDir}/{row.Cells[0]}"):
                         Log("Failed\n")
