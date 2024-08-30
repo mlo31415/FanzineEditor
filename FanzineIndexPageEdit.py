@@ -1731,6 +1731,7 @@ class FanzineIndexPage(GridDataSource):
         self.Locale: list[str]=[]
         self.FanzineName: str=""
         self._clubname: str=""
+        self._betterScanNeeded: bool=False
         self._Editors: str=""
         self.Dates: str=""
         self.FanzineType: str=""

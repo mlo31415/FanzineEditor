@@ -95,6 +95,7 @@ class ClassicFanzinesLine:
         self._topcomments: str=""
         self._country: str=""
         self._complete: bool=False
+        self._betterScanNeeded: bool=False
         self._created: ClassicFanzinesDate|None=None
         self._updated: ClassicFanzinesDate|None=None
 
@@ -106,10 +107,12 @@ class ClassicFanzinesLine:
             self._editors=cfl._editors
             self._dates=cfl._dates
             self._type=cfl._type
+            self._clubname=cfl._clubname
             self._issues=cfl._issues
             self._topcomments=cfl._topcomments
             self._country=cfl._country
             self._complete=cfl._complete
+            self._betterScanNeeded=cfl._betterScanNeeded
             self._created=cfl._created
             self._updated=cfl._updated
             return
@@ -131,10 +134,12 @@ class ClassicFanzinesLine:
             self._editors == other._editors and \
             self._dates == other._dates and \
             self._type == other._type and \
+            self._clubname == other._clubname and \
             self._issues == other._issues and \
             self._topcomments == other._topcomments and \
             self._country == other._country and \
             self._complete == other._complete and \
+            self._betterScanNeeded == other._betterScanNeeded  and \
             self._updated == other._updated and \
             self._created == other._created
 
@@ -146,10 +151,12 @@ class ClassicFanzinesLine:
             hash(self._editors) + \
             hash(self._dates) + \
             hash(self._type) + \
+            hash(self.clubname)+ \
             hash(self._issues) + \
             hash(self._topcomments) + \
             hash(self._country) + \
             hash(self._complete) + \
+            hash(self._betterScanNeeded) + \
             hash(self._created) + \
             hash(self._updated)
 
