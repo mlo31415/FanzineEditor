@@ -87,18 +87,13 @@ class ClassicFanzinesLine:
         self._displayName: str=""
         self._url: str=""
         self._otherNames: str=""
-        self._displayNameSort: str=""
         self._editors: str=""
-        self._editorsSort: str=""
         self._dates: str=""
-        self._datesSort: str=""
         self._type: str=""
         self._clubname: str=""
         self._issues: str=""
-        self._issuesSort: str=""
         self._topcomments: str=""
         self._country: str=""
-        self._flagSort: str=""
         self._complete: bool=False
         self._created: ClassicFanzinesDate|None=None
         self._updated: ClassicFanzinesDate|None=None
@@ -108,17 +103,12 @@ class ClassicFanzinesLine:
             self._displayName=cfl._displayName
             self._url=cfl._url
             self._otherNames=cfl._otherNames       # Alternate names for this fanzine
-            self._displayNameSort=cfl._displayNameSort
             self._editors=cfl._editors
-            self._editorsSort=cfl._editorsSort
             self._dates=cfl._dates
-            self._datesSort=cfl._datesSort
             self._type=cfl._type
             self._issues=cfl._issues
-            self._issuesSort=cfl._issuesSort
             self._topcomments=cfl._topcomments
             self._country=cfl._country
-            self._flagSort: str=cfl._flagSort
             self._complete=cfl._complete
             self._created=cfl._created
             self._updated=cfl._updated
@@ -138,17 +128,12 @@ class ClassicFanzinesLine:
         return self._displayName == other._displayName and \
             self._url == other._url and \
             self._otherNames == other._otherNames and \
-            self._displayNameSort == other._displayNameSort and \
             self._editors == other._editors and \
-            self._editorsSort == other._editorsSort and \
             self._dates == other._dates and \
-            self._datesSort == other._datesSort and \
             self._type == other._type and \
             self._issues == other._issues and \
-            self._issuesSort == other._issuesSort and \
             self._topcomments == other._topcomments and \
             self._country == other._country and \
-            self._flagSort == other._flagSort and \
             self._complete == other._complete and \
             self._updated == other._updated and \
             self._created == other._created
@@ -158,17 +143,12 @@ class ClassicFanzinesLine:
         return hash(self._displayName) + \
             hash(self._url) + \
             hash(self._otherNames) + \
-            hash(self._displayNameSort) + \
             hash(self._editors) + \
-            hash(self._editorsSort) + \
             hash(self._dates) + \
-            hash(self._datesSort) + \
             hash(self._type) + \
             hash(self._issues) + \
-            hash(self._issuesSort) + \
             hash(self._topcomments) + \
             hash(self._country) + \
-            hash(self._flagSort) + \
             hash(self._complete) + \
             hash(self._created) + \
             hash(self._updated)
