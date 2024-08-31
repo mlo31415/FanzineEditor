@@ -151,7 +151,7 @@ class ClassicFanzinesLine:
             hash(self._editors) + \
             hash(self._dates) + \
             hash(self._type) + \
-            hash(self.clubname)+ \
+            hash(self._clubname)+ \
             hash(self._issues) + \
             hash(self._topcomments) + \
             hash(self._country) + \
