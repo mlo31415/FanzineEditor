@@ -514,7 +514,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.TopComments=self.tTopComments.GetValue()
         cfl.Country=self.tLocaleText.GetValue()
 
-        with ModalDialogManager(ProgressMessage2, f"Backing up FanzineIndexPage {self.serverDir}", parent=self) as pm:
+        with ModalDialogManager(ProgressMessage2, f"Uploading up FanzineIndexPage {self.serverDir}", parent=self) as pm:
             Log(f"Uploading Fanzine Index Page: {self.serverDir}")
             self.failure=False
 
