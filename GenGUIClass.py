@@ -18,7 +18,7 @@ import wx.grid
 class FanzineIndexPageEditGen ( wx.Dialog ):
 
 	def __init__( self, parent ):
-		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 1126,3509 ), style = wx.DEFAULT_DIALOG_STYLE )
+		wx.Dialog.__init__ ( self, parent, id = wx.ID_ANY, title = wx.EmptyString, pos = wx.DefaultPosition, size = wx.Size( 1126,3509 ), style = wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER )
 
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 
@@ -541,7 +541,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.PopupMenu( self.m_GridPopup, event.GetPosition() )
 
 
-
 ###########################################################################
 ## Class FanzinesGridGen
 ###########################################################################
@@ -549,7 +548,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 class FanzinesGridGen ( wx.Frame ):
 
 	def __init__( self, parent ):
-		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Fanzines Editor", pos = wx.DefaultPosition, size = wx.Size( 1037,502 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+		wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Fanzines Editor", pos = wx.DefaultPosition, size = wx.Size( 1037,502 ), style = wx.DEFAULT_FRAME_STYLE|wx.RESIZE_BORDER|wx.TAB_TRAVERSAL )
 
 		self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
 
