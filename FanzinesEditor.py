@@ -59,7 +59,7 @@ def main():
     Log(f"Settings().Load({os.path.join(homedir, 'FanzinesEditor settings.txt')})")
     Settings().Load(os.path.join(homedir, "FanzinesEditor settings.txt"), MustExist=True)
     Log(Settings().Dump())
-    Settings("FanzinesEditor positions.json").Load(os.path.join(homedir, "FanzinesEditor positions.json"), MustExist=True)
+    Settings("FanzinesEditor positions.json").Load(os.path.join(homedir, "FanzinesEditor positions.json"), MustExist=True, SuppressMessageBox=True)
     Log(Settings("FanzinesEditor positions.json").Dump())
 
     # Set the debug/production mode
