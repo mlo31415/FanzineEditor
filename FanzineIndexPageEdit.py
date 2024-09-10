@@ -25,7 +25,7 @@ from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefini
 from WxHelpers import OnCloseHandling, ProcessChar
 from WxHelpers import ModalDialogManager, ProgressMessage2
 from HelpersPackage import IsInt, Int0, ZeroIfNone
-from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2
+from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, RemoveHxTags
@@ -2102,6 +2102,13 @@ class FanzineIndexPage(GridDataSource):
             return False
         with open("Template - Fanzine Index Page.html") as f:
             output=f.read()
+
+        # Insert the <head> matter: <meta name="description"...> and <title>
+        eds=", ".join([x.strip() for x in self.Editors.split("\n")])
+        meta=f'<meta name="description" content="{self.FanzineName} {eds} {self.Dates} {self.FanzineType}">'
+        output=FindAndReplaceSingleBracketedText(output, "meta name=", meta)
+
+        output, rslt=FindAndReplaceBracketedText(output, "title", f"<title>{self.FanzineName}</title>", caseInsensitive=True)
 
         eds=", ".join([SpecialNameFormatToHtmlFancylink(x.strip()) for x in self.Editors.split("\n")])
         insert=f"{SpecialNameFormatToHtmlFancylink(self.FanzineName)}<BR><H2>{eds}<BR><BR>{self.Dates}</H2><H3>{self.FanzineType}"
