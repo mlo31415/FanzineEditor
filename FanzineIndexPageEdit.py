@@ -2074,11 +2074,12 @@ class FanzineIndexPage(GridDataSource):
             else:
                 cols=[url, text]+cols[1:]
 
+            if cols is not None:
 
-            row=[RemoveAllHTMLLikeTags(str(x)) for x in cols]
-            fipr=FanzineIndexPageTableRow(self._colDefs, row)
-            fipr._UpdatedComment=updated
-            self.Rows.append(fipr)
+                row=[RemoveAllHTMLLikeTags(str(x)) for x in cols]
+                fipr=FanzineIndexPageTableRow(self._colDefs, row)
+                fipr._UpdatedComment=updated
+                self.Rows.append(fipr)
 
         self.Credits=ExtractHTMLUsingFanacComments(html, "scan").strip()
 
