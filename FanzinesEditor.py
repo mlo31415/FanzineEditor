@@ -70,6 +70,8 @@ def main():
     # Allow turning off of routine FTP logging
     FTP.g_dologging=Settings().Get("FTP Logging", False)
 
+    FTP().LoggingOff()
+
     if not os.path.exists("FTP Credentials.json"):
         msg=f"Unable to find file 'FTP Credentials.json' file.  Expected to find it in {os.getcwd()}"
         MessageBox(msg, ignoredebugger=True)
