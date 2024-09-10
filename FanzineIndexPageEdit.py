@@ -144,7 +144,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             ])
 
         else:
-            # This is not a new directory
+            # This is an existing directory
             # Load the fanzine index page
             with ModalDialogManager(ProgressMessage2,f"Downloading Fanzine Index Page: {serverDir}", parent=parent):
                 self.failure=False

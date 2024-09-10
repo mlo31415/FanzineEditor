@@ -79,7 +79,7 @@ class ClassicFanzinesDate:
 
 
 #==========================================================================================================
-# A class to hold the information in a single like of the classic Fanzines page
+# A class to hold the information in a single line of the Classic Fanzines page
 class ClassicFanzinesLine:
 
     def __init__(self, cfl=None):
