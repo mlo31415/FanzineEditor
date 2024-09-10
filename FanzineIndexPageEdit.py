@@ -652,7 +652,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     return
 
             # Check the dates to make sure that the dated issues all fall into the date range given for the fanzine
-            # Date range sgould be of the form yyyy-yyyy with question marks abounding
+            # Date range should be of the form yyyy-yyyy with question marks abounding
             dates=self.tDates.GetValue()
             # Unless there is exactly one hyphen in the range, we can't do comparisons
             if dates.count("-") == 1:
@@ -2145,7 +2145,7 @@ class FanzineIndexPage(GridDataSource):
         output=InsertInvisibleTextInsideFanacComment(output, "updated", f"{ClassicFanzinesDate().Now()}")
 
         # Now interpret the table to generate the column headers and data rows
-        # The 1st col is the URL and it gets mixed with ther 2nd to form an Href.
+        # The 1st col is the URL, and it gets mixed with the 2nd to form an Href.
         insert="\n<TR>\n"
         if len(self.ColHeaders) < 2:
             LogError(f"PutFanzineIndexPage({url}) failed: {len(self.ColHeaders)=}")
