@@ -235,7 +235,7 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
             if m is not None:
                 cfl._complete=True
 
-            cfl.Updated=""
+            cfl.Updated=None
             val=ExtractInvisibleTextInsideFanacComment(html, "updated")
             if len(val) > 0:
                 cfl.Updated=val
