@@ -109,11 +109,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Used to communicate with the fanzine list editor.  It is set to None, but is filled in with a CFL when something is uploaded.
         self.CFL: ClassicFanzinesLine|None=None
 
-        self._dataGrid: DataGrid=DataGrid(self.wxGrid)
+        self._dataGrid: DataGrid=DataGrid(self.wxGrid, ColorCellByValue=self.ColorCellByValueOverride)
         self.Datasource=FanzineIndexPage()
-
-        # We do some additional coloring if a file lacks a descriptve title
-        self._dataGrid._ColorCellByValue=self.ColorCellByValueOverride
 
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
