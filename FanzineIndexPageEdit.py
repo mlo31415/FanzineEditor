@@ -700,7 +700,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             if year < d1 or year > d2:
                                 failed=True
                 if failed:
-                    wx.MessageBox("Warning: One or more of the years in the table are outside the date range given fore this fanzine.", parent=self)
+                    wx.MessageBox("Warning: One or more of the years in the table are outside the date range given for this fanzine.", parent=self)
 
             # Put the FanzineIndexPage on the server as an HTML file
             if not self.Datasource.PutFanzineIndexPage(self.RootDir, self.serverDir):
