@@ -2043,6 +2043,7 @@ class FanzineIndexPage(GridDataSource):
             return False
         # Interpret the rows
         for row in rows:
+
             # First look for a link row
             # This starts with colspan= and is followed by <a href="col 0">col 1</a></TD>
             m=re.match(r'<TD colspan=\"[0-9]+\">(<a href=\"(.*?)">(.*?)</a>)</TD>', row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
@@ -2063,8 +2064,10 @@ class FanzineIndexPage(GridDataSource):
                 self.Rows.append(fipr)
                 continue
 
-            # The final "column" is a comment containing an updated time. (It really isn't a table column at all.)
-            # It may or may not exist.  If it exists, save it in a special place and remove the list element so as to not confuse later code
+            # OK, it's a regular row.
+
+            # The final "column" is actually a comment containing an updated datetime for the row. (It really isn't a table column at all.)
+            # It may or may not exist.  If it exists, save it in a special place and remove the list element to not confuse later code.
             updated=""
             m=re.search(".*(<!-- Up: [0-9 -]*-->)", row)
             if m is not None:
@@ -2073,7 +2076,7 @@ class FanzineIndexPage(GridDataSource):
             rowsfound=re.findall(r"<TD(:?.*?)>(.*?)</TD>", row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
             cols=[x[1] for x in rowsfound]
 
-            # We treat column 0 specially, extracting its hyperref and turning it into two
+            # We treat the web page's column 0 specially, extracting its hyperref and display name and showing them as two column in FanzinesEditor
             cols0=str(cols[0])
             _, url, text, _=FindLinkInString(cols0)
             if url == "" and text == "":
