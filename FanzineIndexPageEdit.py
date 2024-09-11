@@ -106,12 +106,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._manualEditOfLocalDirectoryNameBegun=False
         self._uploaded=False
 
-
         # Used to communicate with the fanzine list editor.  It is set to None, but is filled in with a CFL when something is uploaded.
         self.CFL: ClassicFanzinesLine|None=None
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzineIndexPage()
+
+        # We do some additional coloring if a file lacks a descriptve title
+        self._dataGrid._ColorCellByValue=self.ColorCellByValueOverride
 
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
@@ -945,6 +947,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     #-------------------
     def OnKeyUp(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self._dataGrid.OnKeyUp(event) # Pass event to WxDataGrid to handle
+
+
+
+    def ColorCellByValueOverride(self, icol: int, irow: int) -> None:
+        if icol == 1:
+            if self.Datasource.Rows[irow].IsNormalRow:
+                if self.Datasource.Rows[irow][0].strip() != "":
+                    if self.Datasource.Rows[irow][1].strip() == "":
+                        self._dataGrid.SetCellBackgroundColor(irow, 1, Color.Pink)
 
     #------------------
     def OnGridCellChanged(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
@@ -2075,11 +2086,14 @@ class FanzineIndexPage(GridDataSource):
                 cols=[url, text]+cols[1:]
 
             if cols is not None:
-
                 row=[RemoveAllHTMLLikeTags(str(x)) for x in cols]
                 fipr=FanzineIndexPageTableRow(self._colDefs, row)
-                fipr._UpdatedComment=updated
-                self.Rows.append(fipr)
+            else:
+                fipr=FanzineIndexPageTableRow(self._colDefs)
+                fipr.IsTextRow=True
+
+            fipr._UpdatedComment=updated
+            self.Rows.append(fipr)
 
         self.Credits=ExtractHTMLUsingFanacComments(html, "scan").strip()
 
