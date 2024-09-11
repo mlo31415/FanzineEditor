@@ -948,8 +948,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def OnKeyUp(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self._dataGrid.OnKeyUp(event) # Pass event to WxDataGrid to handle
 
-
-
+    #------------------
     def ColorCellByValueOverride(self, icol: int, irow: int) -> None:
         if icol == 1:
             if self.Datasource.Rows[irow].IsNormalRow:
