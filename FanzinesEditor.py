@@ -334,7 +334,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
         return False
     output=temp
 
-    with ModalDialogManager(ProgressMessage2, None, f"Uploading 'Classic_Fanzines.html'"):
+    with ModalDialogManager(ProgressMessage2, f"Uploading 'Classic_Fanzines.html'", parent=None):
         ret=FTP().BackupServerFile(f"/{rootDir}/Classic_Fanzines.html")
 
         if not ret:
