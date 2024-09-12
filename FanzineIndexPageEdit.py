@@ -747,7 +747,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         def IsEmpty(s: str) -> bool:
             return s.strip() == ""
 
-        # The Upload button is enabled iff certain text boxes have content  and there's at least one fanzine
+        # The Upload button is enabled iff certain text boxes have content and there's at least one fanzine
         enable=True
         if IsEmpty(self.tServerDirectory.GetValue()) or IsEmpty(self.tFanzineName.GetValue()) or IsEmpty(self.tLocalDirectory.GetValue()):
             enable=False
@@ -2067,7 +2067,7 @@ class FanzineIndexPage(GridDataSource):
             # OK, it's a regular row.
 
             # The final "column" is actually a comment containing an updated datetime for the row. (It really isn't a table column at all.)
-            # It may or may not exist.  If it exists, save it in a special place and remove the list element to not confuse later code.
+            # It may or may not exist.  If it exists, save it for later use.
             updated=""
             m=re.search(".*(<!-- Up: [0-9 -]*-->)", row)
             if m is not None:
@@ -2111,6 +2111,7 @@ class FanzineIndexPage(GridDataSource):
     # This puts a Version 1.1 page
     def PutFanzineIndexPage(self, root: str, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
 
+        # Get the Fanzine Index Page template
         if not os.path.exists("Template - Fanzine Index Page.html"):
             LogError(f"PutFanzineIndexPage() can't find ';'Template - Fanzine Index Page.html' at {os.path.curdir}")
             return False
@@ -2202,6 +2203,7 @@ class FanzineIndexPage(GridDataSource):
 
             # Record the update date of this line
             if row._Signature != row.Signature():
+                # We have to update the updated comment before appending it
                 row._UpdatedComment=f"<!-- Up: {datetime.now():%Y-%m-%d}-->"
             insert+=row._UpdatedComment+"\n"
             insert+=f"</TR>\n"
