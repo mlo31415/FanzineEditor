@@ -508,8 +508,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.Clubname=self.tClubname.GetValue()
         cfl.Complete=self.cbComplete.GetValue()
         cfl.Updated=datetime.now()
-        if cfl.Created == ClassicFanzinesDate("1900-01-01"):
-            cfl.Created=datetime.now()
+        if self.IsNewDirectory:
+            cfl.Created=datetime.now()      # We only update the created time when were actually creating something...
         cfl.TopComments=self.tTopComments.GetValue()
         cfl.Country=self.tLocaleText.GetValue()
 
