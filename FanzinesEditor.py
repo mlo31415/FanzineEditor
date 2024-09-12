@@ -292,21 +292,21 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
 
         match flags:
             case "":
-                row+=f'<TD sorttable_customkey="zzzz"><BR>&nbsp;</TD>\n'
+                row+=f'<TD sorttable_customkey="zzzz"><BR>&nbsp;<br></TD>\n'
             case "c":
-                row+=f'<TD sorttable_customkey="complete"><X CLASS="complete">Complete</X></TD>\n'
+                row+=f'<TD sorttable_customkey="complete"><br><X CLASS="complete">Complete</X><br></TD>\n'
             case "u":
-                row+=f'<TD sorttable_customkey="updated"><X CLASS="updated">Updated</X></TD>\n'
+                row+=f'<TD sorttable_customkey="updated"><br><X CLASS="updated">Updated</X><br></TD>\n'
             case "n":
-                row+=f'<TD sorttable_customkey="new"><X CLASS="new">New</X></TD>\n'
+                row+=f'<TD sorttable_customkey="new"><br><X CLASS="new">New</X><br></TD>\n'
             case "uc":
-                row+=f'<TD sorttable_customkey="complete+updated"><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X></TD>\n'
+                row+=f'<TD sorttable_customkey="complete+updated"><br><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X><br></TD>\n'
             case "nc":
-                row+=f'<TD sorttable_customkey="complete+new"><X CLASS="complete">New+Complete</X><X CLASS="new">New</X><X CLASS="complete">Complete</X></TD>\n'
+                row+=f'<TD sorttable_customkey="complete+new"><br><X CLASS="complete">New+Complete</X><X CLASS="new">New</X><X CLASS="complete">Complete</X><br></TD>\n'
             case "nu":
-                row+=f'<TD sorttable_customkey="new+updated"><X CLASS="updated">Updated</X><X CLASS="new">New</X></TD>\n'
+                row+=f'<TD sorttable_customkey="new+updated"><br><X CLASS="updated">Updated</X><X CLASS="new">New</X><br></TD>\n'
             case "ncu":
-                row+=f'<TD sorttable_customkey="complete+updated+new"><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X><X CLASS="new">New</X></TD>\n'
+                row+=f'<TD sorttable_customkey="complete+updated+new"><br><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X><X CLASS="new">New</X><br></TD>\n'
 
         flu=""
         if fanzine.Updated is not None:
