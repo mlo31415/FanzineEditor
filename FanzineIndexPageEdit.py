@@ -1736,7 +1736,7 @@ class FanzineIndexPage(GridDataSource):
         self._specialTextColor: Optional[Color, bool]=True
         self.TopComments: str=""
         self.Locale: list[str]=[]
-        self.FanzineName: str=""
+        self._fanzineName: str=""
         self._clubname: str=""
         self._betterScanNeeded: bool=False
         self._Editors: str=""
@@ -1809,6 +1809,13 @@ class FanzineIndexPage(GridDataSource):
     @Clubname.setter
     def Clubname(self, val: str) -> None:
         self._clubname=val
+
+    @property
+    def FanzineName(self) -> str:
+        return self._fanzineName
+    @FanzineName.setter
+    def FanzineName(self, val: str) -> None:
+        self._fanzineName=val.strip()
 
 
     @property
