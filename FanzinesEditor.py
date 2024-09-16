@@ -394,6 +394,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
 
         self.MarkAsSaved()
+        self.tSearch.SetFocus()
         self.RefreshWindow()
 
         self.Show(True)
