@@ -463,6 +463,21 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self.SearchFanzineList()
 
 
+    def OnSearchTextChar(self, event: wx.KeyEvent):
+        if event.GetKeyCode() != 13:
+            event.Skip()
+            return
+        # A Return was pressed.  If the list of fanzines is down to 1, treat this as a request to open it.  (Otherwise, just process normally.)
+        if len(self.Datasource._fanzineList) != 1:
+            event.Skip()
+            return
+
+        self.clickedColumn=0
+        self.clickedRow=0
+        self.clickType="auto"
+        self.OpenClickedCell(0, 0)
+
+
     def SearchFanzineList(self):       
         searchtext=self.tSearch.GetValue()
         if searchtext != "":
@@ -509,7 +524,12 @@ class FanzinesEditorWindow(FanzinesGridGen):
     #-------------------
     def OnGridCellDoubleClick(self, event):       
         self._dataGrid.SaveClickLocation(event, "double")
-        serverDir=self._Datasource.Rows[event.Row][event.Col]
+        self.OpenClickedCell(event.Col, event.Row)
+
+
+    def OpenClickedCell(self, icol: int, irow: int):
+
+        serverDir=self._Datasource.Rows[irow][icol]
         with FanzineIndexPageWindow(None, serverDir) as fsw:
             if fsw.failure:
                 wx.MessageBox(f"Unable to load {serverDir}", caption="Loading Fanzine Index page", parent=self)
@@ -519,7 +539,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
         # The edit may have updated some of the parameters.
         if fsw.CFL is not None:
-            self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]=fsw.CFL
+            self._fanzinesList[self.Datasource.NumCols*irow+icol]=fsw.CFL
             #existingCFL: ClassicFanzinesLine=self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]
             # Display the updated fanzines list
             self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())

@@ -648,6 +648,7 @@ class FanzinesGridGen ( wx.Frame ):
 
 		# Connect Events
 		self.Bind( wx.EVT_CLOSE, self.OnClosePressed )
+		self.tSearch.Bind( wx.EVT_CHAR, self.OnSearchTextChar )
 		self.tSearch.Bind( wx.EVT_TEXT, self.OnSearchText )
 		self.bClearSearch.Bind( wx.EVT_BUTTON, self.OnClearSearch )
 		self.bExit.Bind( wx.EVT_BUTTON, self.OnExitPressed )
@@ -664,6 +665,9 @@ class FanzinesGridGen ( wx.Frame ):
 
 	# Virtual event handlers, override them in your derived class
 	def OnClosePressed( self, event ):
+		event.Skip()
+
+	def OnSearchTextChar( self, event ):
 		event.Skip()
 
 	def OnSearchText( self, event ):
