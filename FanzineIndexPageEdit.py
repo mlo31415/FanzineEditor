@@ -24,7 +24,7 @@ from FTP import FTP
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
 from WxHelpers import OnCloseHandling, ProcessChar
 from WxHelpers import ModalDialogManager, ProgressMessage2
-from HelpersPackage import IsInt, Int0, ZeroIfNone
+from HelpersPackage import IsInt, Int0, Int, ZeroIfNone
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename
@@ -525,6 +525,28 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     FTP().CopyFile(f"/fanzines/{self.serverDir}",   # If not, copy one in.
                                    f"/{self.RootDir}/{self.serverDir}", "index.html", Create=True)
 
+
+            # Check the dates to make sure that the dated issues all fall into the date range given for the fanzine
+            # Date range should be of the form yyyy-yyyy with question marks abounding
+            d1, d2=self.DateRange
+            # Now check this against all the years in the rows.
+            icol=self.Datasource.ColHeaderIndex("year")
+            failed=False
+            if icol != -1:
+                for row in self.Datasource.Rows:
+                    year=row[icol]
+                    # Remove question marks and interpret the rest
+                    year=year.replace("?", "")
+                    year=Int0(year)
+                    if year > 0:        # Ignore missing years
+                        if year < d1 or year > d2:
+                            dlg=wx.MessageDialog(self,"Warning: One or more of the years in the table are outside the date range given for this fanzine. Continue the upload?","Date Range Warning", wx.YES_NO|wx.ICON_QUESTION)
+                            result=dlg.ShowModal()
+                            dlg.Destroy()
+                            if result != wx.ID_YES:
+                                break
+                            return
+
             # Make a dated backup copy of the existing index page
             ret=FTP().BackupServerFile(f"/{self.RootDir}/{self.serverDir}/index.html")
             if not ret:
@@ -650,55 +672,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     self.failure=True
                     return
 
-            # Check the dates to make sure that the dated issues all fall into the date range given for the fanzine
-            # Date range should be of the form yyyy-yyyy with question marks abounding
-            dates=self.tDates.GetValue()
-            # Unless there is exactly one hyphen in the range, we can't do comparisons
-            if dates.count("-") == 1:
-                # Remove question marks, as they tell us nothing.  Then split
-                dates=dates.replace("?", "")
-                date1, date2=dates.split("-")
-                # The dates should be of one of these forms:
-                #       yyyy, <empty>, 1950s, Ppresent
-                #       empty is interpreted as 1920 or 2100, depending on which side of the hyphen it's on
-                #       present is interpreted as, well, now.
-                #       something like 1950s is interpreted as the start or end of the decade depending on which side of the hyphen it's on
-                d1=Int0(date1)
-                d2=Int0(date2)
-                if date2.lower() == "present":
-                    d2=datetime.now().year+1
-                if date1[-1].lower() == "s":
-                    # This ends in "s", it must either be something like 1950s or garbage
-                    d1=Int0(date1[:-1])
-                    if d1 > 1900:
-                        d1=10*floor(d1/10)
-                # Also check date 2
-                if date2[-1].lower() == "s":
-                    # This ends in "s", it must either be something like 1950s or garbage
-                    d2=Int0(date2[:-1])
-                    if d2 > 1900:
-                        d2=10*ceil(d2/10)
-                # OK, we now change zero dates into 1900 and 2200, respectively so that zero matches everything
-                if d1 == 0:
-                    d1=1900
-                if d2 == 0:
-                    d2=2200
-
-                # Now check this against all the years in the rows.
-                icol=self.Datasource.ColHeaderIndex("year")
-                failed=False
-                if icol != -1:
-                    for row in self.Datasource.Rows:
-                        year=row[icol]
-                        # Remove question marks and interpret the rest
-                        year=year.replace("?", "")
-                        year=Int0(year)
-                        if year > 0:        # Ignore missing years
-                            if year < d1 or year > d2:
-                                failed=True
-                if failed:
-                    wx.MessageBox("Warning: One or more of the years in the table are outside the date range given for this fanzine.", parent=self)
-
             # Put the FanzineIndexPage on the server as an HTML file
             if not self.Datasource.PutFanzineIndexPage(self.RootDir, self.serverDir):
                 self.failure=True
@@ -731,6 +704,69 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             self.UpdateDialogComponentEnabledStatus()
 
+
+    # Take the date range (if any) on the Fanzine Index Page and return a years start, end tuple
+    # Return 1900, 2200 for missing information
+    # Should handle:
+    # 1953-55
+    # 1953-
+    # 1950s
+    # 1953?-1965?
+    # 1953-present
+    # And others like this.  It tries its best to make sense of the data.
+    @property
+    def DateRange(self) -> tuple[int, int]:
+        # Pull the date range text from the dialog's dates range box
+        dates=self.tDates.GetValue().lower()
+
+        # Remove question marks and spaces, as they tell us nothing.  Then split on the hyphen
+        dates=dates.replace("?", "").replace(" ", "")
+
+        # If there is no hyphen, we then the single date defines a range (e.g., 1953, 1950s etc)
+        if "-" not in dates:
+            d1=Int(dates)
+            if d1 is not None:
+                # It's a single numbers, so apparently, we have just a single year which defines that year as the range
+                return d1, d1
+            # It's somwething that's not a number.  Try interpreting it.
+            if dates[-1] == "s":
+                # This ends in "s", it must either be something like 1950s or garbage
+                d1=Int0(dates[:-1])
+                if d1 > 1900:
+                    d1=10*floor(d1/10)
+                return d1, d1+10    # We'll assume this is just a decade.  Maybe more subtlety later?
+
+            # That's all the options for now.
+            return 1900, 2200
+
+        # Ok, there is a hyphen, so we need to interpret two values to be a range
+        date1, date2=dates.split("-")
+        # The dates should be of one of these forms:
+        #       yyyy, <empty>, 1950s, present
+        #       empty is interpreted as 1920 or 2100, depending on which side of the hyphen it's on
+        #       present is interpreted as, well, now.
+        #       something like 1950s is interpreted as the start or end of the decade depending on which side of the hyphen it's on
+        d1=Int0(date1)
+        if date2.lower() == "present":
+            d2=datetime.now().year+1
+        if date1[-1] == "s":
+            # This ends in "s", it must either be something like 1950s or garbage
+            d1=Int0(date1[:-1])
+            if d1 > 1900:
+                d1=10*floor(d1/10)
+        # Now check date 2
+        d2=Int0(date2)
+        if date2[-1] == "s":
+            # This ends in "s", it must either be something like 1950s or garbage.  1940s-1950s Is interpreted as 1940-1959
+            d2=Int0(date2[:-1])
+            if d2 > 1900:
+                d2=10*ceil(d2/10)+9
+        # Now change zero dates into 1900 and 2200, respectively, so that zero matches everything
+        if d1 == 0:
+            d1=1900
+        if d2 == 0:
+            d2=2200
+        return d1, d2
 
 
     def UpdateNeedsSavingFlag(self):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
@@ -952,6 +988,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if self.Datasource.Rows[irow][0].strip() != "":
                     if self.Datasource.Rows[irow][1].strip() == "":
                         self._dataGrid.SetCellBackgroundColor(irow, 1, Color.Pink)
+
+        if self.Datasource.ColDefs[icol].Name == "Year":
+            d1, d2=self.DateRange
+            year=self.Datasource.Rows[irow][icol]
+            # Remove question marks and interpret the rest
+            year=year.replace("?", "")
+            year=Int0(year)
+            if year > 0:        # Ignore missing years
+                if year < d1 or year > d2:
+                    self._dataGrid.SetCellBackgroundColor(irow, icol, Color.Pink)
 
     #------------------
     def OnGridCellChanged(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
