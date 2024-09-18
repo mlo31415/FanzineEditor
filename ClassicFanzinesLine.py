@@ -121,7 +121,7 @@ class ClassicFanzinesLine:
 
     def __str__(self) -> str:
         s=f"{self.DisplayName}  [{self.DisplayNameSort}]     {self._editors}  [{self.EditorsSort}]     {self._dates}  [{self.DatesSort}]     "
-        s+=f"{self._issues} issues    Type={self.Type}     Flags: {'(Complete)' if self._complete else ''}      Created={self.Created}       Updated={self.Updated} "
+        s+=f"{self._issues} issues    Type={self.Type}     \nFlags: {'(Complete)' if self._complete else ''}      Created={self.Created}       Updated={self.Updated} "
         return s
 
     def __eq__(self, other) -> bool:
