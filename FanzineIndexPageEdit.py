@@ -372,6 +372,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # If a pdf is found possibly add a PDF column and fill the PDF column in for those rows.
     def FillInPagesColumn(self) -> None:                # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         iPages=self.Datasource.ColHeaderIndex("pages")
+
+        if iPages == -1:
+            # We need to add a Pages column
+            iNotes=self.Datasource.ColHeaderIndex("notes")
+            if iNotes == -1:
+                LogError("We need to add a Pages column right before tghe Npotes column, but can't find a Notes colum, either. Will ignore, but you really ought to add a Pages column!")
+                return
+            self.Datasource.InsertColumn(self.Datasource.NumCols, ColDefinition("Pages"))
+            iPages=self.Datasource.ColHeaderIndex("pages")
         # Look through the rows and for each PDF which does not have a page count, add the page count
         for i, row in enumerate(self.Datasource.Rows):
             if row[iPages].strip() == "":   # Don't bother with rows that already have page counts
