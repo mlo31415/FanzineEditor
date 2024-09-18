@@ -945,7 +945,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     def OnDatesText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
         self.Datasource.Dates=self.tDates.GetValue()
-        self.RefreshWindow(DontRefreshGrid=True)
+        self.RefreshWindow()
 
 
     def OnFanzineTypeSelect(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
