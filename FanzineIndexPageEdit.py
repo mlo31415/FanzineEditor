@@ -210,7 +210,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     @property
-    def Datasource(self) -> FanzineIndexPage:       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def Datasource(self) -> FanzineIndexPage:   
         return self._Datasource
     @Datasource.setter
     def Datasource(self, val: FanzineIndexPage):
@@ -219,7 +219,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     # Look at information available and color buttons and fields accordingly.
-    def EnableDialogFields(self):                      # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def EnableDialogFields(self):                      
         # See also UpdateDialogComponentEnabledStatus
 
         # Some things are turned on for both editing an old FIP and creating a new one
@@ -256,7 +256,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     #
     # #------------------
     # # An override of DataGrids's method ColorCellsByValue() for columns 0 and 1 only
-    # def ColorCells01ByValue(self, icol: int, irow: int):            # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    # def ColorCells01ByValue(self, icol: int, irow: int):            
     #     if icol != 0 and icol != 1:
     #         return
     #     if icol < 0 or icol >= self.Datasource.NumCols:
@@ -268,7 +268,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
 
-    def OnClose(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnClose(self, event):       
         if not self.OKToClose(event):
             return
 
@@ -292,7 +292,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # The user has requested that the dialog be closed or wiped and reloaded.
     # Check to see if it has unsaved information.
     # If it does, ask the user if he wants to save it first.
-    def OKToClose(self, event) -> bool:             # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OKToClose(self, event) -> bool:             
         if not self.NeedsSaving():
             return True
 
@@ -303,7 +303,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         return False
 
 
-    def OnAddNewIssues(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnAddNewIssues(self, event):       
 
         # Call the File Open dialog to select PDF files
         with wx.FileDialog(self,
@@ -355,7 +355,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     #--------------------------
     # Check the rows to see if any of the files is a pdf
     # If a pdf is found possibly add a PDF column and fill the PDF column in for those rows.
-    def FillInPDFColumn(self) -> None:              # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def FillInPDFColumn(self) -> None:              
         iPdf=self.AddOrDeletePDFColumnIfNeeded()
         if iPdf != -1:
             for i, row in enumerate(self.Datasource.Rows):
@@ -370,7 +370,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     #--------------------------
     # Check the rows to see if any of the files are a pdf
     # If a pdf is found possibly add a PDF column and fill the PDF column in for those rows.
-    def FillInPagesColumn(self) -> None:                # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def FillInPagesColumn(self) -> None:                
         iPages=self.Datasource.ColHeaderIndex("pages")
 
         if iPages == -1:
@@ -402,7 +402,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     #           If not, add one as the far right column
     #           If there is, if necessary, move the column to the far right
     #       Return the index of the column containing the PDF flags or -1 if there is none.
-    def AddOrDeletePDFColumnIfNeeded(self) -> int:              # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def AddOrDeletePDFColumnIfNeeded(self) -> int:              
         # Are any or all of the files PDFs?  (We must exclude text lines, empty lines and URL lines)
         noPDFs=not any([row[0].lower().endswith(".pdf") for row in self.Datasource.Rows if row.IsNormalRow])
         allPDFs=all([row[0].lower().endswith(".pdf") for row in self.Datasource.Rows if row.IsNormalRow])
@@ -442,7 +442,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # The only columns *always* present are the Issue name/link, Year, Pages and Notes columns.
     # Other columns will be deleted if they are completely empty and there is more than one row defined.
     # The Mailing column (if any) will be automatically moved to the left of the Notes column.
-    def StandardizeColumns(self) -> None:               # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def StandardizeColumns(self) -> None:               
 
         # Standardize the column names
         for cd in self.Datasource.ColDefs:
@@ -475,7 +475,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # ------------------
     # Initialize an existing, initializedm main window to empty
     # This also initiazes the datasource
-    def ClearMainWindow(self):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def ClearMainWindow(self):       
 
         # Create an empty datasource
         self.Datasource._fanzineList=[]
@@ -502,7 +502,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     #------------------
     # Upload the current FanzineIndexPage (including any added fanzines) to the server
-    def OnUpload(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnUpload(self, event):       
 
         # Save the fanzine's values to return to the main fanzines page.
         cfl=ClassicFanzinesLine()
@@ -791,7 +791,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         return d1, d2
 
 
-    def UpdateNeedsSavingFlag(self):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def UpdateNeedsSavingFlag(self):       
         s="Editing "+self.serverDir
         if self.NeedsSaving():
             s=s+" *"        # Append a change marker if needed
@@ -820,7 +820,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tClubname.Enabled="Clubzine" == self.tFanzineType.Items[self.tFanzineType.GetSelection()]
 
 
-    def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       
         self.UpdateNeedsSavingFlag()
         self.UpdateDialogComponentEnabledStatus()
 
@@ -831,16 +831,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     # ----------------------------------------------
     # Used to determine if anything has been updated
-    def Signature(self) -> int:       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def Signature(self) -> int:       
         return self.Datasource.Signature()
 
 
-    def MarkAsSaved(self):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def MarkAsSaved(self):       
         self._signature=self.Signature()
         self.UpdateNeedsSavingFlag()
 
 
-    def NeedsSaving(self):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def NeedsSaving(self):       
         return self._signature != self.Signature()
 
 
@@ -902,7 +902,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             Log(f"OnFanzineNameChar: Local directory name updated to '{lname}'")
 
 
-    def OnFanzineNameText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnFanzineNameText(self, event):       
         self.Datasource.FanzineName=self.tFanzineName.GetValue()
         Log(f"OnFanzineNameText: Fanzine name updated to '{self.Datasource.FanzineName}'")
         self.UpdateServerAndLocalDirNames(self.Datasource.FanzineName)
@@ -938,17 +938,17 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         return
 
 
-    def OnEditorsText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnEditorsText(self, event):       
         self.Datasource.Editors=self.tEditors.GetValue()
         self.RefreshWindow(DontRefreshGrid=True)
 
 
-    def OnDatesText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnDatesText(self, event):       
         self.Datasource.Dates=self.tDates.GetValue()
         self.RefreshWindow()
 
 
-    def OnFanzineTypeSelect(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnFanzineTypeSelect(self, event):       
         self.Datasource.FanzineType=self.tFanzineType.GetItems()[self.tFanzineType.GetSelection()]
         if self.Datasource.FanzineType.lower() != "clubzine":   # If the fanzine type is changed to anything but clubzine, erase the clubname field
             self.Datasource.Clubname=""
@@ -962,7 +962,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     #------------------
-    def OnTopCommentsText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnTopCommentsText(self, event):       
         if self.Datasource.TopComments is not None and len(self.Datasource.TopComments) > 0:
             self.Datasource.TopComments=self.tTopComments.GetValue()
         else:
@@ -971,13 +971,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow(DontRefreshGrid=True)
 
     # ------------------
-    def OnCheckComplete(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnCheckComplete(self, event):      
         self.Datasource.Complete=self.cbComplete.GetValue()
         Log(f"OnCheckComplete(): {self.Datasource.Complete=} and {self.Datasource.AlphabetizeIndividually=}")
         self.RefreshWindow(DontRefreshGrid=True)
 
     # ------------------
-    def OnCheckAlphabetizeIndividually(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnCheckAlphabetizeIndividually(self, event):       
         self.Datasource.AlphabetizeIndividually=self.cbAlphabetizeIndividually.GetValue()
         Log(f"OnCheckAlphabetizeIndividually(): {self.Datasource.Complete=} and {self.Datasource.AlphabetizeIndividually=}")
         self.RefreshWindow(DontRefreshGrid=True)
@@ -985,7 +985,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     #------------------
-    def OnLocaleText(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnLocaleText(self, event):       
         self.Datasource.Locale=self.tLocaleText.GetValue().split("\n")
         self.RefreshWindow(DontRefreshGrid=True)
 
@@ -995,12 +995,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow(DontRefreshGrid=True)
 
     #-------------------
-    def OnKeyDown(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnKeyDown(self, event):       
         self._dataGrid.OnKeyDown(event) # Pass event to WxDataGrid to handle
         self.UpdateNeedsSavingFlag()
 
     #-------------------
-    def OnKeyUp(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnKeyUp(self, event):       
         self._dataGrid.OnKeyUp(event) # Pass event to WxDataGrid to handle
 
     #------------------
@@ -1022,7 +1022,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     self._dataGrid.SetCellBackgroundColor(irow, icol, Color.Pink)
 
     #------------------
-    def OnGridCellChanged(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnGridCellChanged(self, event):       
         # If the change is to col 0 -- the URL -- then we need to queue a Delta so the change actually gets made. Save the old name.
         oldURL=""
         if event.GetCol() == 0:
@@ -1040,7 +1040,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow()
 
     #------------------
-    def OnGridCellRightClick(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnGridCellRightClick(self, event):       
         # Do generic RMB on grid processing
         self._dataGrid.OnGridCellRightClick(event, self.m_GridPopup)
 
@@ -1048,16 +1048,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RMBHandler(event, True)
 
     #--------------------------
-    def OnGridEditorShown(self, event):      # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnGridEditorShown(self, event):      
         # Use Generic handling
         self._dataGrid.OnGridEditorShown(event)
 
     # ------------------
-    def OnGridLabelLeftClick(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnGridLabelLeftClick(self, event):       
         self._dataGrid.OnGridLabelLeftClick(event)
 
     #------------------
-    def OnGridLabelRightClick(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnGridLabelRightClick(self, event):       
         # Do generic RMB on grid processing
         self._dataGrid.OnGridCellRightClick(event, self.m_GridPopup)
 
@@ -1066,7 +1066,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     # RMB click handling for grid and grid label clicks
-    def RMBHandler(self, event, isGridCellClick: bool):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def RMBHandler(self, event, isGridCellClick: bool):       
 
         # Everything remains disabled when we're outside the defined columns
         if self._dataGrid.clickedColumn > self.Datasource.NumCols:    # Click is outside populated columns.
@@ -1174,7 +1174,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     # ------------------
     # Extract 'scanned by' information from the Notes column, if any
-    def ExtractScannerFromNotes(self):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def ExtractScannerFromNotes(self):       
 
         if "Notes" not in self.Datasource.ColDefs:
             return
@@ -1226,28 +1226,28 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow()
 
 
-    def OnPopupCopy(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupCopy(self, event):       
         self._dataGrid.OnPopupCopy(event) # Pass event to WxDataGrid to handle
         self.RefreshWindow(DontRefreshGrid=True)
 
 
-    def OnPopupPaste(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupPaste(self, event):       
         self._dataGrid.OnPopupPaste(event) # Pass event to WxDataGrid to handle
         self.RefreshWindow()
 
 
-    def OnPopupEraseSelection(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupEraseSelection(self, event):       
         self._dataGrid.OnPopupEraseSelection(event) # Pass event to WxDataGrid to handle
         self.RefreshWindow()
 
 
-    def OnPopupDelCol(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupDelCol(self, event):       
         if self.Datasource.Element.CanDeleteColumns:
             self._dataGrid.DeleteSelectedColumns() # Pass event to WxDataGrid to handle
         self.RefreshWindow()
 
 
-    def OnPopupDelRow(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupDelRow(self, event):       
         # Add the deletions to the delta tracker
         top, _, bottom, _=self._dataGrid.SelectionBoundingBox()
         if top == -1 or bottom == -1:
@@ -1263,7 +1263,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow()
 
 
-    def OnPopupInsertRow(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupInsertRow(self, event):       
         irow=self._dataGrid.clickedRow
         # Insert an empty row just before the clicked row
         rows :[FanzineIndexPageTableRow]=[]
@@ -1275,7 +1275,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow()
 
 
-    def OnPopupRenameCol(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupRenameCol(self, event):       
         self._dataGrid.OnPopupRenameCol(event) # Pass event to WxDataGrid to handle
 
         # Now we check the column header to see if it is one of the standard header. If so, we use the std definition for that header
@@ -1429,7 +1429,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         return 0
 
 
-    def OnPopupSortOnSelectedColumn(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupSortOnSelectedColumn(self, event):       
         self.wxGrid.SaveEditControlValue()
         # We already know that only a single column is selected because that's the only time this menu item is enabled and can be called
         col=self._dataGrid.clickedColumn
@@ -1468,20 +1468,20 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow()
 
 
-    def OnPopupInsertColLeft(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupInsertColLeft(self, event):       
         self._dataGrid.OnPopupInsertColLeft(event) # Pass event to WxDataGrid to handle
         self.RefreshWindow()
 
-    def OnPopupInsertColRight(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupInsertColRight(self, event):       
         self._dataGrid.OnPopupInsertColRight(event) # Pass event to WxDataGrid to handle
         self.RefreshWindow()
 
-    def OnPopupExtractScanner(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupExtractScanner(self, event):       
         self.wxGrid.SaveEditControlValue()
         self.ExtractScannerFromNotes()
         self.RefreshWindow()
 
-    def OnPopupTidyUpColumns(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupTidyUpColumns(self, event):       
         self.wxGrid.SaveEditControlValue()
         self.ExtractApaMailings()
         self.FillInPDFColumn()
@@ -1490,7 +1490,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow()
 
 
-    def OnPopupAllowEditing(self, event):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupAllowEditing(self, event):       
         self.wxGrid.SaveEditControlValue()
         self._dataGrid.AllowCellEdit(self._dataGrid.clickedRow, self._dataGrid.clickedColumn)
         self.RefreshWindow()
@@ -1499,7 +1499,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # Run through the rows and columns and look at the Notes column  If an APA mailing note is present,
     # move it to a "Mailing" column (which may need to be created).  Remove the text from the Notes column.
     # Find the Notes column. If there is none, we're done.
-    def ExtractApaMailings(self):       # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def ExtractApaMailings(self):       
         if "Notes" not in self._Datasource.ColHeaders:
             return
         notescol=self._Datasource.ColHeaders.index("Notes")
@@ -1565,7 +1565,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     # Run through the rows and columns and look at the Notes column  If an editor note is present,
     # move it to a "Editors" column (which may need to be created).  Remove the text from the Notes column.
-    def OnPopupExtractEditor(self, event):  # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupExtractEditor(self, event):  
         self.wxGrid.SaveEditControlValue()
 
         # Find the Notes column. If there is none, we're done.
@@ -1627,7 +1627,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     # If there is an editors column and if editors have been specific for the whole run, replace all blank cells in the editors column with th series editors.
-    def OnPopupPropagateEditor(self, event):  # FanzineIndexPageWindow(FanzineIndexPageEditGen)
+    def OnPopupPropagateEditor(self, event):  
         self.wxGrid.SaveEditControlValue()
 
         if self.tEditors.GetValue() is None or len(self.tEditors.GetValue()) == 0:
