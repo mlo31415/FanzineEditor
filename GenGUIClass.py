@@ -554,25 +554,32 @@ class FanzinesGridGen ( wx.Frame ):
 
 		bSizer3 = wx.BoxSizer( wx.VERTICAL )
 
-		fgSizer7 = wx.FlexGridSizer( 3, 1, 0, 0 )
+		fgSizer7 = wx.FlexGridSizer( 6, 1, 0, 0 )
 		fgSizer7.SetFlexibleDirection( wx.BOTH )
 		fgSizer7.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		fgSizer71 = wx.FlexGridSizer( 0, 4, 0, 0 )
+
+		fgSizer7.Add( ( 0, 12), 1, wx.EXPAND, 5 )
+
+		fgSizer71 = wx.FlexGridSizer( 0, 5, 0, 0 )
 		fgSizer71.SetFlexibleDirection( wx.BOTH )
 		fgSizer71.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		self.m_staticText12 = wx.StaticText( self, wx.ID_ANY, u"Search:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText12 = wx.StaticText( self, wx.ID_ANY, u"    Search: ", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText12.Wrap( -1 )
 
-		self.m_staticText12.SetFont( wx.Font( 12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL, False, "Arial" ) )
+		self.m_staticText12.SetFont( wx.Font( 14, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, "Arial" ) )
 
 		fgSizer71.Add( self.m_staticText12, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
 		self.tSearch = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.tSearch.SetFont( wx.Font( 14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
+		self.tSearch.SetMinSize( wx.Size( 170,30 ) )
+
 		fgSizer71.Add( self.tSearch, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
 		self.bClearSearch = wx.Button( self, wx.ID_ANY, u"X", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.bClearSearch.SetFont( wx.Font( wx.NORMAL_FONT.GetPointSize(), wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, wx.EmptyString ) )
 		self.bClearSearch.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_WINDOW ) )
 		self.bClearSearch.SetMaxSize( wx.Size( 20,20 ) )
 
@@ -580,6 +587,9 @@ class FanzinesGridGen ( wx.Frame ):
 
 
 		fgSizer7.Add( fgSizer71, 0, wx.EXPAND, 5 )
+
+
+		fgSizer7.Add( ( 0, 12), 1, wx.EXPAND, 5 )
 
 		fgSizer8 = wx.FlexGridSizer( 0, 4, 0, 0 )
 		fgSizer8.SetFlexibleDirection( wx.BOTH )
@@ -600,18 +610,18 @@ class FanzinesGridGen ( wx.Frame ):
 
 		fgSizer7.Add( fgSizer8, 1, wx.EXPAND, 5 )
 
-		bSizer5 = wx.BoxSizer( wx.VERTICAL )
+		sbSizer5 = wx.StaticBoxSizer( wx.StaticBox( self, wx.ID_ANY, u"Classic Fanzines line information:" ), wx.VERTICAL )
 
-		self.CFLText = wx.StaticText( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.CFLText = wx.StaticText( sbSizer5.GetStaticBox(), wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.CFLText.Wrap( -1 )
 
 		self.CFLText.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
-		self.CFLText.SetMinSize( wx.Size( 600,40 ) )
+		self.CFLText.SetMinSize( wx.Size( 900,40 ) )
 
-		bSizer5.Add( self.CFLText, 0, wx.ALL, 5 )
+		sbSizer5.Add( self.CFLText, 0, wx.ALL, 5 )
 
 
-		fgSizer7.Add( bSizer5, 1, wx.EXPAND, 5 )
+		fgSizer7.Add( sbSizer5, 1, wx.EXPAND, 5 )
 
 
 		bSizer3.Add( fgSizer7, 0, wx.EXPAND, 5 )
