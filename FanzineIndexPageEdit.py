@@ -543,7 +543,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             dlg=wx.MessageDialog(self,"Warning: One or more of the years in the table are outside the date range given for this fanzine. Continue the upload?","Date Range Warning", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
                             dlg.Destroy()
-                            if result != wx.ID_YES:
+                            if result == wx.ID_YES:
                                 break
                             return
 
