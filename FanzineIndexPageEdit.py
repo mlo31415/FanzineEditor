@@ -731,6 +731,18 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Remove question marks and spaces, as they tell us nothing.  Then split on the hyphen
         dates=dates.replace("?", "").replace(" ", "")
 
+        #-------
+        # Define a function to turn valid years into int, and to deal with 50 (=1950) and 20 (=2020)
+        def YearToInt(s: str) -> int:
+            d=Int0(s)
+            if d == 0:
+                return 0
+            if d < 100:
+                if d < 34:  # 01-33 --> 2001-2033
+                    return 2000+d
+                return 1900+d  # 34-99 --> 1934-1999
+            return d
+
         # If there is no hyphen, we then the single date defines a range (e.g., 1953, 1950s etc)
         if "-" not in dates:
             d1=Int(dates)
@@ -740,7 +752,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # It's somwething that's not a number.  Try interpreting it.
             if dates[-1] == "s":
                 # This ends in "s", it must either be something like 1950s or garbage
-                d1=Int0(dates[:-1])
+                d1=YearToInt(dates[:-1])
                 if d1 > 1900:
                     d1=10*floor(d1/10)
                 return d1, d1+10    # We'll assume this is just a decade.  Maybe more subtlety later?
@@ -755,19 +767,20 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         #       empty is interpreted as 1920 or 2100, depending on which side of the hyphen it's on
         #       present is interpreted as, well, now.
         #       something like 1950s is interpreted as the start or end of the decade depending on which side of the hyphen it's on
-        d1=Int0(date1)
+        d1=YearToInt(date1)
         if date2.lower() == "present":
             d2=datetime.now().year+1
         if len(date1) > 0 and date1[-1] == "s":
             # This ends in "s", it must either be something like 1950s or garbage
-            d1=Int0(date1[:-1])
+            d1=YearToInt(date1[:-1])
             if d1 > 1900:
                 d1=10*floor(d1/10)
+
         # Now check date 2
-        d2=Int0(date2)
+        d2=YearToInt(date2)
         if len(date2) > 0 and date2[-1] == "s":
             # This ends in "s", it must either be something like 1950s or garbage.  1940s-1950s Is interpreted as 1940-1959
-            d2=Int0(date2[:-1])
+            d2=YearToInt(date2[:-1])
             if d2 > 1900:
                 d2=10*ceil(d2/10)+9
         # Now change zero dates into 1900 and 2200, respectively, so that zero matches everything
