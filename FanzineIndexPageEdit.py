@@ -2290,7 +2290,7 @@ class FanzineIndexPage(GridDataSource):
             return False
         output=temp
 
-        temp=InsertHTMLUsingFanacComments(output, "scan", self.Credits)
+        temp=InsertHTMLUsingFanacComments(output, "scan", self.Credits if self.Credits != "(not found)" else "")
         # Different test because we don't always have a credit in the file.
         if len(temp) > 0:
             output=temp
