@@ -1627,7 +1627,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Go through the cells in the Editors column and fill in any which are empty with the contents of tEditors
         for row in self._Datasource.Rows:
             if row[editorscol] is None or len(row[editorscol].strip()) == 0:
-                row[editorscol]=self.tEditors.GetValue()
+                eds=self.tEditors.GetValue()
+                if "\n" in eds:
+                    eds=" / ".join([x.strip() for x in eds.split("\n")])
+                row[editorscol]=eds
 
         self.RefreshWindow()
 
