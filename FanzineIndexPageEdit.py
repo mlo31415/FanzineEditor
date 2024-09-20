@@ -1151,7 +1151,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         Enable("Tidy Up Columns")
         Enable("Insert a Text Line")
 
-        if self.Datasource.ColHeaders[self._dataGrid.clickedColumn] == "Editor" and self.tEditors.GetValue() is not None and len(self.tEditors.GetValue()) > 0:
+        if (self.Datasource.ColHeaders[self._dataGrid.clickedColumn] == "Editor" or self.Datasource.ColHeaders[self._dataGrid.clickedColumn] == "Editors") and \
+                                       self.tEditors.GetValue() is not None and len(self.tEditors.GetValue()) > 0:
             Enable("Propagate Editor")
 
         # Pop the menu up.
