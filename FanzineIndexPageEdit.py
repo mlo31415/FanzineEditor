@@ -872,22 +872,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # Strip leading "The", etc
             sname=RemoveArticles(fname).strip()
             if len(sname) > 0:
-                if len(sname) == 1:
-                    sname=sname.upper()
-                else:
-                    sname=sname[0].upper()+sname[1:].lower()
-                    sname=re.sub("[^a-zA-Z0-9-]+", "_", sname)  # Replace all spans of not-listed chars with underscore
-                    sname=sname.strip("_")  # Do not start or end names with underscores
-                    sname=[capwords(x) for x in sname.split("_")]  # Split the name on underscores and capitolize all words
-
-                    def capit(s: str):
-                        lcwords=["And", "The", "A", "An", "With", "To", "From", "Over", "Of", "In", "Without"]  # Words which should be lower case if they are not the first word
-                        if s in lcwords:
-                            s=s.lower()
-                        return s
-
-                    sname=[capit(x) for x in sname]  # Swap special words back to lower case
-                    sname="_".join(sname)
+                sname=re.sub("[^a-zA-Z0-9-]+", "_", sname)  # Replace all spans of not-listed chars with underscore
+                sname=sname.replace(" ", "_")
             self.tServerDirectory.SetValue(sname)
             Log(f"OnFanzineNameChar: Server directory name updated to '{sname}'")
         # If this is a new fanzine, and if the user has not overridden the default local directory name by editing it himself, update the Local Directory name
