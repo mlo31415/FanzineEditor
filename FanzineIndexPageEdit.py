@@ -729,7 +729,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         dates=self.tDates.GetValue().lower()
 
         # Remove question marks and spaces, as they tell us nothing.  Then split on the hyphen
-        dates=dates.replace("?", "").replace(" ", "")
+        dates=dates.replace("?", "").replace(" ", "").strip()
+        if dates == "":
+            return 1900, 2200   # Defaults
 
         #-------
         # Define a function to turn valid years into int, and to deal with 50 (=1950) and 20 (=2020)
