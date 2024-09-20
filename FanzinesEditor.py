@@ -392,6 +392,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self._dataGrid.HideColLabels()
 
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
+        self._fanzinesCount=0   # Also used to prevent exist with loss of data
 
         self.MarkAsSaved()
         self.tSearch.SetFocus()     # Start up with the entry cursor in the search box
@@ -416,9 +417,17 @@ class FanzinesEditorWindow(FanzinesGridGen):
     def OnExitPressed( self, event ):
         self.OnClose(event)
 
-    def OnClose(self, event):       
-        if OnCloseHandling(event, self.NeedsSaving(), "The list of fanzines has been updated and not yet saved. Exit anyway?"):
-            return
+    def OnClose(self, event):
+
+        if self._fanzinesCount != len(self._fanzinesList):
+            resp=wx.MessageBox("You have added or deleted sa fanzine from this list and have not saved the list. If you exist without saving, "
+                               "those changes will be lost. \n\nDo you want to exist without saving?", 'Warning', wx.OK|wx.CANCEL|wx.ICON_WARNING)
+            if resp == wx.CANCEL:
+                return
+        else:
+            if OnCloseHandling(event, self.NeedsSaving(), "The list of fanzines has been updated and not yet saved. Exit anyway?"):
+                return
+
         self.MarkAsSaved()  # The contents have been declared doomed
 
         # Save the window's position
@@ -453,10 +462,11 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
     def MarkAsSaved(self):       
         self._signature=self.Signature()
+        self._fanzinesCount=len(self._fanzinesList)
 
 
     def NeedsSaving(self):       
-        return self._signature != self.Signature()
+        return self._signature != self.Signature() or self._fanzinesCount != len(self._fanzinesList)
 
 
     def OnSearchText(self, event):       
