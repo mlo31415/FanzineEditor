@@ -1613,7 +1613,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow()
 
 
-    # If there is an editors column and if editors have been specific for the whole run, replace all blank cells in the editors column with th series editors.
+    # If there is an editors column and if editors have been specific for the whole run, replace all blank cells in the editors column with the series' editors.
     def OnPopupPropagateEditor(self, event):  
         self.wxGrid.SaveEditControlValue()
 
