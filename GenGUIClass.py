@@ -149,7 +149,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		bSizerMain.Add( fgSizer8, 0, wx.EXPAND, 5 )
 
-		fgSizer6 = wx.FlexGridSizer( 1, 4, 0, 0 )
+		fgSizer6 = wx.FlexGridSizer( 1, 5, 0, 0 )
 		fgSizer6.SetFlexibleDirection( wx.BOTH )
 		fgSizer6.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
@@ -162,6 +162,12 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.tServerDirectory.SetMinSize( wx.Size( 250,-1 ) )
 
 		fgSizer6.Add( self.tServerDirectory, 0, wx.ALL, 5 )
+
+		self.m_bpButton1 = wx.BitmapButton( self, wx.ID_ANY, wx.NullBitmap, wx.DefaultPosition, wx.Size( 25,25 ), wx.BU_AUTODRAW|0 )
+		self.m_bpButton1.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_ACTIVECAPTION ) )
+		self.m_bpButton1.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_ACTIVECAPTION ) )
+
+		fgSizer6.Add( self.m_bpButton1, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
 
 		self.m_staticText39 = wx.StaticText( self, wx.ID_ANY, u"Local Directory:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText39.Wrap( -1 )
@@ -344,6 +350,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.tEditors.Bind( wx.EVT_TEXT, self.OnEditorsText )
 		self.tServerDirectory.Bind( wx.EVT_CHAR, self.OnServerDirectoryChar )
 		self.tServerDirectory.Bind( wx.EVT_TEXT, self.OnServerDirectoryText )
+		self.m_bpButton1.Bind( wx.EVT_BUTTON, self.OnButtonClickCopyServerDir )
 		self.tLocalDirectory.Bind( wx.EVT_CHAR, self.OnLocalDirectoryChar )
 		self.tLocalDirectory.Bind( wx.EVT_TEXT, self.OnLocalDirectoryText )
 		self.tTopComments.Bind( wx.EVT_TEXT, self.OnTopCommentsText )
@@ -427,6 +434,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnServerDirectoryText( self, event ):
+		event.Skip()
+
+	def OnButtonClickCopyServerDir( self, event ):
 		event.Skip()
 
 	def OnLocalDirectoryChar( self, event ):

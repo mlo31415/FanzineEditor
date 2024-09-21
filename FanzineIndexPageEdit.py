@@ -13,6 +13,7 @@ from tempfile import gettempdir
 from bs4 import BeautifulSoup
 import bs4
 from pypdf import PdfWriter
+import pyperclip
 
 from GenGUIClass import FanzineIndexPageEditGen
 from ClassicFanzinesLine import ClassicFanzinesLine, ClassicFanzinesDate
@@ -918,6 +919,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._manualEditOfServerDirectoryNameBegun=True
         Log(f"OnServerDirectoryChar: updated to '{fname}'")
         return
+
+
+    def OnButtonClickCopyServerDir(self, event):
+        pyperclip.copy(self.tServerDirectory.GetValue())
+        event.Skip()
 
 
     def OnLocalDirectoryChar( self, event ):
