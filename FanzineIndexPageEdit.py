@@ -1199,14 +1199,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         #   or a capitalized word, then a letter followed by a period, then a capitalized word  (e.g., "John W. Campbell")
         #   or a capitalized word followed by a number
         pattern=(
-            "[sS](can by|cans by|canned by|canned at|canning by) ([A-Z][a-z]+) ("   # A variation of "scanned by" followed by a first name;
+            r"[sS](can by|cans by|canned by|canned at|canning by) ([A-Z][a-z]+) ("   # A variation of "scanned by" followed by a first name;
             #   This all followed by one of these:
-            "(?:Mc|Mac|O')[A-Z][a-z]+|"     # Celtic names
-            "[A-Z]\.[A-Z][a-z]+|"   # Middle initial
-            "[A-Z][a-z]+|" # This needs to go last because it will ignore characters after it finds a match (with "Sam McDonald" it matches "Sam Mc")
-            "[0-9]+)"       # Boskone 23
+            r"(?:Mc|Mac|O')[A-Z][a-z]+|"     # Celtic names
+            r"[A-Z]\.[A-Z][a-z]+|"   # Middle initial
+            r"[A-Z][a-z]+|" # This needs to go last because it will ignore characters after it finds a match (with "Sam McDonald" it matches "Sam Mc")
+            r"[0-9]+)"       # Boskone 23
         )
-        pattern='[sS](?:can by|cans by|canned by|canned at|canning by) ([A-Z][a-z]+ (?:Mc|Mac|O\'\s?)?[A-Z][a-z]+|[A-Z]\\.[A-Z][a-z]+|[A-Z][a-z]+|[0-9]+)'
+        pattern=r'[sS](?:can by|cans by|canned by|canned at|canning by) ([A-Z][a-z]+ (?:Mc|Mac|O\'\s?)?[A-Z][a-z]+|[A-Z]\\.[A-Z][a-z]+|[A-Z][a-z]+|[0-9]+)'
 
         for i in range(self.Datasource.NumRows):
             row=self.Datasource.Rows[i]
@@ -1425,7 +1425,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             return 0
         # First, strip the surrounding HTML
         h=RemoveHyperlink(h)
-        m=re.match("^[ a-zA-Z0-9-]* ([0-9]+)[a-zA-Z]?\s*$", h)
+        m=re.match(r"^[ a-zA-Z0-9-]* ([0-9]+)[a-zA-Z]?\s*$", h)
         if m:
             return Int0(m.groups()[0])
         return 0
@@ -1522,14 +1522,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # Run through the list of APAs, looking for in turn the apa name followed by a number and maybe a letter
             # Sometimes the apa name will be preceded by "in" or "for"
             # Sometimes the actual apa mailing name will be the text of a hyperlink
-            mailingPat=f"({patapas})\s+([0-9]+[a-zA-Z]?)"  # Matches APA 123X
+            mailingPat=fr"({patapas})\s+([0-9]+[a-zA-Z]?)"  # Matches APA 123X
 
             # First look for a mailing name inside a hyperlink and, if found, remove the hyperlink
             note=RemoveHyperlinkContainingPattern(note, mailingPat, repeat=True, flags=re.IGNORECASE)
 
             while True:
                 # With any interfering hyperlink removed, look for the mailing spec
-                pat=f"(?:for|in|)?\s*{mailingPat}\s*(pm|postmailing)?(,|&)?"
+                pat=rf"(?:for|in|)?\s*{mailingPat}\s*(pm|postmailing)?(,|&)?"
                 m=re.search(pat, note, flags=re.IGNORECASE)
                 if m is None:
                     break
@@ -1584,7 +1584,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             #       Aaaa Bbbb
             #       Aaaa B Cccc
             #       Aaaa B. Cccc
-            pat="[eE](ditor|dited by|d\.?):?\s*([A-Z][a-zA-Z]+\s+[A-Z]?[.]?\s*[A-Z][a-zA-Z]+)\s*"
+            pat=r"[eE](ditor|dited by|d\.?):?\s*([A-Z][a-zA-Z]+\s+[A-Z]?[.]?\s*[A-Z][a-zA-Z]+)\s*"
             m=re.search(pat, row[notescol])
             if m is not None:
                 # We found an editor.
@@ -1593,7 +1593,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 r=row[notescol]
                 r=r.replace(r[locs[0]:locs[1]], "")
                 if len(r) > 0:
-                    pat="\s*(and|&|,)\s*([A-Z][a-zA-Z]+\s+[A-Z]?[.]?\s*[A-Z][a-zA-Z]+)\s*"
+                    pat=r"\s*(and|&|,)\s*([A-Z][a-zA-Z]+\s+[A-Z]?[.]?\s*[A-Z][a-zA-Z]+)\s*"
                     r=r[locs[0]:]   # Want to search for co-editors only following the 1st editor which we just excised
                     m=re.search(pat, r)
                     if m is not None:
