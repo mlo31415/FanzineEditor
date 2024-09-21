@@ -540,16 +540,16 @@ class FanzinesEditorWindow(FanzinesGridGen):
     def OpenClickedCell(self, icol: int, irow: int):
 
         serverDir=self._Datasource.Rows[irow][icol]
-        with FanzineIndexPageWindow(None, serverDir) as fsw:
-            if fsw.failure:
+        with FanzineIndexPageWindow(None, serverDir) as fipw:
+            if fipw.failure:
                 wx.MessageBox(f"Unable to load {serverDir}", caption="Loading Fanzine Index page", parent=self)
                 Log(f"FanzineIndexPageWindow('{serverDir}') failed")
                 return
-            fsw.ShowModal()
+            fipw.ShowModal()
 
         # The edit may have updated some of the parameters.
-        if fsw.CFL is not None:
-            self._fanzinesList[self.Datasource.NumCols*irow+icol]=fsw.CFL
+        if fipw.CFL is not None:
+            self._fanzinesList[self.Datasource.NumCols*irow+icol]=fipw.CFL
             #existingCFL: ClassicFanzinesLine=self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]
             # Display the updated fanzines list
             self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())
