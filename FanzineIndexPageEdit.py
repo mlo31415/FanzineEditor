@@ -218,6 +218,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.Datasource=val
 
 
+    # This is cleaned of things like (uncredited)
+    @property
+    def Editors(self) -> str:
+        eds=self.tEditors.GetValue()
+        if eds.lower() == "(uncredited)" or eds.lower() == "uncredited":
+            return ""
+        return eds
+
+
     # Look at information available and color buttons and fields accordingly.
     def EnableDialogFields(self):                      
         # See also UpdateDialogComponentEnabledStatus
@@ -1153,8 +1162,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         Enable("Tidy Up Columns")
         Enable("Insert a Text Line")
 
-        if (self.Datasource.ColHeaders[self._dataGrid.clickedColumn] == "Editor" or self.Datasource.ColHeaders[self._dataGrid.clickedColumn] == "Editors") and \
-                                       self.tEditors.GetValue() is not None and len(self.tEditors.GetValue()) > 0:
+        if (self.Datasource.ColHeaders[self._dataGrid.clickedColumn] == "Editor" or self.Datasource.ColHeaders[self._dataGrid.clickedColumn] == "Editors") and len(self.Editors) > 0:
             Enable("Propagate Editor")
 
         # Pop the menu up.
@@ -1619,7 +1627,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def OnPopupPropagateEditor(self, event):  
         self.wxGrid.SaveEditControlValue()
 
-        if self.tEditors.GetValue() is None or len(self.tEditors.GetValue()) == 0:
+        if len(self.Editors) == 0:
             return
 
         editorscol=FindIndexOfStringInList(self._Datasource.ColHeaders, ["Editor", "Editors"])
@@ -1629,7 +1637,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Go through the cells in the Editors column and fill in any which are empty with the contents of tEditors
         for row in self._Datasource.Rows:
             if row[editorscol] is None or len(row[editorscol].strip()) == 0:
-                eds=self.tEditors.GetValue()
+                eds=self.Editors
                 if "\n" in eds:
                     eds=" / ".join([x.strip() for x in eds.split("\n")])
                 row[editorscol]=eds
