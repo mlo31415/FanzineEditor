@@ -549,7 +549,13 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
         # The edit may have updated some of the parameters.
         if fipw.CFL is not None:
-            self._fanzinesList[self.Datasource.NumCols*irow+icol]=fipw.CFL
+            # First, we have to figure out where to store the result. The icol and irow can be used only if the entire list of fanzines was being displayed.
+            # If they were the result of a search, they are meaningless
+            # We make use of the fact that the derver directories are unique.
+            index=[i for i, x in enumerate(self._fanzinesList) if x.ServerDir == fipw.CFL.ServerDir][0]    # There should be exactly one hit
+
+             self._fanzinesList[index]=fipw.CFL
+
             #existingCFL: ClassicFanzinesLine=self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]
             # Display the updated fanzines list
             self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())
