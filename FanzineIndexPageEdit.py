@@ -7,7 +7,6 @@ import wx.grid
 import re
 import shutil
 from datetime import datetime
-from string import capwords
 from math import floor, ceil
 from tempfile import gettempdir
 
@@ -30,7 +29,7 @@ from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, Ca
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, RemoveHxTags
 from HelpersPackage import InsertInvisibleTextUsingFanacComments, InsertHTMLUsingFanacComments, ExtractHTMLUsingFanacComments, ExtractInvisibleTextUsingFanacComments
-from HelpersPackage import  InsertInvisibleTextInsideFanacComment, ExtractInvisibleTextInsideFanacComment, TimestampFilename
+from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename
 from PDFHelpers import GetPdfPageCount
 from Log import Log, LogError
 from Settings import Settings
