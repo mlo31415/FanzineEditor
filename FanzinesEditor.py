@@ -554,7 +554,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
             # We make use of the fact that the derver directories are unique.
             index=[i for i, x in enumerate(self._fanzinesList) if x.ServerDir == fipw.CFL.ServerDir][0]    # There should be exactly one hit
 
-             self._fanzinesList[index]=fipw.CFL
+            self._fanzinesList[index]=fipw.CFL
 
             #existingCFL: ClassicFanzinesLine=self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]
             # Display the updated fanzines list
