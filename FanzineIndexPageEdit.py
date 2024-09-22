@@ -2139,7 +2139,7 @@ class FanzineIndexPage(GridDataSource):
             m=re.match(r'<TD colspan=\"[0-9]+\">(.*?)</TD>', row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
             if m is not None:
                 fipr=FanzineIndexPageTableRow(self._colDefs)
-                fipr.Cells[1]=m.groups()[0]
+                fipr.Cells[0]=m.groups()[0]
                 fipr.IsTextRow=True
                 self.Rows.append(fipr)
                 continue
