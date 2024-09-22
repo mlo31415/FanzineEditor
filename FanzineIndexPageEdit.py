@@ -2271,8 +2271,12 @@ class FanzineIndexPage(GridDataSource):
                 insert+=f"</TR>\n"
                 continue
 
-            if row.IsTextRow or row.IsLinkRow:
+            if row.IsTextRow:
                 insert+=f'\n<TR><TD colspan="{self.NumCols}">{row.Cells[0]}</TD></TR>'
+                continue
+
+            if row.IsLinkRow:
+                insert+=(f'\n<TR><TD colspan="{self.NumCols}"><a href\=\"{row.Cells[0]}">{row.Cells[0]}</a></TD></TR>')
                 continue
 
             # OK, it's an ordinary row
