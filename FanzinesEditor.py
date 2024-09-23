@@ -400,6 +400,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
         self.Show(True)
         self.Raise()
+        self.tSearch.SetFocus()
 
 
     @property
