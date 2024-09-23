@@ -569,6 +569,8 @@ class FanzinesEditorWindow(FanzinesGridGen):
     def OnUploadPressed( self, event ):       
         PutClassicFanzineList(self._fanzinesList, self.RootDir)
         self.MarkAsSaved()
+        self.Raise()
+        self.tSearch.SetFocus()
 
 
     # ------------------
