@@ -503,13 +503,13 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
 
     def OnAddNewFanzine(self, event):       
-        fsw=FanzineIndexPageWindow(None)
-        if fsw.failure:
-            MessageBox(f"Unable to load new fanzine window", Title="Loading Fanzine Index page", ignoredebugger=True)
-            Log(f"FanzineIndexPageWindow('') failed")
-            return
+        # fsw=FanzineIndexPageWindow(None, ExistingFanzinesServerDirs=self.Datasource.FanzineList)
+        # if fsw.failure:
+        #     MessageBox(f"Unable to load new fanzine window", Title="Loading Fanzine Index page", ignoredebugger=True)
+        #     Log(f"FanzineIndexPageWindow('') failed")
+        #     return
 
-        with FanzineIndexPageWindow(None) as fsw:
+        with FanzineIndexPageWindow(None, ExistingFanzinesServerDirs=self.Datasource.FanzineList) as fsw:
             fsw.ShowModal()
 
         if not fsw._uploaded:
@@ -714,7 +714,12 @@ class FanzinesPage(GridDataSource):
 
     @property
     def FanzineList(self):
-        assert False    # We don't actually ever expect to use this
+        serverdirs=[]
+        for row in self._rows:
+            for cell in row:
+                if len(cell) > 0:
+                    serverdirs.append(cell)
+        return serverdirs
     @FanzineList.setter
     def FanzineList(self, val: list[ClassicFanzinesLine]):
         self._fanzineList=val

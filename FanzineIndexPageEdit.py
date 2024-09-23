@@ -24,7 +24,7 @@ from FTP import FTP
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
 from WxHelpers import OnCloseHandling, ProcessChar
 from WxHelpers import ModalDialogManager, ProgressMessage2
-from HelpersPackage import IsInt, Int0, Int, ZeroIfNone
+from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, MessageBox
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename
@@ -78,10 +78,12 @@ def HtmlFancylinkToSpecialNameFormat(val: str) -> str:
 
 
 class FanzineIndexPageWindow(FanzineIndexPageEditGen):
-    def __init__(self, parent, serverDir: str= ""):
+    def __init__(self, parent, serverDir: str= "", ExistingFanzinesServerDirs: list[str]|None=None):
         FanzineIndexPageEditGen.__init__(self, parent)
 
         self.failure=True
+
+        self._existingFanzinesServerDirs=ExistingFanzinesServerDirs
 
         # IsNewDirectory True means this FIP is newly created and has not yet been uploaded.
         # We can tell because an existing fanzine must be opened by supplying a server directory, while for a new fanzine, the server directory must be the empty string
@@ -511,7 +513,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     #------------------
     # Upload the current FanzineIndexPage (including any added fanzines) to the server
-    def OnUpload(self, event):       
+    def OnUpload(self, event):
+
+        if self.tServerDirectory.GetBackgroundColour() == Color.Pink:
+            wx.MessageBox(f"There is already a directory named {self.tServerDirectory.GetValue()} on the server. Please select another name.", parent=self)
+            return
 
         # Save the fanzine's values to return to the main fanzines page.
         cfl=ClassicFanzinesLine()
@@ -899,7 +905,17 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             Log(f"OnFanzineNameChar: Local directory name updated to '{lname}'")
 
 
-    def OnFanzineNameText(self, event):       
+    def OnFanzineNameText(self, event):
+
+        serverdir=self.tServerDirectory.GetValue()
+        if self.IsNewDirectory and self._existingFanzinesServerDirs is not None and serverdir in self._existingFanzinesServerDirs:
+            self.tServerDirectory.SetBackgroundColour(Color.Pink)
+            self.tFanzineName.SetBackgroundColour(Color.Pink)
+        else:
+            self.tServerDirectory.SetBackgroundColour(Color.White)
+            self.tFanzineName.SetBackgroundColour(Color.White)
+
+
         self.Datasource.FanzineName=self.tFanzineName.GetValue()
         Log(f"OnFanzineNameText: Fanzine name updated to '{self.Datasource.FanzineName}'")
         self.UpdateServerAndLocalDirNames(self.Datasource.FanzineName)
