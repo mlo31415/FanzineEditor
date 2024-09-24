@@ -399,8 +399,8 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self.RefreshWindow()
 
         self.Show(True)
-        self.Raise()
-        self.tSearch.SetFocus()
+        self.Raise()    # Bring the window to the top
+        self.tSearch.SetFocus()     # And put the focus/cursor in the search box
 
 
     @property
@@ -569,8 +569,8 @@ class FanzinesEditorWindow(FanzinesGridGen):
     def OnUploadPressed( self, event ):       
         PutClassicFanzineList(self._fanzinesList, self.RootDir)
         self.MarkAsSaved()
-        self.Raise()
-        self.tSearch.SetFocus()
+        self.Raise()    # Bring the window to the top
+        self.tSearch.SetFocus()     # And put the focus/cursor in the search box
 
 
     # ------------------

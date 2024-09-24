@@ -202,11 +202,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if self.tServerDirectory.GetValue() in self.serverNameList:
             self.tLocalDirectory.SetValue(self.localNameList[self.serverNameList.index(self.tServerDirectory.GetValue())])
 
-
         self._dataGrid.RefreshWxGridFromDatasource()
         self.MarkAsSaved()
         self.RefreshWindow()
-        self.Raise()
+        self.Raise()        # Bring tghe window to the top
         self.failure=False
 
 
