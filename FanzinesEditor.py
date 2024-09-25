@@ -240,6 +240,10 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
             if len(val) > 0:
                 cfl.Updated=val
 
+            cfl.DuplicateCopy=False
+            val=ExtractInvisibleTextInsideFanacComment(html, "duplicate")
+            if val == "yes":
+                cfl.DuplicateCopy=True
 
             val=ExtractInvisibleTextInsideFanacComment(html, "created")
             if len(val) > 0:
@@ -248,8 +252,8 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
         # Look for an invisible Updated flag somewhere in the row
         cfl.Updated=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(str(row), "updated"))
 
-
-        namelist.append(cfl)
+        if not cfl.DuplicateCopy:
+            namelist.append(cfl)
         #Log(str(row))
 
     return namelist
@@ -262,8 +266,26 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
     with open("Template - Classic_Fanzines.html") as f:
         output=f.read()
 
-    insert=""
+    # There is a single entry for each fanzine, including ones with multiple titles. We want to create an entry for each title.
+    # The strategy will be to duplicate any ClassicFanzinesLine with multiple names, marking the extras as duplicate so they are ignored when doing the GetFanzinesList
+    duplicatelist=[]
     for fanzine in fanzinesList:
+        duplicatelist.append(fanzine)
+        if len(fanzine.OtherNames) > 0:
+            assert len(fanzine.OtherNames) == 1
+            # Duplicate and add to list using their othernames
+            for i, on in enumerate(fanzine.OtherNames):
+                fz=fanzine.Deepcopy()
+                fz.DuplicateCopy=True
+                mainname=fz.DisplayName
+                fz.DisplayName=on
+                fz.OtherNames[i]=mainname
+                duplicatelist.append(fz)
+
+    duplicatelist.sort(key=lambda x:x.DisplayName)
+
+    insert=""
+    for fanzine in duplicatelist:
         # <!-- fanac.table start -->
         # <TR VALIGN="top">
         # <TD><IMG SRC="blue.gif" HEIGHT="14" WIDTH="21" ALT="[BB]"></TD>
@@ -317,6 +339,9 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
         if fanzine.Created is not None:
             flu=str(fanzine.Created)
         row+=f'<!-- fanac-created {flu} -->\n'
+
+        # When a fanzine is entered more than once (e.g., due to multiple names) al but one must be ignored
+        row+=f'<!-- fanac-duplicate {"yes" if fanzine.DuplicateCopy else "no"} -->\n'
 
         row+=f'</TR>\n'
         insert+=row

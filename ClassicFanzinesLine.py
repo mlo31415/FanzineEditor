@@ -86,7 +86,7 @@ class ClassicFanzinesLine:
         # OCreate empty CFL
         self._displayName: str=""
         self._url: str=""
-        self._otherNames: str=""
+        self._otherNames: list[str]=[]
         self._editors: str=""
         self._dates: str=""
         self._type: str=""
@@ -98,6 +98,7 @@ class ClassicFanzinesLine:
         self._betterScanNeeded: bool=False
         self._created: ClassicFanzinesDate|None=None
         self._updated: ClassicFanzinesDate|None=None
+        self.DuplicateCopy=False
 
         # Initialize from another CFL by deep copying
         if isinstance(cfl, ClassicFanzinesLine):
@@ -115,6 +116,7 @@ class ClassicFanzinesLine:
             self._betterScanNeeded=cfl._betterScanNeeded
             self._created=cfl._created
             self._updated=cfl._updated
+            self.DuplicateCopy=cfl.DuplicateCopy
             return
 
 
@@ -147,7 +149,7 @@ class ClassicFanzinesLine:
     def __hash__(self) -> int:
         return hash(self._displayName) + \
             hash(self._url) + \
-            hash(self._otherNames) + \
+            hash(".".join(self._otherNames)) + \
             hash(self._editors) + \
             hash(self._dates) + \
             hash(self._type) + \
@@ -159,6 +161,27 @@ class ClassicFanzinesLine:
             hash(self._betterScanNeeded) + \
             hash(self._created) + \
             hash(self._updated)
+
+
+    def Deepcopy(self) -> ClassicFanzinesLine:
+        cfl=ClassicFanzinesLine()
+        cfl._displayName=self._displayName
+        cfl._url=self._url
+        cfl._otherNames=[]
+        for on in self._otherNames:
+            cfl._otherNames.append(on)
+        cfl._editors=self._editors
+        cfl._dates=self._dates
+        cfl._type=self._type
+        cfl._clubname=self._clubname
+        cfl._issues=self._issues
+        cfl._topcomments=self._topcomments
+        cfl._country=self._country
+        cfl._complete=self._complete
+        cfl._betterScanNeeded=self._betterScanNeeded
+        cfl._created=self._created
+        cfl._updated=self._updated
+        return cfl
 
 
     @property
@@ -184,11 +207,17 @@ class ClassicFanzinesLine:
         self._url=val
 
     @property
-    def OtherNames(self) -> str:
+    def OtherNames(self) -> [str]:
         return self._otherNames
     @OtherNames.setter
-    def OtherNames(self, val: str):
-        self._otherNames=val
+    def OtherNames(self, val: str|list[str]):
+        if isinstance(val,list):
+            self._otherNames=val
+            return
+        # Split on <br> in all its forms
+        ons=re.split(r"</?br/?>", val, flags=re.IGNORECASE)
+        ons=[x.strip() for x in ons if len(x) > 0]
+        self._otherNames=ons
 
     @property
     def Editors(self) -> str:
