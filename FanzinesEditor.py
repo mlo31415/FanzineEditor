@@ -301,7 +301,11 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
         # <!-- fanac.table end -->
         row='<TR VALIGN="top">\n'
         row+='<TD><IMG SRC="blue.gif" HEIGHT="14" WIDTH="21" ALT="[BB]"></TD>\n'
-        row+=f'<TD sorttable_customkey="{fanzine.DisplayNameSort}"><A HREF="{fanzine.ServerDir}/"><STRONG>{UnicodeToHtml(fanzine.DisplayName)}</STRONG></A></TD>'
+        row+=f'<TD sorttable_customkey="{fanzine.DisplayNameSort}"><A HREF="{fanzine.ServerDir}/"><STRONG>{UnicodeToHtml(fanzine.DisplayName)}</STRONG></A>'
+        if len(fanzine.OtherNames) > 0:
+            for on in fanzine.OtherNames:
+                row+=f"<br>{on}"
+        row+=f'</TD>'
         row+=f'<TD sorttable_customkey="{fanzine.EditorsSort}">{UnicodeToHtml(fanzine.Editors)}</TD>\n'
         row+=f'<TD sorttable_customkey="{fanzine.DatesSort}">{fanzine.Dates}</TD>\n'
         row+=f'<TD>{fanzine.Type}</TD>\n'
