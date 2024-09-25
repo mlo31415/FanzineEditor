@@ -205,7 +205,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.RefreshWxGridFromDatasource()
         self.MarkAsSaved()
         self.RefreshWindow()
-        self.Raise()        # Bring tghe window to the top
+        self.Raise()        # Bring the window to the top
         self.failure=False
 
 
