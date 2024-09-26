@@ -573,7 +573,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # Make a dated backup copy of the existing index page
             ret=FTP().BackupServerFile(f"/{self.RootDir}/{self.serverDir}/index.html")
             if not ret:
-                Log(f"Could not make a backup copy: Fanzines-test/{self.serverDir}/{TimestampFilename('index.html')}")
+                Log(f"Could not make a backup copy: Fanzines-test 2/{self.serverDir}/{TimestampFilename('index.html')}")
                 self.failure=True
                 return
 
