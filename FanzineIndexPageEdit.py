@@ -2226,7 +2226,7 @@ class FanzineIndexPage(GridDataSource):
                 else:
                     pm=""
                 out.append(f'<a href="https://fanac.org/fanzines/APA_Mailings/{FanzineNameToDirName(apa)}/{number}.html">{apa} {number}</a>{pm}')
-        return ",".join(out)
+        return ", ".join(out)
 
 
     # Using the fanzine index page template, create a page and upload it.
