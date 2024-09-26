@@ -272,7 +272,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
     for fanzine in fanzinesList:
         duplicatelist.append(fanzine)
         if len(fanzine.OtherNames) > 0:
-            assert len(fanzine.OtherNames) == 1
+            assert len(fanzine.OtherNames) > 0
             # Duplicate and add to list using their othernames
             for i, on in enumerate(fanzine.OtherNames):
                 fz=fanzine.Deepcopy()
