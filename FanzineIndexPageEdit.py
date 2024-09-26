@@ -24,7 +24,7 @@ from FTP import FTP
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
 from WxHelpers import OnCloseHandling, ProcessChar
 from WxHelpers import ModalDialogManager, ProgressMessage2
-from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, MessageBox
+from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, FanzineNameToDirName
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename
@@ -1527,7 +1527,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # Look through the rows and extract mailing info, if any
         # We're looking for things like [for/in] <apa> nnn. Parhaps, more than one separated by commas or ampersands
-        apas: list[str]=["FAPA", "SAPS", "OMPA", "ANZAPA", "VAPA", "FLAP", "FWD", "FIDO", "TAPS", "APA-F", "APA-L", "APA:NESFA", "WOOF", "SFPA"]
+        apas: list[str]=Settings().Get("apas")
+        if len(apas) == 0:
+            LogError(f"ExtractApaMailings() could not read apa list from settings.txt")
         # Now turn this into a pattern
         patapas="|".join(apas)
         for i, row in enumerate(self._Datasource.Rows):
@@ -2202,6 +2204,31 @@ class FanzineIndexPage(GridDataSource):
 
         return True
 
+
+    # Turn any mailing info into hyperlinks to the mailing on fanac.org
+    def ProcessAPALinks(self, cell: str) -> str:
+        if len(cell) == 0:
+            return ""
+
+        mailings=cell.replace(",", "&").replace(";", "&").split("&")     # It may be of the form 'FAPA 103 PM, OMPA 32 & SAPS 76A'
+        out=[]
+        for mailing in mailings:
+            mailing=mailing.strip()
+            if len(mailing) == 0:
+                continue
+            m=re.match("([a-zA-Z'1-9_\- ]*)\s+([0-9]+[a-zA-Z]*)\s*(pm|postmailing)?$", mailing, flags=re.IGNORECASE)      # Split the FAPA 103A into an apa name and the mailing number (which may have trailing characters '30A')
+            if m is not None:
+                apa=m.groups()[0]
+                number=m.groups()[1]
+                pm=m.groups()[2]
+                if pm:
+                    pm=" "+pm
+                else:
+                    pm=""
+                out.append(f'<a href="https://fanac.org/fanzines/APA_Mailings/{FanzineNameToDirName(apa)}/{number}.html">{apa} {number}</a>{pm}')
+        return ",".join(out)
+
+
     # Using the fanzine index page template, create a page and upload it.
     # This puts a Version 1.1 page
     def PutFanzineIndexPage(self, root: str, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
@@ -2297,8 +2324,11 @@ class FanzineIndexPage(GridDataSource):
             # OK, it's an ordinary row
             insert+=f"\n<TR>"
             insert+=f"\n<TD><a href='{row.Cells[0]}'>{row.Cells[1]}</A></TD>\n"
-            for cell in row.Cells[2:]:
-                insert+=f"<TD CLASS='left'>{cell}</TD>\n"
+            for i, cell in enumerate(row.Cells[2:]):
+                if self.ColHeaders[i+2].lower() == "mailing":
+                    insert+=f"<TD CLASS='left'>{self.ProcessAPALinks(cell)}</TD>\n"
+                else:
+                    insert+=f"<TD CLASS='left'>{cell}</TD>\n"
 
             # Record the update date of this line
             if row._Signature != row.Signature():
