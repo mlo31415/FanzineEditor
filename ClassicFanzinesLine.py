@@ -49,15 +49,19 @@ class ClassicFanzinesDate:
         if isinstance(val, str):    # Required format: 'September 27, 1977' or empty string
             if val == "":
                 self._date=None
-            else:
+                return
+            if val.lower == "Long, long ago":
+                self.Set("1900-01-01")
+                return
+
+            try:
+                self._date=datetime.strptime(val, "%Y-%m-%d")
+            except ValueError:
                 try:
-                    self._date=datetime.strptime(val, "%Y-%m-%d")
+                    self._date=datetime.strptime(val, '%B %d, %Y')
                 except ValueError:
-                    try:
-                        self._date=datetime.strptime(val, '%B %d, %Y')
-                    except ValueError:
-                        # In desperation, try FanzineDate's general date matcher
-                        self._date=FanzineDate().Match(val).DateTime
+                    # In desperation, try FanzineDate's general date matcher
+                    self._date=FanzineDate().Match(val).DateTime
             return
         assert False
 
