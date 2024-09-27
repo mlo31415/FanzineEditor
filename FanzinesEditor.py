@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from msilib.schema import Class
 from typing import Optional
 
 import os
@@ -223,7 +224,7 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
             if m is not None:
                 cfl._complete=True
 
-            cfl.Updated=None
+            cfl.Updated=ClassicFanzinesDate()
             val=ExtractInvisibleTextInsideFanacComment(row[6], "updated")
             if len(val) > 0:
                 cfl.Updated=val
