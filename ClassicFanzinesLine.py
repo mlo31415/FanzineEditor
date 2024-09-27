@@ -4,7 +4,7 @@ from datetime import datetime
 
 from unidecode import unidecode
 
-from HelpersPackage import SortPersonsName, Int0, FindNextBracketedText
+from HelpersPackage import SortPersonsName, Int0, FindNextBracketedText, SplitOnSpansOfLineBreaks
 from FanzineIssueSpecPackage import FanzineDate
 
 ########################################################################
@@ -211,13 +211,10 @@ class ClassicFanzinesLine:
         return self._otherNames
     @OtherNames.setter
     def OtherNames(self, val: str|list[str]):
-        if isinstance(val,list):
+        if isinstance(val, list):
             self._otherNames=val
             return
-        # Split on <br> in all its forms
-        ons=re.split(r"</?br/?>", val, flags=re.IGNORECASE)
-        ons=[x.strip() for x in ons if len(x) > 0]
-        self._otherNames=ons
+        self._otherNames=SplitOnSpansOfLineBreaks(val)
 
     @property
     def Editors(self) -> str:

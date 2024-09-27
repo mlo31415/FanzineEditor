@@ -128,8 +128,23 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
         if "<form action=" in srow[:30]:  # I don't know where this line is coming from (it shows up as the last row, but does not appear on the website!)>
             continue
 
-        # Parse a row into columns by breaking on <td>...</td>
-        row, srow=SearchExtractAndRemoveBoundedAll(srow, r"(<td)(.*?)<\/td>")
+        # Parse a row into columns
+        # Drop everything before the first <td>
+        loc=srow.lower().find("<td>")
+        if loc >= 0:
+            srow=srow[loc:]
+        # Break the remainder into section bounced by <td...> and </td> plus whatever's left
+
+        row=[]
+        while True:
+            colpat=r"<td.*?>(.*?)</td>"
+            m=re.search(colpat, srow, flags=re.IGNORECASE | re.DOTALL)
+            if m is None:
+                if len(srow) > 0:
+                    row.append(srow)
+                break
+            row.append(m.groups()[0])
+            srow=re.sub(colpat, "", srow, count=1, flags=re.IGNORECASE | re.DOTALL)
 
         #Log(str(cols))
         rowtable.append(row)
@@ -166,94 +181,70 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
         # (1) '<a href="Zed-Nielsen_Hayden/"><strong>Zed</strong></a>'
         # This is the typical case with URL and text
         # (2) '<a href="Zed/"><strong>Zed, The </strong></a><br/> Die Zeitschrift Fur Vollstandigen Unsinn'
-        # In aa few cases, the fanzine has a list of alternative names following.
+        # In a few cases, the fanzine has a list of alternative names following.
         if row[1] != "":
-            m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]><a href=[\'\"]?([^>]+?)/?[\'\"]?>(.+)</a>(.*)$', row[1], flags=re.IGNORECASE)
+            m=re.search(r'<a href=[\'\"]?([^>]+?)/?[\'\"]?>(.+)</a>(.*)$', row[1], flags=re.DOTALL|re.IGNORECASE)
             if m is None:
                 Log(f"GetFanzineList() Failure: column 1 (Name and URL), {row[1]=}")
                 Log(f"                {row=}")
                 continue
 
-            cfl.ServerDir=m.groups()[1]
-            cfl.DisplayName=StripSpecificTag(m.groups()[2], "strong", CaseSensitive=False)
-            cfl.OtherNames=m.groups()[3]
+            url=m.group(2)
+            cfl.DisplayName=StripSpecificTag(m.group(2), "strong", CaseSensitive=True)
+            cfl.OtherNames=m.group(3)
+            m=re.match(r"https://fanac.org/fanzines([a-zA-Z 0-9\-]*?)/(.*)$", url, flags=re.IGNORECASE)
+            if m is not None:
+                url=m.group(2)
+            cfl.ServerDir=StripSpecificTag(url, "strong", CaseSensitive=True)
+
+
 
         # Column 2: Editor
-        # '<td sorttable_customkey="SPEER, JACK">Jack Speer'
         if row[2] != "":
-            m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[2], flags=re.IGNORECASE)
-            if m is None:
-                Log(f"GetFanzineList() Failure: column 2 (Editors), {row[2]=}")
-                Log(f"                {row=}")
-                continue
-            cfl.Editors=m.groups()[1]
+            cfl.Editors=row[2]
 
         # Column 3: Dates
-        # '<td sorttable_customkey="19390000">1939-1943'
         if row[3] != "":
-            m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[3], flags=re.IGNORECASE)
-            if m is None:
-                Log(f"GetFanzineList() Failure: column 3 (Dates), {row[3]=}")
-                Log(f"                {row=}")
-                continue
-            cfl.Dates=m.groups()[1]
+            cfl.Dates=row[3]
 
         # Column 4: Type
-        # '<td>Fanzine'
         if row[4] != "":
-            m=re.search(r'<td>(.*)$', row[4], flags=re.IGNORECASE)
-            if m is None:
-                Log(f"GetFanzineList() Failure: column 4 (Type), {row[4]=}")
-                Log(f"                {row=}")
-                continue
-            cfl.Type=m.groups()[0]
+            cfl.Type=row[4]
 
         # Column 5: Issues
-        # '<td class="right" sorttable_customkey="00001">1 '
         if row[5] != "":
-            m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[5], flags=re.IGNORECASE)
-            if m is None:
-                Log(f"GetFanzineList() Failure: column 5 (Dates), {row[5]=}")
-                Log(f"                {row=}")
-                continue
-            cfl.Issues=m.groups()[1]
+            cfl.Issues=row[5]
 
         # Column 6: Flag
-        # '<td sorttable_customkey="zzzz"><br/>'
         if len(row) < 7:
-            row.append("")      # This column is optional, but it's easier tpo process if we add it on as blank
+            row.append("")      # This column is optional, but it's easier to process if we add it on as blank
         if row[6] != "":
-            m=re.search(r'<td\s*sorttable_customkey=[\'\"](.*?)[\'\"]>(.*)$', row[6], flags=re.IGNORECASE)
-            if m is not None:
-                flag=m.groups()[1].lower()
-                if flag == "<br>" or flag == "<br/>":
-                    cfl.Flag=""
-                else:
-                    cfl.Flag=m.groups()[1]
-
             m=re.search(r'<x class="complete">Complete</x>', row[6], flags=re.IGNORECASE)
             if m is not None:
                 cfl._complete=True
 
             cfl.Updated=None
-            val=ExtractInvisibleTextInsideFanacComment(html, "updated")
+            val=ExtractInvisibleTextInsideFanacComment(row[6], "updated")
             if len(val) > 0:
                 cfl.Updated=val
 
             cfl.DuplicateCopy=False
-            val=ExtractInvisibleTextInsideFanacComment(html, "duplicate")
+            val=ExtractInvisibleTextInsideFanacComment(row[6], "duplicate")
             if val == "yes":
                 cfl.DuplicateCopy=True
 
-            val=ExtractInvisibleTextInsideFanacComment(html, "created")
+            val=ExtractInvisibleTextInsideFanacComment(row[6], "created")
             if len(val) > 0:
                 cfl.Created=val
 
-        # Look for an invisible Updated flag somewhere in the row
-        cfl.Updated=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(str(row), "updated"))
+        if cfl.Updated is None: # Look for an invisible Updated flag somewhere in the row
+            cfl.Updated=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(str(row), "updated"))
 
+        # When we create the classic list, we add fanzines with more than one title in multiple places and mark all but one as duplicate.
+        # We only want one entry for each fanzine, so we skip appending the duplicates.
         if not cfl.DuplicateCopy:
             namelist.append(cfl)
+            Log(f"{row[1]=}    {cfl.ServerDir=}    {cfl.DisplayName=}    {cfl.OtherNames=}")
         #Log(str(row))
 
     return namelist
@@ -282,7 +273,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
                 fz.OtherNames[i]=mainname
                 duplicatelist.append(fz)
 
-    duplicatelist.sort(key=lambda x:x.DisplayName)
+    duplicatelist.sort(key=lambda x:x.DisplayName.lower())
 
     insert=""
     for fanzine in duplicatelist:
