@@ -310,21 +310,21 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
 
         match flags:
             case "":
-                row+=f'<TD sorttable_customkey="zzzz"><BR>&nbsp;<br></TD>\n'
+                row+=f'<TD sorttable_customkey="zzzz"><BR>&nbsp;<br>\n'
             case "c":
-                row+=f'<TD sorttable_customkey="complete"><br><X CLASS="complete">Complete</X><br></TD>\n'
+                row+=f'<TD sorttable_customkey="complete"><br><X CLASS="complete">Complete</X><br>\n'
             case "u":
-                row+=f'<TD sorttable_customkey="updated"><br><X CLASS="updated">Updated</X><br></TD>\n'
+                row+=f'<TD sorttable_customkey="updated"><br><X CLASS="updated">Updated</X><br>\n'
             case "n":
-                row+=f'<TD sorttable_customkey="new"><br><X CLASS="new">New</X><br></TD>\n'
+                row+=f'<TD sorttable_customkey="new"><br><X CLASS="new">New</X><br>\n'
             case "uc":
-                row+=f'<TD sorttable_customkey="complete+updated"><br><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X><br></TD>\n'
+                row+=f'<TD sorttable_customkey="complete+updated"><br><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X><br>\n'
             case "nc":
-                row+=f'<TD sorttable_customkey="complete+new"><br><X CLASS="complete">New+Complete</X><X CLASS="new">New</X><X CLASS="complete">Complete</X><br></TD>\n'
+                row+=f'<TD sorttable_customkey="complete+new"><br><X CLASS="complete">New+Complete</X><X CLASS="new">New</X><X CLASS="complete">Complete</X><br>\n'
             case "nu":
-                row+=f'<TD sorttable_customkey="new+updated"><br><X CLASS="updated">Updated</X><X CLASS="new">New</X><br></TD>\n'
+                row+=f'<TD sorttable_customkey="new+updated"><br><X CLASS="updated">Updated</X><X CLASS="new">New</X><br>\n'
             case "ncu":
-                row+=f'<TD sorttable_customkey="complete+updated+new"><br><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X><X CLASS="new">New</X><br></TD>\n'
+                row+=f'<TD sorttable_customkey="complete+updated+new"><br><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X><X CLASS="new">New</X><br>\n'
 
         flu=""
         if fanzine.Updated is not None:
@@ -339,7 +339,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
         # When a fanzine is entered more than once (e.g., due to multiple names) al but one must be ignored
         row+=f'<!-- fanac-duplicate {"yes" if fanzine.DuplicateCopy else "no"} -->\n'
 
-        row+=f'</TR>\n'
+        row+=f'</TD></TR>\n'
         insert+=row
 
     temp=InsertHTMLUsingFanacComments(output, "table", insert)
@@ -769,7 +769,6 @@ class FanzinesPage(GridDataSource):
 
     def __setitem__(self, index: int, val: FanzinesPageRow) -> None:        
         self._fanzineList[index]=val
-
     def CanAddColumns(self) -> bool:        
         return False
 
