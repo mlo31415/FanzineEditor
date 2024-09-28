@@ -205,7 +205,7 @@ class ClassicFanzinesLine:
 
     @property
     def ServerDir(self) -> str:
-        return self._url
+        return self._url.strip()
     @ServerDir.setter
     def ServerDir(self, val: str):
         self._url=val

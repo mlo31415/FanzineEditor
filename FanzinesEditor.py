@@ -190,7 +190,7 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
                 Log(f"                {row=}")
                 continue
 
-            url=m.group(2)
+            url=m.group(1).strip()
             cfl.DisplayName=StripSpecificTag(m.group(2), "strong", CaseSensitive=True)
             cfl.OtherNames=m.group(3)
             m=re.match(r"https://fanac.org/fanzines([a-zA-Z 0-9\-]*?)/(.*)$", url, flags=re.IGNORECASE)
@@ -202,19 +202,19 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
 
         # Column 2: Editor
         if row[2] != "":
-            cfl.Editors=row[2]
+            cfl.Editors=row[2].strip()
 
         # Column 3: Dates
         if row[3] != "":
-            cfl.Dates=row[3]
+            cfl.Dates=row[3].strip()
 
         # Column 4: Type
         if row[4] != "":
-            cfl.Type=row[4]
+            cfl.Type=row[4].strip()
 
         # Column 5: Issues
         if row[5] != "":
-            cfl.Issues=row[5]
+            cfl.Issues=row[5].strip()
 
         # Column 6: Flag
         if len(row) < 7:
