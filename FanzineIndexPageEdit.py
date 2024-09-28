@@ -1697,27 +1697,27 @@ class FanzineIndexPageTableRow(GridDataRowClass):
     def __len__(self):     # FanzineTableRow(GridDataRowClass)
         return len(self._cells)
 
-    def Extend(self, s: list[str]) -> None:    # FanzineTableRow(GridDataRowClass)
+    def Extend(self, s: list[str]) -> None:
         self._cells.extend(s)
 
     # Make a deep copy of a FanzineTableRow
-    def Copy(self) -> FanzineIndexPageTableRow:      # FanzineTableRow(GridDataRowClass)
+    def Copy(self) -> FanzineIndexPageTableRow:
         val=FanzineIndexPageTableRow(self._tableColdefs)
         val._cells=[x for x in self._cells]     # Make a new list containing the old cell data
         return val
 
     # We multiply the cell has by the cell index (+1) so that moves right and left also change the signature
-    def Signature(self) -> int:      # FanzineTableRow(GridDataRowClass)
+    def Signature(self) -> int:
         return sum([x.__hash__()*(i+1) for i, x in enumerate(self._cells)])
 
 
     @property
-    def CanDeleteColumns(self) -> bool:      # FanzineTableRow(GridDataRowClass)
+    def CanDeleteColumns(self) -> bool:
         return True
 
     # This deletes a single column from the datasource.
     # It must be implemented here because WxDataGrid doesn't understand the details of the DataSource
-    def DelCol(self, icol: int) -> None:      # FanzineTableRow(GridDataRowClass)
+    def DelCol(self, icol: int) -> None:
         del self._cells[icol]
 
     @property
@@ -1730,7 +1730,7 @@ class FanzineIndexPageTableRow(GridDataRowClass):
 
     # Get or set a value by name or column number
     #def GetVal(self, name: Union[str, int]) -> Union[str, int]:
-    def __getitem__(self, index: str | int | slice) -> str | list[str]:        # FanzineTableRow(GridDataRowClass)
+    def __getitem__(self, index: str | int | slice) -> str | list[str]:
 
         if isinstance(index, int):
             if index < 0 or  index >= len(self._cells):
@@ -1750,7 +1750,7 @@ class FanzineIndexPageTableRow(GridDataRowClass):
 
 
     #def SetVal(self, nameOrCol: Union[str, int], val: Union[str, int]) -> None:
-    def __setitem__(self, index: str | int | slice, value: str | int) -> None:        # FanzineTableRow(GridDataRowClass)
+    def __setitem__(self, index: str | int | slice, value: str | int) -> None:
         if isinstance(value, int):
             value=str(value)    # All data is stored as strings
 
@@ -1774,14 +1774,14 @@ class FanzineIndexPageTableRow(GridDataRowClass):
 
 
     @property
-    def IsLinkRow(self) -> bool:      # FanzineTableRow(GridDataRowClass)
+    def IsLinkRow(self) -> bool:
         return self._isLink
     @IsLinkRow.setter
     def IsLinkRow(self, val: bool) -> None:
         self._isLink=val
 
     @property
-    def IsTextRow(self) -> bool:      # FanzineTableRow(GridDataRowClass)
+    def IsTextRow(self) -> bool:
         return self._isText
     @IsTextRow.setter
     def IsTextRow(self, val: bool) -> None:
@@ -1792,7 +1792,7 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         return not self.IsLinkRow and not self.IsTextRow
 
     @property
-    def IsEmptyRow(self) -> bool:      # FanzineTableRow(GridDataRowClass)
+    def IsEmptyRow(self) -> bool:
         return all([cell.strip() == "" for cell in self._cells])
 
 

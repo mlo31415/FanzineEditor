@@ -645,43 +645,43 @@ class FanzinesPageRow(GridDataRowClass):
         GridDataRowClass.__init__(self)
         self._cells: list[str]=cells
 
-    def __str__(self):      # FanzineTableRow(GridDataRowClass)
+    def __str__(self):
         return str(self._cells)
 
-    def __len__(self):     # FanzineTableRow(GridDataRowClass)
+    def __len__(self):
         return len(self._cells)
 
-    def Extend(self, s: list[str]) -> None:    # FanzineTableRow(GridDataRowClass)
+    def Extend(self, s: list[str]) -> None:
         self._cells.extend(s)
 
     # Make a deep copy of a FanzineTableRow
-    def Copy(self) -> FanzinesPageRow:      # FanzineTableRow(GridDataRowClass)
+    def Copy(self) -> FanzinesPageRow:
         ftr=FanzinesPageRow([])
         ftr._cells=self._cells
         return ftr
 
     # We multiply the cell has by the cell index (+1) so that moves right and left also change the signature
-    def Signature(self) -> int:      # FanzineTableRow(GridDataRowClass)
+    def Signature(self) -> int:
         return sum([(i+1)*hash(x) for i, x in enumerate(self._cells)])
 
     @property
-    def Cells(self) -> list[str]:      # FanzineTableRow(GridDataRowClass)
+    def Cells(self) -> list[str]:
         return self._cells
     @Cells.setter
     def Cells(self, newcells: list[str]):
         self._cells=newcells
 
     @property
-    def CanDeleteColumns(self) -> bool:      # FanzineTableRow(GridDataRowClass)
+    def CanDeleteColumns(self) -> bool:
         return False
 
     # This deletes a single column from the datasource.
     # It must be implemented here because WxDataGrid doesn't understand the details of the DataSource
-    def DelCol(self, icol: int) -> None:      # FanzineTableRow(GridDataRowClass)
+    def DelCol(self, icol: int) -> None:
         del self._cells[icol]
 
 
-    def __getitem__(self, index: int | slice) -> str | list[str]:      # FanzineTableRow(GridDataRowClass)
+    def __getitem__(self, index: int | slice) -> str | list[str]:
         if isinstance(index, int):
             return self._cells[index]
         if isinstance(index, slice):
@@ -689,14 +689,14 @@ class FanzinesPageRow(GridDataRowClass):
             #return self._cells(self.List[index])
         raise KeyError
 
-    def __setitem__(self, index: str | int | slice, value: str | int | bool) -> None:      # FanzineTableRow(GridDataRowClass)
+    def __setitem__(self, index: str | int | slice, value: str | int | bool) -> None:
         if isinstance(index, int):
             self._cells[index]=value
             return
         raise KeyError
 
     @property
-    def IsEmptyRow(self) -> bool:      # FanzineTableRow(GridDataRowClass)
+    def IsEmptyRow(self) -> bool:
         return all([cell.strip() == "" for cell in self._cells])
 
 
