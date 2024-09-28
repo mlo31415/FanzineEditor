@@ -1420,7 +1420,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def PseudonumericSort(x: str) -> float:
         if IsInt(x):
             return float(int(x))
-        m=re.match("([0-9]+)\.?(.*)$", x)
+        m=re.match(r"([0-9]+)\.?(.*)$", x)
         if m is None:
             return 0
         # Turn the trailing junk into something like a number.  The trailing junk will be things like ".1" or "A"
@@ -2216,7 +2216,7 @@ class FanzineIndexPage(GridDataSource):
             mailing=mailing.strip()
             if len(mailing) == 0:
                 continue
-            m=re.match("([a-zA-Z'1-9_\- ]*)\s+([0-9]+[a-zA-Z]*)\s*(pm|postmailing)?$", mailing, flags=re.IGNORECASE)      # Split the FAPA 103A into an apa name and the mailing number (which may have trailing characters '30A')
+            m=re.match(r"([a-zA-Z'1-9_\- ]*)\s+([0-9]+[a-zA-Z]*)\s*(pm|postmailing)?$", mailing, flags=re.IGNORECASE)      # Split the FAPA 103A into an apa name and the mailing number (which may have trailing characters '30A')
             if m is not None:
                 apa=m.groups()[0]
                 number=m.groups()[1]
@@ -2318,7 +2318,7 @@ class FanzineIndexPage(GridDataSource):
                 continue
 
             if row.IsLinkRow:
-                insert+=(f'\n<TR><TD colspan="{self.NumCols}"><a href\=\"{row.Cells[0]}">{row.Cells[0]}</a></TD></TR>')
+                insert+=(fr'\n<TR><TD colspan="{self.NumCols}"><a href\=\"{row.Cells[0]}">{row.Cells[0]}</a></TD></TR>')
                 continue
 
             # OK, it's an ordinary row
