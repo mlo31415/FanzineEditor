@@ -50,7 +50,7 @@ class ClassicFanzinesDate:
             if val == "":
                 self._date=None
                 return
-            if val.lower == "Long, long ago":
+            if val.lower() == "long, long ago":
                 self.Set("1900-01-01")
                 return
 
