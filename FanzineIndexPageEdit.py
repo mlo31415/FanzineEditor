@@ -525,7 +525,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.ServerDir=self.tServerDirectory.GetValue()
 
         cfl.DisplayName=self.tFanzineName.GetValue()
-        cfl.OtherNames="?!!"
+        cfl.OtherNames=[]
         cfl.Dates=self.tDates.GetValue()
         cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
         cfl.Clubname=self.tClubname.GetValue()
