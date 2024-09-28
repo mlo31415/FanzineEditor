@@ -147,7 +147,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         else:
             # This is an existing directory
             # Load the fanzine index page
-            with ModalDialogManager(ProgressMessage2,f"Downloading Fanzine Index Page: {serverDir}", parent=parent):
+            with ModalDialogManager(ProgressMessage2,f"Downloading Fanzine Index Page: '{serverDir}'", parent=parent):
                 self.failure=False
                 if not self.Datasource.GetFanzineIndexPage(serverDir):
                     self.failure=True
