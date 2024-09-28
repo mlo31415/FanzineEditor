@@ -136,19 +136,19 @@ def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
             srow=srow[loc:]
         # Break the remainder into section bounced by <td...> and </td> plus whatever's left
 
-        row=[]
+        cells=[]
         while True:
             colpat=r"<td.*?>(.*?)</td>"
             m=re.search(colpat, srow, flags=re.IGNORECASE | re.DOTALL)
             if m is None:
                 if len(srow) > 0:
-                    row.append(srow)
+                    cells.append(srow)
                 break
-            row.append(m.groups()[0])
+            cells.append(m.groups()[0])
             srow=re.sub(colpat, "", srow, count=1, flags=re.IGNORECASE | re.DOTALL)
 
         #Log(str(cols))
-        rowtable.append(row)
+        rowtable.append(cells)
 
     # Process each of the columns
     namelist: list[ClassicFanzinesLine]=[]
