@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from msilib.schema import Class
 from typing import Optional
 
 import os
@@ -107,7 +106,7 @@ def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear
 
 #==========================================================================================================
 # Read the classic fanzine list on fanac.org and return a list of all *fanzine directory names*
-def GetFanzinesList() -> list[ClassicFanzinesLine]|None:
+def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
     testServerDirectory=Settings().Get("Test server directory")
     html=None
     if testServerDirectory != "":
@@ -402,7 +401,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
             self.RootDir=Settings().Get("Test Server Directory", self.RootDir)
 
         with ModalDialogManager(ProgressMessage2, "Downloading main fanzine page", parent=self):
-            cfllist=GetFanzinesList()
+            cfllist=GetClassicFanzinesList()
             if cfllist is None or len(cfllist) == 0:
                 return
             cfllist.sort(key=lambda cfl: cfl.ServerDir.casefold())
