@@ -159,7 +159,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.tDates.SetValue(self.Datasource.Dates)
             self.tEditors.SetValue(self.Datasource.Editors)
             self.tFanzineName.SetValue(self.Datasource.Name.MainName)
-            self.tOthernames.SetValue((self.Datasource.Name.OtherNamesAsStr("\n")))
+            self.tOthernames.SetValue((self.Datasource.Name.OthernamesAsStr("\n")))
             if self.Datasource.FanzineType in self.tFanzineType.Items:
                 self.tFanzineType.SetSelection(self.tFanzineType.Items.index(self.Datasource.FanzineType))
             self.tClubname.SetValue(self.Datasource.Clubname)
@@ -923,7 +923,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     def OnOthernamesText(self, event):
-        self.Datasource.Name.OtherNames=self.tOthernames.GetValue().split("\n")
+        self.Datasource.Name.Othernames=self.tOthernames.GetValue().split("\n")
 
 
     def OnServerDirectoryChar(self, event):
@@ -2248,13 +2248,13 @@ class FanzineIndexPage(GridDataSource):
 
         # Insert the <head> matter: <meta name="description"...> and <title>
         eds=", ".join([x.strip() for x in self.Editors.split("\n")])
-        meta=f'<meta name="description" content="{self.Name.MainName} {self.Name.OtherNamesAsStr(", ")}{eds} {self.Dates} {self.FanzineType}">'
+        meta=f'<meta name="description" content="{self.Name.MainName} {self.Name.OthernamesAsStr(", ")}{eds} {self.Dates} {self.FanzineType}">'
         output=FindAndReplaceSingleBracketedText(output, "meta name=", meta)
 
         output, rslt=FindAndReplaceBracketedText(output, "title", f"<title>{self.Name.MainName}</title>", caseInsensitive=True)
 
         eds=", ".join([SpecialNameFormatToHtmlFancylink(x.strip()) for x in self.Editors.split("\n")])
-        insert=f"{SpecialNameFormatToHtmlFancylink(self.Name.MainName)} {self.Name.OtherNamesAsStr("\n ")}<BR><H2>{eds}<BR><BR>{self.Dates}</H2><H3>{self.FanzineType}"
+        insert=f"{SpecialNameFormatToHtmlFancylink(self.Name.MainName)} {self.Name.OthernamesAsStr("\n ")}<BR><H2>{eds}<BR><BR>{self.Dates}</H2><H3>{self.FanzineType}"
         if len(self.Clubname) > 0:
             insert+=f"<BR>{SpecialNameFormatToHtmlFancylink(self.Clubname)}"
         insert+="</H3>"

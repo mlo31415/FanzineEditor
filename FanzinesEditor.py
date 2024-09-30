@@ -262,13 +262,13 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
     duplicatelist=[]
     for fanzine in fanzinesList:
         duplicatelist.append(fanzine)
-        if len(fanzine.Name.OtherNames) > 0:
+        if len(fanzine.Name.Othernames) > 0:
             # Duplicate the fanzine's entry, swapping each of the other names in turn as the main name
-            for i in range(len(fanzine.Name.OtherNames)):
+            for i in range(len(fanzine.Name.Othernames)):
                 fz=fanzine.Deepcopy()
-                fz.DuplicateCopy=True
-                fz.Name.SwapMainNameAndOtherName(i)
-                duplicatelist.append(fz)
+                if fz.Name.SwapMainNameAndOtherName(i):
+                    fz.DuplicateCopy=True
+                    duplicatelist.append(fz)
 
     duplicatelist.sort(key=lambda x:x.Name.MainName.lower())
 
@@ -290,8 +290,8 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
         row='<TR VALIGN="top">\n'
         row+='<TD><IMG SRC="blue.gif" HEIGHT="14" WIDTH="21" ALT="[BB]"></TD>\n'
         row+=f'<TD sorttable_customkey="{fanzine.DisplayNameSort}"><A HREF="{fanzine.ServerDir}/"><STRONG>{UnicodeToHtml(fanzine.Name.MainName)}</STRONG></A>'
-        if len(fanzine.Name.OtherNames) > 0:
-            for on in fanzine.Name.OtherNames:
+        if len(fanzine.Name.Othernames) > 0:
+            for on in fanzine.Name.Othernames:
                 row+=f"<br>{on}"
         row+=f'</TD>'
         row+=f'<TD sorttable_customkey="{fanzine.EditorsSort}">{UnicodeToHtml(fanzine.Editors)}</TD>\n'

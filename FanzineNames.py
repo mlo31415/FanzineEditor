@@ -1,39 +1,44 @@
 import re
 
-from HelpersPackage import SplitOnSpansOfLineBreaks
+from HelpersPackage import SplitOnSpansOfLineBreaks, RemoveLinebreaks
 
 from Log import Log
 
 class FanzineNames:
     def __init__(self, name: str="", othernames: list[str]|None=None):
-        self._name=name
+        self._mainname: str=""
+        self._othernames: list[str]=[]
 
-        if othernames is None or othernames == "":
-            othernames=[]
+        self.MainName=name  # Want to use the processing in the property
+
+        if othernames is None:
+            return
 
         if isinstance(othernames, list):
-            self._othernames=othernames
-        elif isinstance(othernames, str):
+            self.Othernames=othernames
+            return
+        if isinstance(othernames, str):
             if "\n" in othernames:
-                self._othernames=othernames.split("\n")
+                self.Othernames=othernames.split("\n")
             else:
-                self._othernames=othernames.split((","))
-        self._othernames=[x.strip() for x in self._othernames]
-
+                self.Othernames=othernames.split(",")
 
 
     def __hash__(self):
-        return hash(self._name)+sum([hash(x) for x in self._othernames])
+        return hash(self._mainname)+sum([hash(x) for x in self._othernames])
 
     def __eq__(self, other) -> bool:
-        return self._name == other._name and all([x == y for x, y in zip(self._othernames, other._othernames)])
+        return self._mainname == other._mainname and all([x == y for x, y in zip(self._othernames, other._othernames)])
 
     def __str__(self):
-        return self._name+", "+self.OtherNamesAsStr(", ")
+        if len(self._othernames) > 0:
+            return self._mainname+" / "+self.OthernamesAsStr(", ")
+        return self._mainname
+
 
     def DeepCopy(self) -> "FanzineNames":
         fn=FanzineNames()
-        fn._name=self._name
+        fn._mainname=self._mainname
         fn._othernames=[x for x in self._othernames]
         return fn
 
@@ -44,23 +49,23 @@ class FanzineNames:
 
     @property
     def MainName(self) -> str:
-        return self._name
+        return self._mainname
     @MainName.setter
     def MainName(self, val: str):
-        self._name = val
+        self._mainname = RemoveLinebreaks(val)
 
     @property
-    def OtherNames(self) -> list[str]:
+    def Othernames(self) -> list[str]:
         return self._othernames
-    @OtherNames.setter
-    def OtherNames(self, val: list[str]) -> None:
-        self._othernames=[x.strip() for x in val]
+    @Othernames.setter
+    def Othernames(self, val: list[str]):
+        self._othernames=[y for y in [RemoveLinebreaks(x).strip() for x in val] if len(y) > 0]
 
     @property
-    def OtherNamesAsHTML(self) -> str:
-        return self.OtherNamesAsStr("<br>")
-    @OtherNamesAsHTML.setter
-    def OtherNamesAsHTML(self, val: str) -> None:
+    def OthernamesAsHTML(self) -> str:
+        return self.OthernamesAsStr("<br>")
+    @OthernamesAsHTML.setter
+    def OthernamesAsHTML(self, val: str) -> None:
         fanzinename=SplitOnSpansOfLineBreaks(val)
         if len(fanzinename) > 1:
             self._othernames=fanzinename[1:]
@@ -69,7 +74,7 @@ class FanzineNames:
         self._othernames=[x.strip() for x in self._othernames]
 
 
-    def OtherNamesAsStr(self, delim: str) -> str:
+    def OthernamesAsStr(self, delim: str) -> str:
         return delim.join(self._othernames)
 
 
@@ -78,11 +83,10 @@ class FanzineNames:
         m=re.match(r"<a href=[\'\"]https?://fancyclopedia.org/(.*?)[\'\"]>(.*?)</a>(.*)$", header)
         if m is None:
             return False
-        self._name=m.group(2)
-        othernames=m.group(3)
-        # Othernames can have commas and spaces around it, so strip them
-        othernames=othernames.strip().strip(",").strip()
-        self._othernames=[othernames]   # TODO: Need to handle multiples
+        self.MainName=m.group(2)
+        # Othernames can have commas and spaces around it, so split on them and strip them and drop any empty strings
+        othernames=SplitOnSpansOfLineBreaks(m.group(3))
+        self.Othernames=othernames
         return True
 
 
@@ -92,15 +96,17 @@ class FanzineNames:
         if m is None:
             Log(f"IntepretOldHeader('{header}') failed")
             return False
-        names=m.group(1)
-        names=SplitOnSpansOfLineBreaks(names)
-        self._name=names[0]
-        self._othernames=names[1:]
+        names=SplitOnSpansOfLineBreaks(m.group(1))
+        self.MainName=names[0]
+        self.Othernames=names[1:]
         return True
 
 
-    def SwapMainNameAndOtherName(self, index: int) -> None:
-        mainname=self._name
+    def SwapMainNameAndOtherName(self, index: int) -> bool:
+        if index > len(self._othernames)-1:
+            return False
+        mainname=self._mainname
         othername=self._othernames[index]
-        self._name=othername
-        self._othernames[index]=mainname
+        self.MainName=othername
+        self.Othernames[index]=mainname
+        return True
