@@ -20,6 +20,7 @@ from Log import Log as RealLog
 from Settings import Settings
 
 from FanzineIndexPageEdit import FanzineIndexPageWindow, ClassicFanzinesDate
+from FanzineNames import FanzineNames
 from GenGUIClass import FanzinesGridGen
 from GenLogDialogClass import LogDialog
 from ClassicFanzinesLine import ClassicFanzinesLine
@@ -190,8 +191,7 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
                 continue
 
             url=m.group(1).strip()
-            cfl.DisplayName=StripSpecificTag(m.group(2), "strong", CaseSensitive=True)
-            cfl.OtherNames=m.group(3)
+            cfl.Name=FanzineNames(StripSpecificTag(m.group(2), "strong", CaseSensitive=True), m.group(3))
             m=re.match(r"https://fanac.org/fanzines([a-zA-Z 0-9\-]*?)/(.*)$", url, flags=re.IGNORECASE)
             if m is not None:
                 url=m.group(2)
@@ -244,7 +244,7 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
         # We only want one entry for each fanzine, so we skip appending the duplicates.
         if not cfl.DuplicateCopy:
             namelist.append(cfl)
-            Log(f"{row[1]=}    {cfl.ServerDir=}    {cfl.DisplayName=}    {cfl.OtherNames=}")
+            Log(f"{row[1]=}    {cfl.ServerDir=}    {cfl.Name=}")
         #Log(str(row))
 
     return namelist
@@ -262,18 +262,15 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
     duplicatelist=[]
     for fanzine in fanzinesList:
         duplicatelist.append(fanzine)
-        if len(fanzine.OtherNames) > 0:
-            assert len(fanzine.OtherNames) > 0
-            # Duplicate and add to list using their othernames
-            for i, on in enumerate(fanzine.OtherNames):
+        if len(fanzine.Name.OtherNames) > 0:
+            # Duplicate the fanzine's entry, swapping each of the other names in turn as the main name
+            for i in range(len(fanzine.Name.OtherNames)):
                 fz=fanzine.Deepcopy()
                 fz.DuplicateCopy=True
-                mainname=fz.DisplayName
-                fz.DisplayName=on
-                fz.OtherNames[i]=mainname
+                fz.Name.SwapMainNameAndOtherName(i)
                 duplicatelist.append(fz)
 
-    duplicatelist.sort(key=lambda x:x.DisplayName.lower())
+    duplicatelist.sort(key=lambda x:x.Name.MainName.lower())
 
     insert=""
     for fanzine in duplicatelist:
@@ -292,9 +289,9 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
         # <!-- fanac.table end -->
         row='<TR VALIGN="top">\n'
         row+='<TD><IMG SRC="blue.gif" HEIGHT="14" WIDTH="21" ALT="[BB]"></TD>\n'
-        row+=f'<TD sorttable_customkey="{fanzine.DisplayNameSort}"><A HREF="{fanzine.ServerDir}/"><STRONG>{UnicodeToHtml(fanzine.DisplayName)}</STRONG></A>'
-        if len(fanzine.OtherNames) > 0:
-            for on in fanzine.OtherNames:
+        row+=f'<TD sorttable_customkey="{fanzine.DisplayNameSort}"><A HREF="{fanzine.ServerDir}/"><STRONG>{UnicodeToHtml(fanzine.Name.MainName)}</STRONG></A>'
+        if len(fanzine.Name.OtherNames) > 0:
+            for on in fanzine.Name.OtherNames:
                 row+=f"<br>{on}"
         row+=f'</TD>'
         row+=f'<TD sorttable_customkey="{fanzine.EditorsSort}">{UnicodeToHtml(fanzine.Editors)}</TD>\n'
@@ -405,7 +402,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
             if cfllist is None or len(cfllist) == 0:
                 return
             cfllist.sort(key=lambda cfl: cfl.ServerDir.casefold())
-            self._fanzinesList=cfllist      # Update the linear list oif fanzines
+            self._fanzinesList=cfllist      # Update the linear list of fanzines
             self.Datasource.FanzineList=self._fanzinesList      # Update the rectangular grid of fanzine server directories
 
         self._dataGrid.HideRowLabels()
@@ -512,7 +509,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
     def SearchFanzineList(self):       
         searchtext=self.tSearch.GetValue()
         if searchtext != "":
-            fanzinelist=[x for x in self._fanzinesList if searchtext.casefold().replace("_", " ") in x.ServerDir.casefold().replace("_", " ") or searchtext.casefold() in x.DisplayName.casefold()]
+            fanzinelist=[x for x in self._fanzinesList if searchtext.casefold().replace("_", " ") in x.ServerDir.casefold().replace("_", " ") or searchtext.casefold() in x.Name.MainName.casefold()]
             self.Datasource.FanzineList=fanzinelist
             self.RefreshWindow()
 
@@ -602,18 +599,18 @@ class FanzinesEditorWindow(FanzinesGridGen):
             wx.MessageBox("No fanzine selected for deletion.", parent=self)
             return
         if type == "left":
-            fanzine=self._dataGrid.Datasource.Rows[row][col]
+            selectedFanzine=self._dataGrid.Datasource.Rows[row][col]
 
-            dlg=wx.MessageDialog(None, f"Really delete {fanzine}?", "Delete fanzine?", wx.YES_NO|wx.ICON_QUESTION)
+            dlg=wx.MessageDialog(None, f"Really delete {selectedFanzine}?", "Delete fanzine?", wx.YES_NO|wx.ICON_QUESTION)
             result=dlg.ShowModal()
             dlg.Destroy()
             if result == wx.ID_YES:
-                self._fanzinesList=[x for x in self._fanzinesList if x.ServerDir != fanzine]
+                self._fanzinesList=[x for x in self._fanzinesList if x.ServerDir != selectedFanzine]
                 self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())
                 searchtext=self.tSearch.GetValue()
                 fanzinelist=self._fanzinesList
                 if searchtext != "":
-                    fanzinelist=[x for x in self._fanzinesList if searchtext.casefold().replace("_", " ") in x.ServerDir.casefold().replace("_", " ") or searchtext.casefold() in x.DisplayName.casefold()]
+                    fanzinelist=[x for x in self._fanzinesList if searchtext.casefold().replace("_", " ") in x.ServerDir.casefold().replace("_", " ") or searchtext.casefold() in x.Name.MainName.casefold()]
                 self.Datasource.FanzineList=fanzinelist
                 self.RefreshWindow()
 

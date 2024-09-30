@@ -18,6 +18,7 @@ import pyperclip
 from GenGUIClass import FanzineIndexPageEditGen
 from ClassicFanzinesLine import ClassicFanzinesLine, ClassicFanzinesDate
 from DeltaTracker import DeltaTracker
+from FanzineNames import FanzineNames
 
 from FTP import FTP
 
@@ -27,7 +28,7 @@ from WxHelpers import ModalDialogManager, ProgressMessage2
 from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, FanzineNameToDirName
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
-from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename
+from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, RemoveHxTags
 from HelpersPackage import InsertInvisibleTextUsingFanacComments, InsertHTMLUsingFanacComments, ExtractHTMLUsingFanacComments, ExtractInvisibleTextUsingFanacComments
 from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename
@@ -157,7 +158,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.tCredits.SetValue(self.Datasource.Credits)
             self.tDates.SetValue(self.Datasource.Dates)
             self.tEditors.SetValue(self.Datasource.Editors)
-            self.tFanzineName.SetValue(self.Datasource.FanzineName)
+            self.tFanzineName.SetValue(self.Datasource.Name.MainName)
+            self.tOthernames.SetValue((self.Datasource.Name.OtherNamesAsStr("\n")))
             if self.Datasource.FanzineType in self.tFanzineType.Items:
                 self.tFanzineType.SetSelection(self.tFanzineType.Items.index(self.Datasource.FanzineType))
             self.tClubname.SetValue(self.Datasource.Clubname)
@@ -456,7 +458,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # Standardize the column names
         for cd in self.Datasource.ColDefs:
-            cd.Name=CanonicizeColumnHeaders(cd.Name.strip())
+            cd.MainName=CanonicizeColumnHeaders(cd.MainName.strip())
 
         # First look to see if we should be deleting empty columns
         if self.Datasource.NumRows > 1:
@@ -523,9 +525,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.Issues=self.Datasource.NumRows
         cfl.Editors=self.tEditors.GetValue().replace("\n", "<br>")
         cfl.ServerDir=self.tServerDirectory.GetValue()
-
-        cfl.DisplayName=self.tFanzineName.GetValue()
-        cfl.OtherNames=[]
+        cfl.Name=FanzineNames(self.tFanzineName.GetValue(), self.tOthernames.GetValue())
         cfl.Dates=self.tDates.GetValue()
         cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
         cfl.Clubname=self.tClubname.GetValue()
@@ -915,11 +915,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.tFanzineName.SetBackgroundColour(Color.White)
 
 
-        self.Datasource.FanzineName=self.tFanzineName.GetValue()
-        Log(f"OnFanzineNameText: Fanzine name updated to '{self.Datasource.FanzineName}'")
-        self.UpdateServerAndLocalDirNames(self.Datasource.FanzineName)
+        self.Datasource.Name.MainName=self.tFanzineName.GetValue()
+        Log(f"OnFanzineNameText: Fanzine name updated to '{self.Datasource.Name.MainName}'")
+        self.UpdateServerAndLocalDirNames(self.Datasource.Name.MainName)
         self.RefreshWindow(DontRefreshGrid=True)
         # Note that we don;t call self.Skip() so we don't use default processing for this event
+
+
+    def OnOthernamesText(self, event):
+        self.Datasource.Name.OtherNames=self.tOthernames.GetValue().split("\n")
 
 
     def OnServerDirectoryChar(self, event):
@@ -1822,11 +1826,10 @@ class FanzineIndexPage(GridDataSource):
         self._colDefs: ColDefinitionsList=ColDefinitionsList([])
         self._fanzineList: list[FanzineIndexPageTableRow]=[]
         self._gridDataRowClass=FanzineIndexPageTableRow
-        self._name: str=""
         self._specialTextColor: Optional[Color, bool]=True
         self.TopComments: str=""
         self.Locale: list[str]=[]
-        self._fanzineName: str=""
+        self._name: FanzineNames=FanzineNames()
         self._clubname: str=""
         self._betterScanNeeded: bool=False
         self._Editors: str=""
@@ -1842,9 +1845,9 @@ class FanzineIndexPage(GridDataSource):
         s=0
         if self._colDefs is not None:
             s+=self._colDefs.Signature()
-        s+=hash(f"{self._name.strip()};{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
+        s+=hash(f"{self._name};{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
-        s+=hash(f"{self.FanzineName};{self.Editors};{self.Dates};{self.FanzineType};{self.Clubname};{self.Credits};{self.Complete}{self.AlphabetizeIndividually}")
+        s+=hash(f"{self.Name.MainName};{self.Editors};{self.Dates};{self.FanzineType};{self.Clubname};{self.Credits};{self.Complete}{self.AlphabetizeIndividually}")
         s+=sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
         s+=hash(self._specialTextColor)
         return s
@@ -1891,6 +1894,15 @@ class FanzineIndexPage(GridDataSource):
             ftr=FanzineIndexPageTableRow(self._colDefs)
             self._fanzineList.insert(insertat+i, ftr)
 
+
+    @property
+    def Name(self) -> FanzineNames:
+        return self._name
+    @Name.setter
+    def Name(self, val: FanzineNames) -> None:
+        assert isinstance(val, FanzineNames)
+        self._name=val
+
     @property
     def Clubname(self) -> str:
         if self.FanzineType.lower() == "clubzine":
@@ -1899,13 +1911,6 @@ class FanzineIndexPage(GridDataSource):
     @Clubname.setter
     def Clubname(self, val: str) -> None:
         self._clubname=val
-
-    @property
-    def FanzineName(self) -> str:
-        return self._fanzineName
-    @FanzineName.setter
-    def FanzineName(self, val: str) -> None:
-        self._fanzineName=val.strip()
 
 
     @property
@@ -1976,7 +1981,7 @@ class FanzineIndexPage(GridDataSource):
             if len(m.groups()[0]) > 10:     # Arbitrary, since the keyword should be "Alphabetize individually", but has been added by hand so might be mosta nyhting
                 self.AlphabetizeIndividually=True
 
-        fanzinename="(not found)"
+        name=FanzineNames()
         editors="(not found)"
         dates="(not found)"
         fanzinetype="(not found)"
@@ -1987,12 +1992,13 @@ class FanzineIndexPage(GridDataSource):
             # '<td border="none" class="fmz"><h1 class="sansserif">Apollo<br/><h2>Joe Hensley <br/> Lionel Innman<br/><h2>1943 - 1946<br/><br/>Genzine</h2></h2></h1></td>'
             # Split it first by <h[12].
             topmattersplit=re.split(r"</?h[12]/?>", str(topmatter))
+            name.IntepretOldHeader(topmattersplit[0])
+
             for i, stuff in enumerate(topmattersplit):
                 stuff=re.sub(r"</?br/?>", "\n", stuff)
                 _, stuff=SearchAndReplace(r"(<.*?>)", stuff, "")
                 topmattersplit[i]=stuff
             topmattersplit=[x.replace("\n\n", "\n").removesuffix("\n") for x in topmattersplit if x != ""]
-            fanzinename=topmattersplit[0]
             editors=topmattersplit[1].split("\n")
             dates, fanzinetype=topmattersplit[2].split("\n")
 
@@ -2048,13 +2054,13 @@ class FanzineIndexPage(GridDataSource):
         Log(f"     {editors=}")
         Log(f"     {fanzinetype=}")
         Log(f"     {locale=}")
-        Log(f"     {fanzinename=}")
+        Log(f"     {name=}")
         self.Credits=credits
         self.Dates=dates
         self.Editors=editors
         self.FanzineType=fanzinetype
         self.Locale=locale
-        self.FanzineName=fanzinename
+        self._name=name
 
         return True
 
@@ -2079,7 +2085,7 @@ class FanzineIndexPage(GridDataSource):
 
     def GetFanzineIndexPageNew(self, html: str, version: str) -> bool:
 
-        # f"{self.FanzineName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
+        # f"{self.Name.MainName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
         topstuff=ExtractHTMLUsingFanacComments(html, "header")
         if topstuff == "":
             LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('header')")
@@ -2087,7 +2093,7 @@ class FanzineIndexPage(GridDataSource):
         # Interpret the header
         topstuff=re.sub(r"(\r|\n|<\\?(br|h\d)>)+", "\n", topstuff, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE).split("\n")
         topstuff=[RemoveHxTags(x) for x in topstuff+["","","","", ""]]  # In case we parsed nothing, pad it with blanks, then remove HTML crud
-        self.FanzineName=RemoveFancyLink(topstuff[0])
+        self.Name.IntepretNewHeader(topstuff[0])
         self.Editors="\n".join([RemoveFancyLink(x).strip() for x in topstuff[1].split(",")])
         self.Dates=topstuff[2]
         self.FanzineType=RemoveFancyLink(topstuff[3])
@@ -2200,7 +2206,7 @@ class FanzineIndexPage(GridDataSource):
         Log(f"     {self.FanzineType=}")
         Log(f"     {self.Clubname=}")
         Log(f"     {self.Locale=}")
-        Log(f"     {self.FanzineName=}")
+        Log(f"     {self.Name.MainName=}")
 
         return True
 
@@ -2242,13 +2248,13 @@ class FanzineIndexPage(GridDataSource):
 
         # Insert the <head> matter: <meta name="description"...> and <title>
         eds=", ".join([x.strip() for x in self.Editors.split("\n")])
-        meta=f'<meta name="description" content="{self.FanzineName} {eds} {self.Dates} {self.FanzineType}">'
+        meta=f'<meta name="description" content="{self.Name.MainName} {self.Name.OtherNamesAsStr(", ")}{eds} {self.Dates} {self.FanzineType}">'
         output=FindAndReplaceSingleBracketedText(output, "meta name=", meta)
 
-        output, rslt=FindAndReplaceBracketedText(output, "title", f"<title>{self.FanzineName}</title>", caseInsensitive=True)
+        output, rslt=FindAndReplaceBracketedText(output, "title", f"<title>{self.Name.MainName}</title>", caseInsensitive=True)
 
         eds=", ".join([SpecialNameFormatToHtmlFancylink(x.strip()) for x in self.Editors.split("\n")])
-        insert=f"{SpecialNameFormatToHtmlFancylink(self.FanzineName)}<BR><H2>{eds}<BR><BR>{self.Dates}</H2><H3>{self.FanzineType}"
+        insert=f"{SpecialNameFormatToHtmlFancylink(self.Name.MainName)} {self.Name.OtherNamesAsStr("\n ")}<BR><H2>{eds}<BR><BR>{self.Dates}</H2><H3>{self.FanzineType}"
         if len(self.Clubname) > 0:
             insert+=f"<BR>{SpecialNameFormatToHtmlFancylink(self.Clubname)}"
         insert+="</H3>"
@@ -2374,7 +2380,7 @@ def SetPDFMetadata(pdfPathname: str, cfl: ClassicFanzinesLine, row: list[str], c
     if "Editor" in colNames:        # Editor in the row overrides editors for the whole zine series
         metadata["/Author"]=row[colNames.index("Editor")]
 
-    keywords=f"{cfl.DisplayName}, "
+    keywords=f"{cfl.Name.MainName}, "
     if "Year" in colNames:
         keywords+=f", {row[colNames.index('Year')]}"
     if "Mailing" in colNames:

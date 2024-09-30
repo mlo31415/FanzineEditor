@@ -6,6 +6,7 @@ from unidecode import unidecode
 
 from HelpersPackage import SortPersonsName, Int0, FindNextBracketedText, SplitOnSpansOfLineBreaks
 from FanzineIssueSpecPackage import FanzineDate
+from FanzineNames import FanzineNames
 
 ########################################################################
 # A class to hold the updated date in standard ConEditor format
@@ -87,10 +88,9 @@ class ClassicFanzinesDate:
 class ClassicFanzinesLine:
 
     def __init__(self, cfl=None):
-        # OCreate empty CFL
-        self._displayName: str=""
+        # Create empty CFL
         self._url: str=""
-        self._otherNames: list[str]=[]
+        self._name: FanzineNames=FanzineNames()
         self._editors: str=""
         self._dates: str=""
         self._type: str=""
@@ -106,9 +106,8 @@ class ClassicFanzinesLine:
 
         # Initialize from another CFL by deep copying
         if isinstance(cfl, ClassicFanzinesLine):
-            self._displayName=cfl._displayName
             self._url=cfl._url
-            self._otherNames=cfl._otherNames       # Alternate names for this fanzine
+            self._name=cfl._name.DeepCopy()
             self._editors=cfl._editors
             self._dates=cfl._dates
             self._type=cfl._type
@@ -126,7 +125,7 @@ class ClassicFanzinesLine:
 
 
     def __str__(self) -> str:
-        s=f"{self.DisplayName}  [{self.DisplayNameSort}]     {self._editors}  [{self.EditorsSort}]     {self._dates}  [{self.DatesSort}]     "
+        s=f"{self._name}  [{self.DisplayNameSort}]     {self._editors}  [{self.EditorsSort}]     {self._dates}  [{self.DatesSort}]     "
         s+=f"{self._issues} issues    Type={self.Type}     \nFlags: {'(Complete)' if self._complete else ''}      Created={self.Created}       Updated={self.Updated} "
         return s
 
@@ -134,9 +133,8 @@ class ClassicFanzinesLine:
         if not isinstance(other, ClassicFanzinesLine):
             return False
 
-        return self._displayName == other._displayName and \
-            self._url == other._url and \
-            self._otherNames == other._otherNames and \
+        return self._url == other._url and \
+            self._name == other._name and \
             self._editors == other._editors and \
             self._dates == other._dates and \
             self._type == other._type and \
@@ -151,9 +149,8 @@ class ClassicFanzinesLine:
 
 
     def __hash__(self) -> int:
-        return hash(self._displayName) + \
-            hash(self._url) + \
-            hash(".".join(self._otherNames)) + \
+        return hash(self._url) + \
+            hash(self._name) + \
             hash(self._editors) + \
             hash(self._dates) + \
             hash(self._type) + \
@@ -169,11 +166,8 @@ class ClassicFanzinesLine:
 
     def Deepcopy(self) -> ClassicFanzinesLine:
         cfl=ClassicFanzinesLine()
-        cfl._displayName=self._displayName
         cfl._url=self._url
-        cfl._otherNames=[]
-        for on in self._otherNames:
-            cfl._otherNames.append(on)
+        cfl._name=self._name.DeepCopy()
         cfl._editors=self._editors
         cfl._dates=self._dates
         cfl._type=self._type
@@ -189,15 +183,15 @@ class ClassicFanzinesLine:
 
 
     @property
-    def DisplayName(self) -> str:
-        return self._displayName
-    @DisplayName.setter
-    def DisplayName(self, val: str):
-        self._displayName=val
+    def Name(self) -> FanzineNames:
+        return self._name
+    @Name.setter
+    def Name(self, val: FanzineNames):
+        self._name=val
 
     @property
     def DisplayNameSort(self) -> str:
-        pre, _, mid, post=FindNextBracketedText(self.DisplayName)
+        pre, _, mid, post=FindNextBracketedText(self._name.MainName)
         return unidecode(f"{pre} {mid} {post}".strip().casefold())
     @DisplayNameSort.setter
     def DisplayNameSort(self, val: str):
@@ -209,16 +203,6 @@ class ClassicFanzinesLine:
     @ServerDir.setter
     def ServerDir(self, val: str):
         self._url=val
-
-    @property
-    def OtherNames(self) -> [str]:
-        return self._otherNames
-    @OtherNames.setter
-    def OtherNames(self, val: str|list[str]):
-        if isinstance(val, list):
-            self._otherNames=val
-            return
-        self._otherNames=SplitOnSpansOfLineBreaks(val)
 
     @property
     def Editors(self) -> str:
