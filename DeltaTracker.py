@@ -17,7 +17,7 @@ class Delta:
         self.SourceFilename: str=sourceFilename     # The name of the file
         self.SourcePath: str=sourcePath     # The path (no filename) of the file on the local disk
         self.NewSourceFilename: str=newSourceFilename       # A new name for the file on the server (needed only for a rename)
-        self.Uploaded: bool=False       # As an upload proceeds, successful deltas are flagged as uploaded, so if it fails later and the upload is re-run, it isn't duplocated
+        self.Uploaded: bool=False       # As an upload proceeds, successful deltas are flagged as uploaded, so if it fails later and the upload is re-run, it isn't duplicated
 
 
     def __str__(self) -> str:
