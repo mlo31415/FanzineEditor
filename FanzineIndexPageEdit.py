@@ -2297,7 +2297,7 @@ class FanzineIndexPage(GridDataSource):
         if len(self.ColHeaders) < 2:
             LogError(f"PutFanzineIndexPage({url}) failed: {len(self.ColHeaders)=}")
             return False
-        insert+=f"<TH>{self.ColHeaders[1]}</TH>\n"
+        insert+=f"<TH>Issue</TH>\n"
         for header in self.ColHeaders[2:]:
             insert+=f"<TH>{header}</TH>\n"
         insert+="</TR>\n"
