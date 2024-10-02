@@ -289,8 +289,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
         row+='<TD><IMG SRC="blue.gif" HEIGHT="14" WIDTH="21" ALT="[BB]"></TD>\n'
         row+=f'<TD sorttable_customkey="{fanzine.DisplayNameSort}"><A HREF="{fanzine.ServerDir}/"><STRONG>{UnicodeToHtml(fanzine.Name.MainName)}</STRONG></A>'
         if len(fanzine.Name.Othernames) > 0:
-            for on in fanzine.Name.Othernames:
-                row+=f"<br>{on}"
+            row+="<br>"+fanzine.Name.OthernamesAsHTML
         row+=f'</TD>'
         row+=f'<TD sorttable_customkey="{fanzine.EditorsSort}">{UnicodeToHtml(fanzine.Editors)}</TD>\n'
         row+=f'<TD sorttable_customkey="{fanzine.DatesSort}">{fanzine.Dates}</TD>\n'

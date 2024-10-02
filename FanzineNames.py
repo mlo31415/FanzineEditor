@@ -18,8 +18,9 @@ class FanzineNames:
             self.Othernames=othernames
             return
         if isinstance(othernames, str):
-            if "\n" in othernames:
-                self.Othernames=othernames.split("\n")
+            othernames=RemoveLinebreaks(othernames, replacement="<br>")
+            if ("<br>" in othernames):
+                self.Othernames=othernames.split("<br>")
             else:
                 self.Othernames=othernames.split(",")
 
@@ -65,7 +66,7 @@ class FanzineNames:
     def OthernamesAsHTML(self) -> str:
         return self.OthernamesAsStr("<br>")
     @OthernamesAsHTML.setter
-    def OthernamesAsHTML(self, val: str) -> None:
+    def OthernamesAsHTML(self, val: str):
         fanzinename=SplitOnSpansOfLineBreaks(val)
         if len(fanzinename) > 1:
             self._othernames=fanzinename[1:]
