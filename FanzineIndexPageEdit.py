@@ -66,6 +66,10 @@ gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
 
 
 def SpecialNameFormatToHtmlFancylink(val: str) ->str:
+    # "Uncredited" is not linked
+    if "uncredited" in val.lower():
+        return val
+
     # If "|" present, input format is <fancyName|displayName>
     if "|" in val:
         fancyName, displayName = val.split("|", 1)
