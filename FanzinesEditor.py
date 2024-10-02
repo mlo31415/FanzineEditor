@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMessage2, ModalDialogManager
-from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll, ExtractInvisibleTextInsideFanacComment
+from HelpersPackage import MessageBox, SearchExtractAndRemoveBoundedAll, ExtractInvisibleTextInsideFanacComment, ConvertHTMLishCharacters
 from HelpersPackage import InsertHTMLUsingFanacComments, UnicodeToHtml, StripSpecificTag, Int0, TimestampFilename
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
@@ -197,15 +197,13 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
                 url=m.group(2)
             cfl.ServerDir=StripSpecificTag(url, "strong", CaseSensitive=True)
 
-
-
         # Column 2: Editor
         if row[2] != "":
-            cfl.Editors=row[2].strip()
+            cfl.Editors=ConvertHTMLishCharacters(row[2].strip())
 
         # Column 3: Dates
         if row[3] != "":
-            cfl.Dates=row[3].strip()
+            cfl.Dates=ConvertHTMLishCharacters(row[3].strip())
 
         # Column 4: Type
         if row[4] != "":
