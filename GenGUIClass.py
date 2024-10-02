@@ -59,13 +59,13 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_staticTextFanzineName.SetMinSize( wx.Size( 200,-1 ) )
 		self.m_staticTextFanzineName.SetMaxSize( wx.Size( -1,50 ) )
 
-		fgSizer11.Add( self.m_staticTextFanzineName, 0, wx.ALIGN_RIGHT|wx.ALL|wx.FIXED_MINSIZE, 5 )
+		fgSizer11.Add( self.m_staticTextFanzineName, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL|wx.FIXED_MINSIZE, 5 )
 
 		self.tFanzineName = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.Size( 400,-1 ), 0 )
 		self.tFanzineName.SetToolTip( u"The name of the fanzine serires." )
 		self.tFanzineName.SetMinSize( wx.Size( 300,-1 ) )
 
-		fgSizer11.Add( self.tFanzineName, 0, wx.ALIGN_LEFT|wx.ALL|wx.FIXED_MINSIZE, 0 )
+		fgSizer11.Add( self.tFanzineName, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT|wx.ALL|wx.FIXED_MINSIZE, 0 )
 
 		self.m_staticTextOtherNames = wx.StaticText( self, wx.ID_ANY, u"Other Names:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticTextOtherNames.Wrap( -1 )
