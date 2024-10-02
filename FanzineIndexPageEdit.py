@@ -540,6 +540,30 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.TopComments=self.tTopComments.GetValue()
         cfl.Country=self.tLocaleText.GetValue()
 
+        # Check the dates to make sure that the dated issues all fall into the date range given for the fanzine
+        # Date range should be of the form yyyy-yyyy with question marks abounding
+        d1, d2=self.DateRange
+        # Now check this against all the years in the rows.
+        icol=self.Datasource.ColHeaderIndex("year")
+        failed=False
+        if icol != -1:
+            for row in self.Datasource.Rows:
+                year=row[icol]
+                # Remove question marks and interpret the rest
+                year=year.replace("?", "")
+                year=Int0(year)
+                if year > 0:  # Ignore missing years
+                    if year < d1 or year > d2:
+                        failed=True
+                        break
+            if failed:
+                dlg=wx.MessageDialog(self, "Warning: One or more of the years in the table are outside the date range given for this fanzine. Continue the upload?", "Date Range Warning",
+                                     wx.YES_NO|wx.ICON_QUESTION)
+                result=dlg.ShowModal()
+                dlg.Destroy()
+                if result != wx.ID_YES:
+                    return
+
         with ModalDialogManager(ProgressMessage2, f"Uploading up FanzineIndexPage {self.serverDir}", parent=self) as pm:
             Log(f"Uploading Fanzine Index Page: {self.serverDir}")
             self.failure=False
@@ -553,26 +577,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                    f"/{self.RootDir}/{self.serverDir}", "index.html", Create=True)
 
 
-            # Check the dates to make sure that the dated issues all fall into the date range given for the fanzine
-            # Date range should be of the form yyyy-yyyy with question marks abounding
-            d1, d2=self.DateRange
-            # Now check this against all the years in the rows.
-            icol=self.Datasource.ColHeaderIndex("year")
-            failed=False
-            if icol != -1:
-                for row in self.Datasource.Rows:
-                    year=row[icol]
-                    # Remove question marks and interpret the rest
-                    year=year.replace("?", "")
-                    year=Int0(year)
-                    if year > 0:        # Ignore missing years
-                        if year < d1 or year > d2:
-                            dlg=wx.MessageDialog(self,"Warning: One or more of the years in the table are outside the date range given for this fanzine. Continue the upload?","Date Range Warning", wx.YES_NO|wx.ICON_QUESTION)
-                            result=dlg.ShowModal()
-                            dlg.Destroy()
-                            if result == wx.ID_YES:
-                                break
-                            return
+
 
             # Make a dated backup copy of the existing index page
             ret=FTP().BackupServerFile(f"/{self.RootDir}/{self.serverDir}/index.html")
