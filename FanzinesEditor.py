@@ -262,7 +262,7 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
         # We only want one entry for each fanzine, so we skip appending the duplicates.
         if not cfl.DuplicateCopy:
             namelist.append(cfl)
-            Log(f"{row[1]=}    {cfl.ServerDir=}    {cfl.Name=}")
+            #Log(f"{row[1]=}    {cfl.ServerDir=}    {cfl.Name=}")
         #Log(str(row))
 
     return namelist

@@ -885,14 +885,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Pick up the current value of the fanzine name field
         fname, cursorloc=ProcessChar(self.tFanzineName.GetValue(), event.GetKeyCode(), self.tFanzineName.GetInsertionPoint())
 
-        Log(f"OnFanzineNameChar: Local directory name updated to '{fname}'")
+        # Log(f"OnFanzineNameChar: Local directory name updated to '{fname}'")
 
         self.UpdateServerAndLocalDirNames(fname)
 
 
     def UpdateServerAndLocalDirNames(self, fname):
         # If this is a new fanzine, and if the user has not overridden the default server directory name by editing it himself, update the Server Directory name
-        Log(f"OnFanzineNameChar: {self.tServerDirectory.Enabled=}    {self._manualEditOfServerDirectoryNameBegun=}'")
+        # Log(f"OnFanzineNameChar: {self.tServerDirectory.Enabled=}    {self._manualEditOfServerDirectoryNameBegun=}'")
         if self.tServerDirectory.Enabled and not self._manualEditOfServerDirectoryNameBegun:
             # Strip leading "The", etc
             sname=RemoveArticles(fname).strip()
@@ -900,9 +900,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 sname=re.sub("[^a-zA-Z0-9-]+", "_", sname)  # Replace all spans of not-listed chars with underscore
                 sname=sname.replace(" ", "_")
             self.tServerDirectory.SetValue(sname)
-            Log(f"OnFanzineNameChar: Server directory name updated to '{sname}'")
+            # Log(f"OnFanzineNameChar: Server directory name updated to '{sname}'")
         # If this is a new fanzine, and if the user has not overridden the default local directory name by editing it himself, update the Local Directory name
-        Log(f"OnFanzineNameChar: {self.tLocalDirectory.Enabled=}    {self._manualEditOfLocalDirectoryNameBegun=}'")
+        # Log(f"OnFanzineNameChar: {self.tLocalDirectory.Enabled=}    {self._manualEditOfLocalDirectoryNameBegun=}'")
         if self.tLocalDirectory.Enabled and not self._manualEditOfLocalDirectoryNameBegun:
             # Strip leading "The", etc
             lname=RemoveArticles(fname).strip()
@@ -910,7 +910,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             lname=lname.strip("_")  # Do not start or end names with underscores
             lname=lname.upper()
             self.tLocalDirectory.SetValue(lname)
-            Log(f"OnFanzineNameChar: Local directory name updated to '{lname}'")
+            #Log(f"OnFanzineNameChar: Local directory name updated to '{lname}'")
 
 
     def OnFanzineNameText(self, event):
@@ -2209,14 +2209,14 @@ class FanzineIndexPage(GridDataSource):
 
         self.Credits=ExtractHTMLUsingFanacComments(html, "scan").strip()
 
-        Log(f"GetFanzinePageNew():")
-        Log(f"     {self.Credits=}")
-        Log(f"     {self.Dates=}")
-        Log(f"     {self.Editors=}")
-        Log(f"     {self.FanzineType=}")
-        Log(f"     {self.Clubname=}")
-        Log(f"     {self.Locale=}")
-        Log(f"     {self.Name.MainName=}")
+        # Log(f"GetFanzinePageNew():")
+        # Log(f"     {self.Credits=}")
+        # Log(f"     {self.Dates=}")
+        # Log(f"     {self.Editors=}")
+        # Log(f"     {self.FanzineType=}")
+        # Log(f"     {self.Clubname=}")
+        # Log(f"     {self.Locale=}")
+        # Log(f"     {self.Name.MainName=}")
 
         return True
 
