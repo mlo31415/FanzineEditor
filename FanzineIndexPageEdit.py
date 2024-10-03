@@ -1997,7 +1997,7 @@ class FanzineIndexPage(GridDataSource):
         theTable=tables[2]
         #bottom=tables[3]
 
-        locale="(not found)"
+        locale=""
         localeStuff=body[0].findAll("fanac-type")
         if len(localeStuff) > 0:
             localeStuff=str(localeStuff[0])
@@ -2011,9 +2011,9 @@ class FanzineIndexPage(GridDataSource):
                 self.AlphabetizeIndividually=True
 
         name=FanzineNames()
-        editors="(not found)"
-        dates="(not found)"
-        fanzinetype="(not found)"
+        editors=""
+        dates=""
+        fanzinetype=""
         # Extract the fanzine Name, Editors, Dates and Type
         if len(top.findAll("td")) > 1:
             topmatter=top.findAll("td")[1]
@@ -2065,7 +2065,7 @@ class FanzineIndexPage(GridDataSource):
         for row in rows:
             self.Rows.append(FanzineIndexPageTableRow(self._colDefs, row) )
 
-        credits="(not found)"
+        credits=""
         loc=bodytext.rfind("</table>")
         if loc >= 0:
             lasttext=bodytext[loc+len("</table>"):]
@@ -2381,7 +2381,7 @@ class FanzineIndexPage(GridDataSource):
             return False
         output=temp
 
-        temp=InsertHTMLUsingFanacComments(output, "scan", self.Credits if self.Credits != "(not found)" else "")
+        temp=InsertHTMLUsingFanacComments(output, "scan", self.Credits)
         # Different test because we don't always have a credit in the file.
         if len(temp) > 0:
             output=temp
