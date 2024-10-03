@@ -1934,7 +1934,6 @@ class FanzineIndexPage(GridDataSource):
 
     # Download a fanzine index page fanac.org/fanzines/URL and fill in the class
     def GetFanzineIndexPage(self, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
-        testServerDirectory=Settings().Get("Test server directory")
         testRootDirectory=Settings().Get("Test Root directory")
         rootDirectory=Settings().Get("Root directory")
         html=None
