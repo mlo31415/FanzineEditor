@@ -66,7 +66,7 @@ def main():
     # Set the debug/production mode
     global g_debug
     g_debug=Settings().Get("Debug Mode", False)
-    g_testServer=Settings().Get("Test server Directory", "")
+    g_testServer=Settings().Get("Test Root Directory", "")
 
     # Allow turning off of routine FTP logging
     FTP.g_dologging=Settings().Get("FTP Logging", False)

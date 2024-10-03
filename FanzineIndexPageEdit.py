@@ -101,7 +101,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Figure out the root directory which depends on whether we are in test mode or not
         self.RootDir="Fanzines"
         if Settings().IsTrue("Test mode"):
-            self.RootDir=Settings().Get("Test Server Directory", self.RootDir)
+            self.RootDir=Settings().Get("Test Root Directory", self.RootDir)
 
         # A list of changes to the file stored on the website which will need to be made upon upload.
         self.deltaTracker=DeltaTracker()
@@ -1935,13 +1935,15 @@ class FanzineIndexPage(GridDataSource):
     # Download a fanzine index page fanac.org/fanzines/URL and fill in the class
     def GetFanzineIndexPage(self, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
         testServerDirectory=Settings().Get("Test server directory")
+        testRootDirectory=Settings().Get("Test Root directory")
+        rootDirectory=Settings().Get("Root directory")
         html=None
-        if testServerDirectory != "":
+        if testRootDirectory != "":
             # If there is a test directory, try loading from there, first
-            html=FTP().GetFileAsString(f"/{testServerDirectory}/{url}", "index.html")
+            html=FTP().GetFileAsString(f"/{testRootDirectory}/{url}", "index.html")
         if html is None:
             # If that failed (or there wasn't one) load from the default
-            html=FTP().GetFileAsString(f"/fanzines/{url}", "index.html")
+            html=FTP().GetFileAsString(f"/{rootDirectory}/{url}", "index.html")
         if html is None:
             LogError(f"Unable to download 'index.html' from '{url}'")
             return False

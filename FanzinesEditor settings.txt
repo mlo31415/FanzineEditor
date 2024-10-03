@@ -7,6 +7,12 @@ PDF Source Path=C:\Users\mlo\Documents\usr\Fancyclopedia\Python\FanacLSTGenerato
 # Pathname of the (local) table relating server directories to local directories
 Server To Local Table Name=C:\Users\mlo\Documents\usr\Fancyclopedia\Python\FanzinesEditor\ServerToLocal Conversion.txt
 
+# The root server directory. Normally "Fanzines" but may be changed for testing.
+Root directory=Fanzine	
+
+# When in test mode, set this to True
+Test Root directory=Fanzines-test2
+Test mode=True
 # For how many days should updated FIP's be tagged as updated on the classic fanzines list?
 How old is new=90
 How old is updated=90
