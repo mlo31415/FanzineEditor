@@ -2106,6 +2106,8 @@ class FanzineIndexPage(GridDataSource):
         self.Name.IntepretNewHeader(topstuff[0])
         self.Editors="\n".join([RemoveFancyLink(x).strip() for x in topstuff[1].split(",")])
         self.Dates=topstuff[2]
+        if "&nbsp;" in self.Dates:
+            self.Dates=self.Dates.split("&nbsp;")[0]
         self.FanzineType=RemoveFancyLink(topstuff[3])
         if version == "1.1" and self.FanzineType.lower() == "clubzine":
             self.Clubname=RemoveFancyLink(topstuff[4])
@@ -2264,7 +2266,7 @@ class FanzineIndexPage(GridDataSource):
         output, rslt=FindAndReplaceBracketedText(output, "title", f"<title>{self.Name.MainName}</title>", caseInsensitive=True)
 
         eds=", ".join([SpecialNameFormatToHtmlFancylink(x.strip()) for x in self.Editors.split("\n")])
-        insert=f"{SpecialNameFormatToHtmlFancylink(self.Name.MainName)} {self.Name.OthernamesAsStr("\n ")}<BR><H2>{eds}<BR><BR>{self.Dates}</H2><H3>{self.FanzineType}"
+        insert=f"{SpecialNameFormatToHtmlFancylink(self.Name.MainName)} {self.Name.OthernamesAsStr("\n ")}<BR><H2>{eds}<BR><BR>{self.Dates}{"&nbsp;<small><small>(Complete)</small></small>" if self.Complete else ""}</H2><H3>{self.FanzineType}"
         if len(self.Clubname) > 0:
             insert+=f"<BR>{SpecialNameFormatToHtmlFancylink(self.Clubname)}"
         insert+="</H3>"
