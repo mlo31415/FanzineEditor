@@ -319,6 +319,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_menuItemPopupInsertText = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Insert a Text Line", u"Insert a new text line at the selected location.", wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupInsertText )
 
+		self.m_menuItemInsertLinkLine = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Insert a Link line", u"Insert a link at the selected row.", wx.ITEM_NORMAL )
+		self.m_GridPopup.Append( self.m_menuItemInsertLinkLine )
+
 		self.m_menuItemPopupDelCol = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Delete Column", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupDelCol )
 
@@ -367,9 +370,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_menuItemAllowEditing = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Allow Editing", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemAllowEditing )
 
-		self.m_menuItemAddLink = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Add a Link", u"Add a link to the selected row.", wx.ITEM_NORMAL )
-		self.m_GridPopup.Append( self.m_menuItemAddLink )
-
 		self.Bind( wx.EVT_RIGHT_DOWN, self.FanzineIndexPageEditGenOnContextMenu )
 
 
@@ -412,6 +412,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.Bind( wx.EVT_MENU, self.OnPopupPaste, id = self.m_menuItemPopupPaste.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupEraseSelection, id = self.m_menuItemPopupEraseSelection.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupInsertText, id = self.m_menuItemPopupInsertText.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnPopupInsertLinkLine, id = self.m_menuItemInsertLinkLine.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupDelCol, id = self.m_menuItemPopupDelCol.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupClearAllLinks, id = self.m_menuItemClearAllLinks.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupDelRow, id = self.m_menuItemPopupDelRow.GetId() )
@@ -428,7 +429,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.Bind( wx.EVT_MENU, self.OnPopupReplace, id = self.m_menuItemPopupReplace.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupRenamePDF, id = self.m_menuItemPopupRenamePDF.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupAllowEditing, id = self.m_menuItemAllowEditing.GetId() )
-		self.Bind( wx.EVT_MENU, self.OnPopupAddLink, id = self.m_menuItemAddLink.GetId() )
 
 	def __del__( self ):
 		pass
@@ -541,6 +541,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnPopupInsertText( self, event ):
 		event.Skip()
 
+	def OnPopupInsertLinkLine( self, event ):
+		event.Skip()
+
 	def OnPopupDelCol( self, event ):
 		event.Skip()
 
@@ -587,9 +590,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnPopupAllowEditing( self, event ):
-		event.Skip()
-
-	def OnPopupAddLink( self, event ):
 		event.Skip()
 
 	def FanzineIndexPageEditGenOnContextMenu( self, event ):

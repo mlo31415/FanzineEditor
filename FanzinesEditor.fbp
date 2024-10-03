@@ -2364,7 +2364,7 @@
                     </object>
                 </object>
             </object>
-            <object class="wxMenu" expanded="0">
+            <object class="wxMenu" expanded="1">
                 <property name="label">MyMenu</property>
                 <property name="name">m_GridPopup</property>
                 <property name="permission">protected</property>
@@ -2423,6 +2423,20 @@
                     <property name="shortcut"></property>
                     <property name="unchecked_bitmap"></property>
                     <event name="OnMenuSelection">OnPopupInsertText</event>
+                </object>
+                <object class="wxMenuItem" expanded="0">
+                    <property name="bitmap"></property>
+                    <property name="checked">0</property>
+                    <property name="enabled">1</property>
+                    <property name="help">Insert a link at the selected row.</property>
+                    <property name="id">wxID_ANY</property>
+                    <property name="kind">wxITEM_NORMAL</property>
+                    <property name="label">Insert a Link line</property>
+                    <property name="name">m_menuItemInsertLinkLine</property>
+                    <property name="permission">none</property>
+                    <property name="shortcut"></property>
+                    <property name="unchecked_bitmap"></property>
+                    <event name="OnMenuSelection">OnPopupInsertLinkLine</event>
                 </object>
                 <object class="wxMenuItem" expanded="0">
                     <property name="bitmap"></property>
@@ -2648,20 +2662,6 @@
                     <property name="unchecked_bitmap"></property>
                     <event name="OnMenuSelection">OnPopupAllowEditing</event>
                 </object>
-                <object class="wxMenuItem" expanded="0">
-                    <property name="bitmap"></property>
-                    <property name="checked">0</property>
-                    <property name="enabled">1</property>
-                    <property name="help">Add a link to the selected row.</property>
-                    <property name="id">wxID_ANY</property>
-                    <property name="kind">wxITEM_NORMAL</property>
-                    <property name="label">Add a Link</property>
-                    <property name="name">m_menuItemAddLink</property>
-                    <property name="permission">none</property>
-                    <property name="shortcut"></property>
-                    <property name="unchecked_bitmap"></property>
-                    <event name="OnMenuSelection">OnPopupAddLink</event>
-                </object>
             </object>
         </object>
         <object class="Frame" expanded="1">
@@ -2693,16 +2693,16 @@
             <property name="window_style">wxTAB_TRAVERSAL</property>
             <property name="xrc_skip_sizer">1</property>
             <event name="OnClose">OnClosePressed</event>
-            <object class="wxBoxSizer" expanded="0">
+            <object class="wxBoxSizer" expanded="1">
                 <property name="minimum_size"></property>
                 <property name="name">bSizer3</property>
                 <property name="orient">wxVERTICAL</property>
                 <property name="permission">none</property>
-                <object class="sizeritem" expanded="0">
+                <object class="sizeritem" expanded="1">
                     <property name="border">5</property>
                     <property name="flag">wxEXPAND</property>
                     <property name="proportion">0</property>
-                    <object class="wxFlexGridSizer" expanded="0">
+                    <object class="wxFlexGridSizer" expanded="1">
                         <property name="cols">1</property>
                         <property name="flexible_direction">wxBOTH</property>
                         <property name="growablecols"></property>

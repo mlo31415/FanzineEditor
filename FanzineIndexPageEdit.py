@@ -1052,17 +1052,28 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     self._dataGrid.SetCellBackgroundColor(irow, icol, Color.Pink)
 
     #------------------
+    # Handle a change to a cell.  This is not done for each character entered, but only at the end.
     def OnGridCellChanged(self, event):       
         # If the change is to col 0 -- the URL -- then we need to queue a Delta so the change actually gets made. Save the old name.
         oldURL=""
         if event.GetCol() == 0:
             oldURL=self.Datasource.Rows[event.GetRow()][0]
 
+        # If this is cell 0 of a link line, remove any HTML decoration, leaving the bare URL
+        irow=event.GetRow()
+        icol=event.GetCol()
+        if self.Datasource.Rows[irow].IsNormalRow and icol == 0:
+            val=self.Datasource.Rows[irow][icol].strip()
+            m=re.match(r"http:=(.*)$", val, flags=re.IGNORECASE)
+            if m is not None:
+                val=m.groups()[0]
+                self.Datasource.Rows[irow][icol]=val.removeprefix("//")
+
         self._dataGrid.OnGridCellChanged(event)  # Pass event handling to WxDataGrid
 
         # If needed, queue the Delta
-        if event.GetCol() == 0 and self.Datasource.Rows[event.GetRow()].IsNormalRow:
-            self.deltaTracker.Rename(oldURL, self.Datasource.Rows[event.GetRow()][0])
+        if icol == 0 and self.Datasource.Rows[irow].IsNormalRow:
+            self.deltaTracker.Rename(oldURL, self.Datasource.Rows[irow][icol])
 
         if event.GetCol() == 0:    # If the Filename changes, we may need to update the PDF and the Pages columns
             self.FillInPDFColumn()
@@ -1163,7 +1174,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             Enable("Rename Column")
 
         if self._dataGrid.clickedRow >= 0 and self._dataGrid.clickedColumn >= 0:
-            Enable("Add a Link")
+            Enable("Insert a Link line")
 
         # We only enable Extract Scanner when we're in the Notes column and there's something to extract.
         if self.Datasource.ColDefs[self._dataGrid.clickedColumn].Preferred == "Notes":
@@ -1401,19 +1412,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     # Add a link to the selected cell
-    def OnPopupAddLink(self, event):
+    def OnPopupInsertLinkLine(self, event):
         irow=self._dataGrid.clickedRow
         icol=self._dataGrid.clickedColumn
         if irow == -1 or icol == -1:
             event.Skip()
             return
 
-        if irow >= self.Datasource.NumRows:
-            self.Datasource.AppendEmptyRows(1)
-            irow=min(irow, self.Datasource.NumRows-1)  # No matter which row past the end was clicked on, we add just one new row
-        if irow >= self.wxGrid.NumberRows:
-            self.wxGrid.AppendRows(1)
-            irow=min(irow, self.wxGrid.NumberRows-1)     # No matter which row past the end was clicked on, we add just one new row
+        if irow > self.Datasource.NumRows:
+            self._dataGrid.ExpandDataSourceToInclude(irow, 0)   # If we're inserting past the end of the datasource, insert empty rows as necessary to fill in between
+        self._dataGrid.InsertEmptyRows(irow, 1)     # Insert the new empty row
 
         row=self.Datasource.Rows[irow]
         val=row[icol]
@@ -1430,8 +1438,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             event.Skip()
             return
 
-        val=f'<a href="https://{ret}">{val}</a>'
-        row[icol]=val
+        row[icol]=ret
+        self._dataGrid.Grid.SetCellSize(irow, 0, 1, self._dataGrid.NumCols)
+        for icol in range(self._dataGrid.NumCols):
+            self._dataGrid.AllowCellEdit(irow, icol)
         self.Datasource.Rows[irow].IsLinkRow=True
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
@@ -2345,7 +2355,7 @@ class FanzineIndexPage(GridDataSource):
                 continue
 
             if row.IsLinkRow:
-                insert+=(fr'\n<TR><TD colspan="{self.NumCols}"><a href\=\"{row.Cells[0]}">{row.Cells[0]}</a></TD></TR>')
+                insert+=(fr'\n<TR><TD colspan="{self.NumCols}"><a href="{row.Cells[0]}">{row.Cells[1]}</a></TD></TR>')
                 continue
 
             # OK, it's an ordinary row
