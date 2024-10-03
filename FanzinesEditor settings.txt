@@ -26,6 +26,3 @@ Debug Mode=False
 Test mode=True
 Test server directory=Fanzines-test 2		# Ignored if Test Mode is not Trues
 
-# Obsolete?
-#Template directory=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\\Python\\FanacLSTGenerator\\Templates
-#Local Directory Root=C:\\Users\\mlo\\Documents\\usr\\Fancyclopedia\\Python\\FanzinesEditor\\Root
