@@ -388,7 +388,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.tFanzineType.Bind( wx.EVT_CHOICE, self.OnFanzineTypeSelect )
 		self.tClubname.Bind( wx.EVT_TEXT, self.OnClubname )
 		self.tDates.Bind( wx.EVT_TEXT, self.OnDatesText )
-		self.cbComplete.Bind( wx.EVT_CHECKBOX, self.OnCheckAlphabetizeIndividually )
+		self.cbComplete.Bind( wx.EVT_CHECKBOX, self.OnCheckComplete )
 		self.cbAlphabetizeIndividually.Bind( wx.EVT_CHECKBOX, self.OnCheckAlphabetizeIndividually )
 		self.tServerDirectory.Bind( wx.EVT_CHAR, self.OnServerDirectoryChar )
 		self.tServerDirectory.Bind( wx.EVT_TEXT, self.OnServerDirectoryText )
@@ -469,9 +469,11 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnDatesText( self, event ):
 		event.Skip()
 
-	def OnCheckAlphabetizeIndividually( self, event ):
+	def OnCheckComplete( self, event ):
 		event.Skip()
 
+	def OnCheckAlphabetizeIndividually( self, event ):
+		event.Skip()
 
 	def OnServerDirectoryChar( self, event ):
 		event.Skip()
