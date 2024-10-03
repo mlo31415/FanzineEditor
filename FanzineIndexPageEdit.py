@@ -1402,12 +1402,21 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     # Add a link to the selected cell
     def OnPopupAddLink(self, event):
-        if self._dataGrid.clickedRow == -1 or self._dataGrid.clickedColumn == -1:
+        irow=self._dataGrid.clickedRow
+        icol=self._dataGrid.clickedColumn
+        if irow == -1 or icol == -1:
             event.Skip()
             return
 
-        row=self.Datasource.Rows[self._dataGrid.clickedRow]
-        val=row[self._dataGrid.clickedColumn]
+        if irow >= self.Datasource.NumRows:
+            self.Datasource.AppendEmptyRows(1)
+            irow=min(irow, self.Datasource.NumRows-1)  # No matter which row past the end was clicked on, we add just one new row
+        if irow >= self.wxGrid.NumberRows:
+            self.wxGrid.AppendRows(1)
+            irow=min(irow, self.wxGrid.NumberRows-1)     # No matter which row past the end was clicked on, we add just one new row
+
+        row=self.Datasource.Rows[irow]
+        val=row[icol]
         # Create text input
         dlg=wx.TextEntryDialog(self, 'Enter the URL to be used (just the URL, no HTML): ', 'Turn cell text into a hyperlink')
         #dlg.SetValue("Turn a cell into a link")
@@ -1422,8 +1431,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             return
 
         val=f'<a href="https://{ret}">{val}</a>'
-        row[self._dataGrid.clickedColumn]=val
-        self.Datasource.Rows[self._dataGrid.clickedRow].IsLinkRow=True
+        row[icol]=val
+        self.Datasource.Rows[irow].IsLinkRow=True
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
 
