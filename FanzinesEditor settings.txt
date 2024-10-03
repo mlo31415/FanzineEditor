@@ -20,7 +20,7 @@ How old is updated=90
 # What apas should we recognize?
 {"apas" :["FAPA", "SAPS", "OMPA", "ANZAPA", "VAPA", "FLAP", "FWD", "FIDO", "TAPS", "APA-F", "APA-L", "APA:NESFA", "WOOF", "SFPA", "KAPA"]}
 
-# Should we do logging of FTP progress. (This generates a lot of cruft which is useful priimarily for debugging.)
+# Should we do logging of FTP progress. (This generates a lot of cruft which is useful primarily for debugging.)
 FTP Logging=False
 
 #Show log window=0
