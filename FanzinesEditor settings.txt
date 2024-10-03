@@ -13,8 +13,12 @@ Root directory=Fanzine
 # When in test mode, set this to True
 Test Root directory=Fanzines-test2
 Test mode=True
+
+# This is the ID which will be used for server locks and for logging.  It should be unique to the user
+ID=mlo
+
 # For how many days should updated FIP's be tagged as updated on the classic fanzines list?
-How old is new=90
+How old is new=903:19 PM 10/2/2024
 How old is updated=90
 
 # What apas should we recognize?
@@ -28,7 +32,4 @@ FTP Logging=False
 # Debug/test controls
 Debug Mode=False
 
-# When in test mode, use this server directory as the root
-Test mode=True
-Test server directory=Fanzines-test 2		# Ignored if Test Mode is not Trues
 

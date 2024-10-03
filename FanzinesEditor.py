@@ -8,7 +8,7 @@ import wx.grid
 import sys
 import re
 
-from FTP import FTP
+from FTP import FTP, Lock
 from bs4 import BeautifulSoup
 
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
@@ -84,12 +84,31 @@ def main():
         Log("Main: OpenConnection('FTP Credentials.json' failed")
         exit(0)
 
+    # Attempt to establish a lock in Classic_fanzines.html
+    id=Settings().Get("ID")
+    lockEstablished=False
+    rootDir="/Fanzines"
+    if Settings().IsTrue("Test mode"):
+        rootDir="/"+Settings().Get("Test Root Directory", rootDir)
+    if id is not None:
+        rslt=Lock().SetLock(rootDir, id)
+        if rslt == "":
+            lockEstablished=True
+        else:
+            dlg=wx.MessageDialog(None, f"Unable to establish a lock for id '{id}' in directory '{rootDir}' because: \n{rslt}. \n\n Do you wish to proceed, anyway? ", "Continue (and risk disaster)?", wx.YES_NO|wx.ICON_QUESTION)
+            result=dlg.ShowModal()
+            dlg.Destroy()
+            if result != wx.ID_YES:
+                lockEstablished=False
 
-    # Initialize the GUI
-    FanzinesEditorWindow(None)
+    if lockEstablished:
+        # Initialize the GUI
+        FanzinesEditorWindow(None)
 
-    # Run the event loop
-    app.MainLoop()
+        # Run the event loop
+        app.MainLoop()
+
+    Lock().ReleaseLock(rootDir, id)
 
     LogClose()
     sys.exit(1)
@@ -108,11 +127,12 @@ def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear
 #==========================================================================================================
 # Read the classic fanzine list on fanac.org and return a list of all *fanzine directory names*
 def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
-    testServerDirectory=Settings().Get("Test server directory")
+    testRootDirectory=Settings().Get("Test Root directory")
     html=None
-    if testServerDirectory != "":
+    if testRootDirectory != "":
+        testRootDirectory="/"+testRootDirectory
         # If there is a test directory, try loading from there, first
-        html=FTP().GetFileAsString(testServerDirectory, "Classic_Fanzines.html")
+        html=FTP().GetFileAsString(testRootDirectory, "Classic_Fanzines.html")
     if html is None:
         # If that failed (or there wasn't one) load from the default
         html=FTP().GetFileAsString("fanzines", "Classic_Fanzines.html")
@@ -392,15 +412,15 @@ class FanzinesEditorWindow(FanzinesGridGen):
         # Figure out the server directory
         self.RootDir="Fanzines"
         if Settings().IsTrue("Test mode"):
-            self.RootDir=Settings().Get("Test Server Directory", self.RootDir)
+            self.RootDir=Settings().Get("Test Root Directory", self.RootDir)
 
         with ModalDialogManager(ProgressMessage2, "Downloading main fanzine page", parent=self):
-            cfllist=GetClassicFanzinesList()
-            if cfllist is None or len(cfllist) == 0:
-                return
-            cfllist.sort(key=lambda cfl: cfl.ServerDir.casefold())
-            self._fanzinesList=cfllist      # Update the linear list of fanzines
-            self.Datasource.FanzineList=self._fanzinesList      # Update the rectangular grid of fanzine server directories
+                cfllist=GetClassicFanzinesList()
+                if cfllist is None or len(cfllist) == 0:
+                    return
+                cfllist.sort(key=lambda cfl: cfl.ServerDir.casefold())
+                self._fanzinesList=cfllist      # Update the linear list of fanzines
+                self.Datasource.FanzineList=self._fanzinesList      # Update the rectangular grid of fanzine server directories
 
         self._dataGrid.HideRowLabels()
         self._dataGrid.HideColLabels()
@@ -453,7 +473,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
         self.Destroy()
         LogClose()
-        sys.exit(1)
+        # sys.exit(1)
 
 
     def UpdateNeedsSavingFlag(self):       
