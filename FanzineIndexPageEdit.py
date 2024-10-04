@@ -1035,12 +1035,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     #------------------
     def ColorCellByValueOverride(self, icol: int, irow: int) -> None:
+
+        # In normal rows and link rows, col 1 must be filled in
         if icol == 1:
-            if self.Datasource.Rows[irow].IsNormalRow:
+            if self.Datasource.Rows[irow].IsNormalRow or self.Datasource.Rows[irow].IsLinkRow:
                 if self.Datasource.Rows[irow][0].strip() != "":
                     if self.Datasource.Rows[irow][1].strip() == "":
                         self._dataGrid.SetCellBackgroundColor(irow, 1, Color.Pink)
 
+        # The year, oif filled in, must be within the range of dates specified by the FIP
         if self.Datasource.ColDefs[icol].Name == "Year":
             d1, d2=self.DateRange
             year=self.Datasource.Rows[irow][icol]
