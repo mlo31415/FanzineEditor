@@ -46,10 +46,6 @@ class FanzineNames:
 
 
     @property
-    def FullNameAsHTML(self) -> str:
-        return "<br>"
-
-    @property
     def MainName(self) -> str:
         return self._mainname
     @MainName.setter
