@@ -32,9 +32,10 @@ class FanzineNames:
         return self._mainname == other._mainname and all([x == y for x, y in zip(self._othernames, other._othernames)])
 
     def __str__(self):
+        otherstuff=""
         if len(self._othernames) > 0:
-            return self._mainname+" / "+self.OthernamesAsStr(", ")
-        return self._mainname
+            otherstuff=" / "+self.OthernamesAsStr(", ")
+        return self._mainname+otherstuff
 
 
     def DeepCopy(self) -> "FanzineNames":
