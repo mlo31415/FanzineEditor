@@ -161,7 +161,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # Add the various values into the dialog
             self.tCredits.SetValue(self.Datasource.Credits)
             self.tDates.SetValue(self.Datasource.Dates)
-            self.tEditors.SetValue(self.Datasource.Editors)
+            self.tEditors.SetValue("\n".join(self.Datasource.Editors))
             self.tFanzineName.SetValue(self.Datasource.Name.MainName)
             self.tOthernames.SetValue((self.Datasource.Name.OthernamesAsStr("\n")))
             if self.Datasource.FanzineType in self.tFanzineType.Items:
@@ -564,7 +564,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if result != wx.ID_YES:
                     return
 
-        with ModalDialogManager(ProgressMessage2, f"Uploading up FanzineIndexPage {self.serverDir}", parent=self) as pm:
+        with ModalDialogManager(ProgressMessage2, f"Uploading FanzineIndexPage {self.serverDir}", parent=self) as pm:
             Log(f"Uploading Fanzine Index Page: {self.serverDir}")
             self.failure=False
 
@@ -2101,17 +2101,18 @@ class FanzineIndexPage(GridDataSource):
     def Editors(self):
         return self._Editors
     @Editors.setter
-    def Editors(self, val):
-        v=val
-        if isinstance(val, list):
-            if len(val) == 1:
-                v=val[0]
-            else:
-                v=", ".join(val)
-        elif ", " in val:
-            v="\n".join([x.strip() for x in val.split(", ")])
-
-        self._Editors=v
+    def Editors(self, val: str|list):
+        self._Editors=val
+        # v=val
+        # if isinstance(val, list):
+        #     if len(val) == 1:
+        #         v=val[0]
+        #     else:
+        #         v=", ".join(val)
+        # elif "<br>" in val:
+        #     v="\n".join([x.strip() for x in val.split(", ")])
+        #
+        # self._Editors=v
 
 
 
@@ -2119,29 +2120,34 @@ class FanzineIndexPage(GridDataSource):
 
         # f"{self.Name.MainName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
         topstuff=ExtractHTMLUsingFanacComments(html, "header")
+
+
         if topstuff == "":
             LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('header')")
             return False
         # Interpret the header
-        topstuff=re.sub(r"(\r|\n|<\\?(br|h\d)>)+", "\n", topstuff, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE).split("\n")
-        topstuff=[RemoveHxTags(x) for x in topstuff+["","","","", ""]]  # In case we parsed nothing, pad it with blanks, then remove HTML crud
-        self.Name.IntepretNewHeader(topstuff[0])
-        self.Editors="\n".join([RemoveFancyLink(x).strip() for x in topstuff[1].split(",")])
-        self.Dates=topstuff[2]
-        if "&nbsp;" in self.Dates:
-            self.Dates=self.Dates.split("&nbsp;")[0]
-        self.FanzineType=RemoveFancyLink(topstuff[3])
-        if version == "1.1" and self.FanzineType.lower() == "clubzine":
-            self.Clubname=RemoveFancyLink(topstuff[4])
+        def ExtractTaggedText(s: str, tag: str) -> str:
+            m=re.search(rf"<!--{tag}-->(.*?)<!--{tag}-->", s)
+            if m is not None:
+                return m.groups()[0]
+            return ""
 
+        self.Name.MainName=RemoveFancyLink(ExtractTaggedText(topstuff, "name"))
+        other=ExtractTaggedText(topstuff, "other")
+        other=[RemoveFancyLink(x) for x in [y for y in SplitOnSpansOfLineBreaks(other)]]
+        self.Name.Othernames=other
+        self.Editors=[RemoveFancyLink(x).strip() for x in ExtractTaggedText(topstuff, "eds").split("<br>")]
+        self.Dates=ExtractTaggedText(topstuff, "dates")
+        self.FanzineType=ExtractTaggedText(topstuff, "type")
+        self.Clubname=RemoveFancyLink(ExtractTaggedText(topstuff, "club"))
 
         # f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
-        locale=ExtractHTMLUsingFanacComments(html, "locale")
+        locale=RemoveFancyLink(ExtractTaggedText(html, "loc"))
         if locale == "":
             LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('Locale')")
             return False
         # Remove the <h2>s that tend to decorate it
-        self.Locale=re.sub(r"</?h[0-9]>", "", locale, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE).strip()
+        self.Locale=locale
 
         keywords=ExtractInvisibleTextUsingFanacComments(html, "keywords").split(",")
         keywords=[x.strip() for x in keywords]
@@ -2288,23 +2294,18 @@ class FanzineIndexPage(GridDataSource):
 
         output, rslt=FindAndReplaceBracketedText(output, "title", f"<title>{self.Name.MainName}</title>", caseInsensitive=True)
 
-        eds=", ".join([SpecialNameFormatToHtmlFancylink(x.strip()) for x in self.Editors.split("\n")])
-        insert=f"{SpecialNameFormatToHtmlFancylink(self.Name.MainName)} {self.Name.OthernamesAsStr("\n ")}<BR><H2>{eds}<BR><BR>{self.Dates}{"&nbsp;<small><small>(Complete)</small></small>" if self.Complete else ""}</H2><H3>{self.FanzineType}"
-        if len(self.Clubname) > 0:
-            insert+=f"<BR>{SpecialNameFormatToHtmlFancylink(self.Clubname)}"
-        insert+="</H3>"
-        temp=InsertHTMLUsingFanacComments(output, "header", insert)
-        if temp == "":
-            LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('header')")
-            return False
-        output=temp
-
-        insert=f"<H3>{TurnPythonListIntoWordList(self.Locale)}</H3>"
-        temp=InsertHTMLUsingFanacComments(output, "locale", insert)
-        if temp == "":
-            LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('Locale')")
-            return False
-        output=temp
+        # Format the top-level stuff
+        def InsertBetweenComments(s: str, tag: str, val: str) -> str:
+            # Look for a section of the input string surrounded by  "<!--- tag -->" and replace it all by val
+            return re.sub(rf"<!--\s*{tag}\s*-->(.*?)<!--\s*{tag}\s*-->", f"<!--{tag}-->{val}<!--{tag}-->", s, flags=re.IGNORECASE | re.DOTALL | re.MULTILINE)
+        output=InsertBetweenComments(output, "name", self.Name.MainName)
+        output=InsertBetweenComments(output, "other", self.Name.OthernamesAsHTML)
+        output=InsertBetweenComments(output, "eds", "<br>".join([SpecialNameFormatToHtmlFancylink(x.strip()) for x in self.Editors.split("\n")]))
+        output=InsertBetweenComments(output, "date", self.Dates)
+        output=InsertBetweenComments(output, "complete", "(Complete)" if self.Complete else "")
+        output=InsertBetweenComments(output, "type", self.FanzineType)
+        output=InsertBetweenComments(output, "club", self.Clubname)
+        output=InsertBetweenComments(output, "loc", f"<H3>{TurnPythonListIntoWordList(self.Locale)}</H3>")
 
         insert=self.TopComments.replace("\n", "<br>")
         temp=InsertHTMLUsingFanacComments(output, "topcomments", insert)
