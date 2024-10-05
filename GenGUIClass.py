@@ -53,7 +53,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		fgSizer11.SetFlexibleDirection( wx.BOTH )
 		fgSizer11.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		self.m_staticTextFanzineName = wx.StaticText( self, wx.ID_ANY, u"Fanzine Name:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticTextFanzineName = wx.StaticText( self, wx.ID_ANY, u"   Fanzine Name: ", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticTextFanzineName.Wrap( -1 )
 
 		self.m_staticTextFanzineName.SetMinSize( wx.Size( 200,-1 ) )
@@ -67,7 +67,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		fgSizer11.Add( self.tFanzineName, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT|wx.ALL|wx.FIXED_MINSIZE, 0 )
 
-		self.m_staticTextOtherNames = wx.StaticText( self, wx.ID_ANY, u"Other Names:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticTextOtherNames = wx.StaticText( self, wx.ID_ANY, u"Other Names:\n(one per line)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticTextOtherNames.Wrap( -1 )
 
 		self.m_staticTextOtherNames.SetMinSize( wx.Size( 200,-1 ) )
@@ -135,10 +135,10 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.tClubname = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.tClubname.SetMinSize( wx.Size( 200,-1 ) )
 
-		fgSizer16.Add( self.tClubname, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+		fgSizer16.Add( self.tClubname, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5 )
 
 
-		bSizer6.Add( fgSizer16, 1, 0, 5 )
+		bSizer6.Add( fgSizer16, 1, wx.ALIGN_RIGHT, 5 )
 
 		fgSizer17 = wx.FlexGridSizer( 0, 2, 0, 0 )
 		fgSizer17.SetFlexibleDirection( wx.BOTH )
@@ -156,33 +156,16 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.tDates.SetToolTip( u"The date range for this fanzine, years only. E.g., 1965-1974" )
 		self.tDates.SetMinSize( wx.Size( 150,-1 ) )
 
-		fgSizer17.Add( self.tDates, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, 0 )
+		fgSizer17.Add( self.tDates, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT, 0 )
 
 
-		bSizer6.Add( fgSizer17, 1, 0, 5 )
+		bSizer6.Add( fgSizer17, 1, wx.ALIGN_RIGHT, 5 )
 
 
 		fgSizer4.Add( bSizer6, 1, 0, 5 )
 
 
 		bSizer7.Add( fgSizer4, 0, wx.EXPAND, 5 )
-
-		fgSizer15 = wx.FlexGridSizer( 0, 2, 0, 0 )
-		fgSizer15.SetFlexibleDirection( wx.BOTH )
-		fgSizer15.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
-
-		self.cbComplete = wx.CheckBox( self, wx.ID_ANY, u"Complete", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.cbComplete.SetToolTip( u"Do we want to treat the issues in this page as independent fanzines rather than issues of this page?" )
-
-		fgSizer15.Add( self.cbComplete, 0, wx.ALL, 5 )
-
-		self.cbAlphabetizeIndividually = wx.CheckBox( self, wx.ID_ANY, u"Alphabetize Individually", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.cbAlphabetizeIndividually.SetToolTip( u"Do we want to treat the issues in this page as independent fanzines rather than issues of this page?" )
-
-		fgSizer15.Add( self.cbAlphabetizeIndividually, 0, wx.ALL, 5 )
-
-
-		bSizer7.Add( fgSizer15, 1, wx.EXPAND, 5 )
 
 		fgSizer6 = wx.FlexGridSizer( 1, 6, 0, 0 )
 		fgSizer6.SetFlexibleDirection( wx.BOTH )
@@ -220,8 +203,25 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		bSizer7.Add( fgSizer6, 0, wx.EXPAND, 5 )
 
+		fgSizer15 = wx.FlexGridSizer( 0, 2, 0, 0 )
+		fgSizer15.SetFlexibleDirection( wx.BOTH )
+		fgSizer15.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
-		bSizerMain.Add( bSizer7, 1, wx.EXPAND, 5 )
+		self.cbComplete = wx.CheckBox( self, wx.ID_ANY, u"Complete", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.cbComplete.SetToolTip( u"Do we want to treat the issues in this page as independent fanzines rather than issues of this page?" )
+
+		fgSizer15.Add( self.cbComplete, 0, wx.ALL, 5 )
+
+		self.cbAlphabetizeIndividually = wx.CheckBox( self, wx.ID_ANY, u"Alphabetize Individually", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.cbAlphabetizeIndividually.SetToolTip( u"Do we want to treat the issues in this page as independent fanzines rather than issues of this page?" )
+
+		fgSizer15.Add( self.cbAlphabetizeIndividually, 0, wx.ALL, 5 )
+
+
+		bSizer7.Add( fgSizer15, 1, wx.EXPAND, 5 )
+
+
+		bSizerMain.Add( bSizer7, 0, wx.EXPAND, 5 )
 
 		fgSizerComments = wx.FlexGridSizer( 4, 2, 0, 0 )
 		fgSizerComments.AddGrowableCol( 1 )
@@ -388,13 +388,13 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.tFanzineType.Bind( wx.EVT_CHOICE, self.OnFanzineTypeSelect )
 		self.tClubname.Bind( wx.EVT_TEXT, self.OnClubname )
 		self.tDates.Bind( wx.EVT_TEXT, self.OnDatesText )
-		self.cbComplete.Bind( wx.EVT_CHECKBOX, self.OnCheckComplete )
-		self.cbAlphabetizeIndividually.Bind( wx.EVT_CHECKBOX, self.OnCheckAlphabetizeIndividually )
 		self.tServerDirectory.Bind( wx.EVT_CHAR, self.OnServerDirectoryChar )
 		self.tServerDirectory.Bind( wx.EVT_TEXT, self.OnServerDirectoryText )
 		self.m_bpButton1.Bind( wx.EVT_BUTTON, self.OnButtonClickCopyServerDir )
 		self.tLocalDirectory.Bind( wx.EVT_CHAR, self.OnLocalDirectoryChar )
 		self.tLocalDirectory.Bind( wx.EVT_TEXT, self.OnLocalDirectoryText )
+		self.cbComplete.Bind( wx.EVT_CHECKBOX, self.OnCheckComplete )
+		self.cbAlphabetizeIndividually.Bind( wx.EVT_CHECKBOX, self.OnCheckAlphabetizeIndividually )
 		self.tTopComments.Bind( wx.EVT_TEXT, self.OnTopCommentsText )
 		self.tLocaleText.Bind( wx.EVT_TEXT, self.OnLocaleText )
 		self.tCredits.Bind( wx.EVT_TEXT, self.OnCreditsText )
@@ -469,12 +469,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 	def OnDatesText( self, event ):
 		event.Skip()
 
-	def OnCheckComplete( self, event ):
-		event.Skip()
-
-	def OnCheckAlphabetizeIndividually( self, event ):
-		event.Skip()
-
 	def OnServerDirectoryChar( self, event ):
 		event.Skip()
 
@@ -488,6 +482,12 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnLocalDirectoryText( self, event ):
+		event.Skip()
+
+	def OnCheckComplete( self, event ):
+		event.Skip()
+
+	def OnCheckAlphabetizeIndividually( self, event ):
 		event.Skip()
 
 	def OnTopCommentsText( self, event ):
