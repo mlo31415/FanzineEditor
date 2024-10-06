@@ -115,7 +115,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		fgSizer10.Add( self.m_staticText13, 0, wx.ALIGN_LEFT|wx.ALL, 5 )
 
-		tFanzineTypeChoices = [ u" ", u"Genzine", u"Apazine", u"Perzine", u"Newszine", u"Collection", u"Related", u"Clubzine", u"Adzine", u"Reference" ]
+		tFanzineTypeChoices = [ u"Fanzine", u"Genzine", u"Apazine", u"Perzine", u"Newszine", u"Collection", u"Related", u"Clubzine", u"Adzine", u"Reference" ]
 		self.tFanzineType = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, tFanzineTypeChoices, 0 )
 		self.tFanzineType.SetSelection( 0 )
 		fgSizer10.Add( self.tFanzineType, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT|wx.ALL, 0 )
