@@ -2301,7 +2301,7 @@ class FanzineIndexPage(GridDataSource):
         output=InsertBetweenComments(output, "name", self.Name.MainName)
         output=InsertBetweenComments(output, "other", self.Name.OthernamesAsHTML)
         output=InsertBetweenComments(output, "eds", "<br>".join([SpecialNameFormatToHtmlFancylink(x.strip()) for x in self.Editors.split("\n")]))
-        output=InsertBetweenComments(output, "date", self.Dates)
+        output=InsertBetweenComments(output, "dates", self.Dates)
         output=InsertBetweenComments(output, "complete", "(Complete)" if self.Complete else "")
         output=InsertBetweenComments(output, "type", self.FanzineType)
         output=InsertBetweenComments(output, "club", self.Clubname)
