@@ -4,7 +4,7 @@ from datetime import datetime
 
 from unidecode import unidecode
 
-from HelpersPackage import SortPersonsName, Int0, FindNextBracketedText, SplitOnSpansOfLineBreaks
+from HelpersPackage import SortPersonsName, Int0, FindNextBracketedText, SplitOnSpansOfLineBreaks, RemoveHTMLishWhitespace
 from FanzineIssueSpecPackage import FanzineDate
 from FanzineNames import FanzineNames
 
@@ -209,7 +209,7 @@ class ClassicFanzinesLine:
         return self._editors
     @Editors.setter
     def Editors(self, val: str):
-        self._editors=val
+        self._editors=RemoveHTMLishWhitespace(val, replacement="; ")
 
     @property
     def EditorsSort(self) -> str:
