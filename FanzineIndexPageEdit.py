@@ -2305,7 +2305,7 @@ class FanzineIndexPage(GridDataSource):
         output=InsertBetweenComments(output, "complete", "(Complete)" if self.Complete else "")
         output=InsertBetweenComments(output, "type", self.FanzineType)
         output=InsertBetweenComments(output, "club", self.Clubname)
-        output=InsertBetweenComments(output, "loc", f"<H3>{TurnPythonListIntoWordList(self.Locale)}</H3>")
+        output=InsertBetweenComments(output, "loc", TurnPythonListIntoWordList(self.Locale))
 
         insert=self.TopComments.replace("\n", "<br>")
         temp=InsertHTMLUsingFanacComments(output, "topcomments", insert)
