@@ -185,7 +185,7 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
         # Do a strip() and then if the entry is nothing but whitespace and HTML that amounts to whitespace, remove it all
         def DStrip(s: str) -> str:
             s=s.strip()
-            ss=re.sub(r"\s|<br>|</br>|<br/>|<td>", "", s)
+            ss=re.sub(r"\s|<br>|</br>|<br/>|<td>", "", s, flags=re.IGNORECASE)
             if len(ss) == 0:
                 return ""
             return s
