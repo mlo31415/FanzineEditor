@@ -164,8 +164,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.tEditors.SetValue("\n".join(self.Datasource.Editors))
             self.tFanzineName.SetValue(self.Datasource.Name.MainName)
             self.tOthernames.SetValue((self.Datasource.Name.OthernamesAsStr("\n")))
-            if self.Datasource.FanzineType in self.tFanzineType.Items:
-                self.tFanzineType.SetSelection(self.tFanzineType.Items.index(self.Datasource.FanzineType))
+            if self.Datasource.FanzineType in self.chFanzineType.Items:
+                self.chFanzineType.SetSelection(self.chFanzineType.Items.index(self.Datasource.FanzineType))
             self.tClubname.SetValue(self.Datasource.Clubname)
             self.tLocaleText.SetValue(self.Datasource.Locale)
             self.tTopComments.SetValue(self.Datasource.TopComments)
@@ -241,7 +241,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Some things are turned on for both editing an old FIP and creating a new one
         self.tEditors.SetEditable(True)
         self.tDates.SetEditable(True)
-        self.tFanzineType.Enabled=True
+        self.chFanzineType.Enabled=True
         self.tTopComments.SetEditable(True)
         self.tLocaleText.SetEditable(True)
         self.cbComplete.Enabled=True
@@ -504,7 +504,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tTopComments.SetValue("")
         self.tEditors.SetValue("")
         self.tDates.SetValue("")
-        self.tFanzineType.SetSelection(0)
+        self.chFanzineType.SetSelection(0)
         self.tClubname.SetValue("")
         self.tLocaleText.SetValue("")
         self.tCredits.SetValue("")
@@ -531,7 +531,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.ServerDir=self.tServerDirectory.GetValue()
         cfl.Name=FanzineNames(self.tFanzineName.GetValue(), self.tOthernames.GetValue())
         cfl.Dates=self.tDates.GetValue()
-        cfl.Type=self.tFanzineType.Items[self.tFanzineType.GetSelection()]
+        cfl.Type=self.chFanzineType.Items[self.chFanzineType.GetSelection()]
         cfl.Clubname=self.tClubname.GetValue()
         cfl.Complete=self.cbComplete.GetValue()
         cfl.Updated=datetime.now()
@@ -842,7 +842,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tLocalDirectory.Enabled=len(self.tLocalDirectory.GetValue()) == 0 or self.IsNewDirectory
 
         # The Clubname field is editable iff the fanzine type is "Clubzine"
-        self.tClubname.Enabled="Clubzine" == self.tFanzineType.Items[self.tFanzineType.GetSelection()]
+        self.tClubname.Enabled="Clubzine" == self.chFanzineType.Items[self.chFanzineType.GetSelection()]
 
 
     def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       
@@ -979,7 +979,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     def OnFanzineTypeSelect(self, event):       
-        self.Datasource.FanzineType=self.tFanzineType.GetItems()[self.tFanzineType.GetSelection()]
+        self.Datasource.FanzineType=self.chFanzineType.GetItems()[self.chFanzineType.GetSelection()]
         if self.Datasource.FanzineType.lower() != "clubzine":   # If the fanzine type is changed to anything but clubzine, erase the clubname field
             self.Datasource.Clubname=""
             self.tClubname.SetValue("")
