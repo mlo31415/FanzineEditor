@@ -203,7 +203,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		bSizer71 = wx.BoxSizer( wx.HORIZONTAL )
 
 
-		bSizer71.Add( ( 100, 0), 1, wx.EXPAND, 5 )
+		bSizer71.Add( ( 150, 0), 0, wx.RIGHT, 5 )
 
 		self.m_staticText15 = wx.StaticText( self, wx.ID_ANY, u"Fanzine Significance:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText15.Wrap( -1 )
@@ -216,10 +216,10 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		bSizer71.Add( self.chSignificance, 0, wx.ALL, 5 )
 
 
-		fgSizer6.Add( bSizer71, 0, wx.ALIGN_RIGHT|wx.RIGHT, 5 )
+		fgSizer6.Add( bSizer71, 0, 0, 5 )
 
 
-		bSizer7.Add( fgSizer6, 0, wx.EXPAND, 5 )
+		bSizer7.Add( fgSizer6, 0, 0, 5 )
 
 		fgSizer15 = wx.FlexGridSizer( 0, 2, 0, 0 )
 		fgSizer15.SetFlexibleDirection( wx.BOTH )
