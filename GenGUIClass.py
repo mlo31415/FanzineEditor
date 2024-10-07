@@ -65,7 +65,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.tFanzineName.SetToolTip( u"The name of the fanzine serires." )
 		self.tFanzineName.SetMinSize( wx.Size( 300,-1 ) )
 
-		fgSizer11.Add( self.tFanzineName, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT|wx.ALL|wx.FIXED_MINSIZE, 0 )
+		fgSizer11.Add( self.tFanzineName, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.FIXED_MINSIZE, 0 )
 
 		self.m_staticTextOtherNames = wx.StaticText( self, wx.ID_ANY, u"Other Names:\n(one per line)", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticTextOtherNames.Wrap( -1 )
@@ -79,7 +79,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.tOthernames.SetToolTip( u"Other, secondary names of the fanzine" )
 		self.tOthernames.SetMinSize( wx.Size( 400,60 ) )
 
-		fgSizer11.Add( self.tOthernames, 0, wx.ALIGN_LEFT|wx.ALL, 5 )
+		fgSizer11.Add( self.tOthernames, 0, wx.ALL, 5 )
 
 
 		fgSizer4.Add( fgSizer11, 1, wx.EXPAND, 5 )
@@ -135,7 +135,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.tClubname = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.tClubname.SetMinSize( wx.Size( 200,-1 ) )
 
-		fgSizer16.Add( self.tClubname, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5 )
+		fgSizer16.Add( self.tClubname, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL|wx.ALIGN_RIGHT, 5 )
 
 
 		bSizer6.Add( fgSizer16, 1, wx.ALIGN_RIGHT, 5 )
@@ -167,25 +167,25 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		bSizer7.Add( fgSizer4, 0, wx.EXPAND, 5 )
 
-		fgSizer6 = wx.FlexGridSizer( 1, 6, 0, 0 )
+		fgSizer6 = wx.FlexGridSizer( 1, 9, 0, 0 )
 		fgSizer6.SetFlexibleDirection( wx.BOTH )
 		fgSizer6.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
 		self.m_staticText38 = wx.StaticText( self, wx.ID_ANY, u"Server Directory:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText38.Wrap( -1 )
 
-		fgSizer6.Add( self.m_staticText38, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5 )
+		fgSizer6.Add( self.m_staticText38, 0, wx.ALIGN_RIGHT|wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.tServerDirectory = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.tServerDirectory.SetMinSize( wx.Size( 250,-1 ) )
 
-		fgSizer6.Add( self.tServerDirectory, 0, wx.ALL, 5 )
+		fgSizer6.Add( self.tServerDirectory, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.m_bpButton1 = wx.BitmapButton( self, wx.ID_ANY, wx.NullBitmap, wx.DefaultPosition, wx.Size( 25,25 ), wx.BU_AUTODRAW|0 )
 		self.m_bpButton1.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_ACTIVECAPTION ) )
 		self.m_bpButton1.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_ACTIVECAPTION ) )
 
-		fgSizer6.Add( self.m_bpButton1, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+		fgSizer6.Add( self.m_bpButton1, 0, wx.ALIGN_CENTER|wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
 		fgSizer6.Add( ( 30, 0), 1, wx.EXPAND, 5 )
@@ -193,12 +193,30 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_staticText39 = wx.StaticText( self, wx.ID_ANY, u"Local Directory:", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText39.Wrap( -1 )
 
-		fgSizer6.Add( self.m_staticText39, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 5 )
+		fgSizer6.Add( self.m_staticText39, 0, wx.ALIGN_RIGHT|wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 		self.tLocalDirectory = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.tLocalDirectory.SetMinSize( wx.Size( 180,-1 ) )
 
-		fgSizer6.Add( self.tLocalDirectory, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, 5 )
+		fgSizer6.Add( self.tLocalDirectory, 0, wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		bSizer71 = wx.BoxSizer( wx.HORIZONTAL )
+
+
+		bSizer71.Add( ( 100, 0), 1, wx.EXPAND, 5 )
+
+		self.m_staticText15 = wx.StaticText( self, wx.ID_ANY, u"Fanzine Significance:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText15.Wrap( -1 )
+
+		bSizer71.Add( self.m_staticText15, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
+		chSignificanceChoices = [ u"Focal Point", u"Important", u"Average", u"Minor", u"Cerudzine" ]
+		self.chSignificance = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, chSignificanceChoices, 0 )
+		self.chSignificance.SetSelection( 0 )
+		bSizer71.Add( self.chSignificance, 0, wx.ALL, 5 )
+
+
+		fgSizer6.Add( bSizer71, 0, wx.ALIGN_RIGHT|wx.RIGHT, 5 )
 
 
 		bSizer7.Add( fgSizer6, 0, wx.EXPAND, 5 )
@@ -393,6 +411,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_bpButton1.Bind( wx.EVT_BUTTON, self.OnButtonClickCopyServerDir )
 		self.tLocalDirectory.Bind( wx.EVT_CHAR, self.OnLocalDirectoryChar )
 		self.tLocalDirectory.Bind( wx.EVT_TEXT, self.OnLocalDirectoryText )
+		self.chSignificance.Bind( wx.EVT_CHOICE, self.OnSignificanceSelect )
 		self.cbComplete.Bind( wx.EVT_CHECKBOX, self.OnCheckComplete )
 		self.cbAlphabetizeIndividually.Bind( wx.EVT_CHECKBOX, self.OnCheckAlphabetizeIndividually )
 		self.tTopComments.Bind( wx.EVT_TEXT, self.OnTopCommentsText )
@@ -482,6 +501,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnLocalDirectoryText( self, event ):
+		event.Skip()
+
+	def OnSignificanceSelect( self, event ):
 		event.Skip()
 
 	def OnCheckComplete( self, event ):

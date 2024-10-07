@@ -166,6 +166,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.tOthernames.SetValue((self.Datasource.Name.OthernamesAsStr("\n")))
             if self.Datasource.FanzineType in self.chFanzineType.Items:
                 self.chFanzineType.SetSelection(self.chFanzineType.Items.index(self.Datasource.FanzineType))
+            self.chSignificance.SetSelection(self.chSignificance.Items.index(self.Datasource.Significance))
             self.tClubname.SetValue(self.Datasource.Clubname)
             self.tLocaleText.SetValue(self.Datasource.Locale)
             self.tTopComments.SetValue(self.Datasource.TopComments)
@@ -242,6 +243,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tEditors.SetEditable(True)
         self.tDates.SetEditable(True)
         self.chFanzineType.Enabled=True
+        self.chSignificance.Enabled=True
         self.tTopComments.SetEditable(True)
         self.tLocaleText.SetEditable(True)
         self.cbComplete.Enabled=True
@@ -505,6 +507,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tEditors.SetValue("")
         self.tDates.SetValue("")
         self.chFanzineType.SetSelection(0)
+        self.chSignificance.SetSelection(0)
         self.tClubname.SetValue("")
         self.tLocaleText.SetValue("")
         self.tCredits.SetValue("")
@@ -532,6 +535,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.Name=FanzineNames(self.tFanzineName.GetValue(), self.tOthernames.GetValue())
         cfl.Dates=self.tDates.GetValue()
         cfl.Type=self.chFanzineType.Items[self.chFanzineType.GetSelection()]
+        cfl.Significance=self.chSignificance.Items[self.chSignificance.GetSelection()]
         cfl.Clubname=self.tClubname.GetValue()
         cfl.Complete=self.cbComplete.GetValue()
         cfl.Updated=datetime.now()
@@ -983,6 +987,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if self.Datasource.FanzineType.lower() != "clubzine":   # If the fanzine type is changed to anything but clubzine, erase the clubname field
             self.Datasource.Clubname=""
             self.tClubname.SetValue("")
+        self.RefreshWindow(DontRefreshGrid=True)
+
+    def OnSignificanceSelect(self, event):
+        self.Datasource.Significance=self.chSignificance.GetItems()[self.chSignificance.GetSelection()]
         self.RefreshWindow(DontRefreshGrid=True)
 
 
@@ -1865,6 +1873,7 @@ class FanzineIndexPage(GridDataSource):
         self._betterScanNeeded: bool=False
         self._Editors: str=""
         self.Dates: str=""
+        self.Significance: str="Average"
         self.FanzineType: str=""
         self.Complete=False     # Is this fanzine series complete?
         self.AlphabetizeIndividually=False      # Treat all issues as part of main series
@@ -1877,7 +1886,7 @@ class FanzineIndexPage(GridDataSource):
         if self._colDefs is not None:
             s+=self._colDefs.Signature()
         s+=hash(f"{self._name};{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
-        s+=hash(f"{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
+        s+=hash(f"{self.TopComments.strip()};{' '.join(self.Locale).strip()};{self.Significance}")
         s+=hash(f"{self.Name.MainName};{self.Editors};{self.Dates};{self.FanzineType};{self.Clubname};{self.Credits};{self.Complete}{self.AlphabetizeIndividually}")
         s+=sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
         s+=hash(self._specialTextColor)
@@ -2141,6 +2150,8 @@ class FanzineIndexPage(GridDataSource):
         self.FanzineType=ExtractTaggedText(topstuff, "type")
         self.Clubname=RemoveFancyLink(ExtractTaggedText(topstuff, "club"))
 
+        self.Significance=ExtractInvisibleTextUsingFanacComments(html, "sig")
+
         # f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
         locale=RemoveFancyLink(ExtractTaggedText(html, "loc"))
         if locale == "":
@@ -2306,6 +2317,8 @@ class FanzineIndexPage(GridDataSource):
         output=InsertBetweenComments(output, "type", self.FanzineType)
         output=InsertBetweenComments(output, "club", f" - {self.Clubname}")
         output=InsertBetweenComments(output, "loc", TurnPythonListIntoWordList(self.Locale))
+
+        output=InsertInvisibleTextUsingFanacComments(output, "sig", self.Significance)
 
         insert=self.TopComments.replace("\n", "<br>")
         temp=InsertHTMLUsingFanacComments(output, "topcomments", insert)
