@@ -498,6 +498,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
     def MarkAsSaved(self):       
         self._signature=self.Signature()
         self._fanzinesCount=len(self._fanzinesList)
+        self.UpdateNeedsSavingFlag()
 
 
     def NeedsSaving(self):       
