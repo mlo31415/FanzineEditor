@@ -15,9 +15,10 @@ import bs4
 from pypdf import PdfWriter
 import pyperclip
 
+from FTPLog import FTPLog
 from GenGUIClass import FanzineIndexPageEditGen
 from ClassicFanzinesLine import ClassicFanzinesLine, ClassicFanzinesDate
-from DeltaTracker import DeltaTracker
+from DeltaTracker import DeltaTracker, Delta
 from FanzineNames import FanzineNames
 
 from FTP import FTP
@@ -352,7 +353,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         for i, file in enumerate(files):
             newrows[i].FileSourcePath=files[i]
             newrows[i][0]=os.path.basename(files[i])
-            self.deltaTracker.Add(file)
+            self.deltaTracker.Add(file, irow=i)
 
         # Add a PDF column (if needed) and fill in the PDF column and page counts
         self.FillInPDFColumn()
@@ -593,12 +594,36 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             pm.Update(f"Uploading new Fanzine Index Page: {self.serverDir}")
             self.serverDir=self.tServerDirectory.GetValue()
 
+            def CreateLogText(d: Delta) -> str:
+                nsfn=""
+                if d.NewSourceFilename != "":
+                    nsfn=f"<newname>{d.NewSourceFilename}</newname>"
+
+                issuename=""
+                if d.IssueName != "":
+                    issuename=f"<issue>{d.IssueName}</issue>"
+                elif d.Irow is not None:
+                    issuename=f"<issue>self.Datasource.Rows[d.Irow][1]</issue>"
+
+                sfn=f"<sname>{d.SourceFilename}</sname>"
+
+                match d.Verb:
+                    case "add":
+                        return f"<verb>{d.Verb}</verb>{sfn}{issuename}{nsfn}<spath>{d.SourcePath}<spath>"
+                    case "replace":
+                        return f"<verb>{d.Verb}</verb>{sfn}{issuename}{nsfn}<spath>{d.SourcePath}<spath>"
+                    case "rename":
+                        return f"<verb>{d.Verb}</verb>{sfn}{issuename}<newname>{d.NewSourceFilename}</newname>"
+                    case "delete":
+                        return f"<verb>{d.Verb}</verb>{sfn}{issuename}"
+
+
             # Now execute the delta list on the files.
             failure=False
             for delta in self.deltaTracker.Deltas:
                 match delta.Verb:
                     case "add":
-                        # Copy file to server, possibly renaming it
+                        # Copy a file to server, possibly renaming it
                         path=delta.SourcePath
                         filename=delta.SourceFilename
 
@@ -628,6 +653,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                 break
                         del tempfilepath
                         delta.Uploaded=True
+                        FTPLog().AppendItem(CreateLogText(delta))
                         continue
 
                     case "delete":
@@ -643,6 +669,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                 failure=True
                                 break
                         delta.Uploaded=True
+                        FTPLog().AppendItem(CreateLogText(delta))
                         continue
 
                     case "rename":
@@ -659,6 +686,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                 failure=True
                                 break
                         delta.Uploaded=True
+                        FTPLog().AppendItem(CreateLogText(delta))
                         continue
 
                     case "replace":
@@ -687,11 +715,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                 break
                         del tempfilepath
                         delta.Uploaded=True
+                        FTPLog().AppendItem(CreateLogText(delta))
                         continue
 
             if failure:
                 dlg=wx.MessageDialog(self, f"Upload failed")
                 dlg.ShowModal()
+
+            FTPLog.Flush()
 
             # Delete all deltas which were uploaded
             oldDeltas=self.deltaTracker
@@ -1084,7 +1115,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # If needed, queue the Delta
         if icol == 0 and self.Datasource.Rows[irow].IsNormalRow:
-            self.deltaTracker.Rename(oldURL, self.Datasource.Rows[irow][icol])
+            self.deltaTracker.Rename(oldURL, self.Datasource.Rows[irow][icol], irow=irow)
 
         if event.GetCol() == 0:    # If the Filename changes, we may need to update the PDF and the Pages columns
             self.FillInPDFColumn()
@@ -1309,7 +1340,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         assert urlCol != -1
         for irow in range(top, bottom+1):
             if self.Datasource.Rows[irow].IsNormalRow and not self.Datasource.Rows[irow].IsEmptyRow:
-                self.deltaTracker.Delete(self.Datasource.Rows[irow][urlCol])
+                self.deltaTracker.Delete(self.Datasource.Rows[irow][urlCol], issuename=self.Datasource.Rows[irow][1], irow=irow)
 
         self._dataGrid.DeleteSelectedRows() # Pass event to WxDataGrid to handle
         self.RefreshWindow()
@@ -1379,10 +1410,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if len(filepath) != 1:     # Should never happen as there's no way to return from dlg w/o selecting pdfs or hitting cancel.  But just in case...
             return
 
-        oldfile=self.Datasource.Rows[self._dataGrid.clickedRow][0]
+        irow=self._dataGrid.clickedRow
+        oldfile=self.Datasource.Rows[irow][0]
         newfilepath, newfilename=os.path.split(filepath[0])
-        self.Datasource.Rows[self._dataGrid.clickedRow][0]=newfilename
-        self.deltaTracker.Replace(oldfile, filepath[0])
+        self.Datasource.Rows[irow][0]=newfilename
+        self.deltaTracker.Replace(oldfile, filepath[0], irow=irow, issuename=self.Datasource.Rows[irow][1])
         self.RefreshWindow()
 
         event.Skip()
@@ -1403,9 +1435,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             event.Skip()
             return
 
-        self.Datasource.Rows[self._dataGrid.clickedRow][0]=newname
+        irow=self._dataGrid.clickedRow
+        self.Datasource.Rows[irow][0]=newname
         self.RefreshWindow()
-        self.deltaTracker.Rename(oldname, newname)
+        self.deltaTracker.Rename(oldname, newname, issuename=self.Datasource.Rows[irow][1], irow=irow)
 
         event.Skip()
 

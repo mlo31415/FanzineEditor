@@ -11,6 +11,7 @@ import re
 from FTP import FTP, Lock
 from bs4 import BeautifulSoup
 
+from FTPLog import FTPLog
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMessage2, ModalDialogManager
 from HelpersPackage import MessageBox, ExtractInvisibleTextInsideFanacComment, ConvertHTMLishCharacters
@@ -73,6 +74,14 @@ def main():
 
     FTP().LoggingOff()
 
+    id=Settings().Get("ID")
+    rootDir="/Fanzines"
+    if Settings().IsTrue("Test mode"):
+        rootDir="/"+Settings().Get("Test Root Directory", rootDir)
+
+    # Initialize logging of activities
+    FTPLog().Init(id, f"{rootDir}/FanzinesEditor Log.txt")
+
     if not os.path.exists("FTP Credentials.json"):
         msg=f"Unable to find file 'FTP Credentials.json' file.  Expected to find it in {os.getcwd()}"
         MessageBox(msg, ignoredebugger=True)
@@ -84,12 +93,8 @@ def main():
         Log("Main: OpenConnection('FTP Credentials.json' failed")
         exit(0)
 
-    # Attempt to establish a lock in Classic_fanzines.html
-    id=Settings().Get("ID")
+    # Attempt to establish a lock on the Fanzines directories
     lockEstablished=False
-    rootDir="/Fanzines"
-    if Settings().IsTrue("Test mode"):
-        rootDir="/"+Settings().Get("Test Root Directory", rootDir)
     if id is not None:
         rslt=Lock().SetLock(rootDir, id)
         if rslt == "":
