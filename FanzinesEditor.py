@@ -672,6 +672,9 @@ class FanzinesPageRow(GridDataRowClass):
     def __len__(self):
         return len(self._cells)
 
+    def __hash__(self):
+        return sum([(i+1)*hash(x) for i, x in enumerate(self._cells)])
+
     def Extend(self, s: list[str]) -> None:
         self._cells.extend(s)
 
@@ -683,7 +686,7 @@ class FanzinesPageRow(GridDataRowClass):
 
     # We multiply the cell has by the cell index (+1) so that moves right and left also change the signature
     def Signature(self) -> int:
-        return sum([(i+1)*hash(x) for i, x in enumerate(self._cells)])
+        return self.__hash__()
 
     @property
     def Cells(self) -> list[str]:
@@ -737,10 +740,12 @@ class FanzinesPage(GridDataSource):
 
         self._fanzineList:list[FanzinesPageRow]=[]
 
+    def __hash__(self):
+        return sum([hash(x)*(i+1) for i, x in enumerate(self._fanzineList)])
+
 
     def Signature(self) -> int:        
-        return sum([x.__hash__() *(i+1) for i, x in enumerate(self._fanzineList)])
-
+        return self.__hash__()
 
     # Inherited from GridDataSource
     @property
