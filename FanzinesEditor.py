@@ -609,11 +609,11 @@ class FanzinesEditorWindow(FanzinesGridGen):
     #-------------------
     # Upload the fanzines list to the classic fanzine page
     def OnUploadPressed( self, event ):       
-        PutClassicFanzineList(self._fanzinesList, self.RootDir)
-        self.MarkAsSaved()
+        success=PutClassicFanzineList(self._fanzinesList, self.RootDir)
         self.Raise()    # Bring the window to the top
         self.tSearch.SetFocus()     # And put the focus/cursor in the search box
-
+        if success:
+            self.MarkAsSaved()
 
     # ------------------
     def OnDeleteFanzineClicked( self, event):
