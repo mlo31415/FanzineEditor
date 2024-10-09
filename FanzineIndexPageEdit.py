@@ -465,7 +465,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # Standardize the column names
         for cd in self.Datasource.ColDefs:
-            cd.MainName=CanonicizeColumnHeaders(cd.MainName.strip())
+            cd.Name=CanonicizeColumnHeaders(cd.Name.strip())
 
         # First look to see if we should be deleting empty columns
         if self.Datasource.NumRows > 1:
