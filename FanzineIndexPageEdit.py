@@ -490,6 +490,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if iMailing > iNotes:
                     self.Datasource.MoveColumns(iMailing, 1, iNotes)
 
+        self.RefreshWindow()
+
 
     # ------------------
     # Initialize an existing, initializedm main window to empty
