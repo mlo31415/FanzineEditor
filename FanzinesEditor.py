@@ -120,7 +120,7 @@ def main():
 
 
 #------------------------------------------------------------------------------
-g_LogDialog: Optional[LogDialog]=None
+g_LogDialog: LogDialog|None=None
 def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear=False, Flush=False, timestamp=False) -> None:
     RealLog(text, isError=isError, noNewLine=noNewLine, Print=Print, Clear=Clear, Flush=Flush, timestamp=timestamp)
     if g_LogDialog is not None:

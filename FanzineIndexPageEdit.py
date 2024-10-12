@@ -1807,8 +1807,8 @@ class FanzineIndexPageTableRow(GridDataRowClass):
 
 
     # Get or set a value by name or column number
-    #def GetVal(self, name: Union[str, int]) -> Union[str, int]:
-    def __getitem__(self, index: str | int | slice) -> str | list[str]:
+    #def GetVal(self, name: str|int) -> str|int:
+    def __getitem__(self, index: str|int|slice) -> str|list[str]:
 
         if isinstance(index, int):
             if index < 0 or  index >= len(self._cells):
@@ -1827,7 +1827,7 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         return self._cells[index]
 
 
-    #def SetVal(self, nameOrCol: Union[str, int], val: Union[str, int]) -> None:
+    #def SetVal(self, nameOrCol: str|int, val: str|int) -> None:
     def __setitem__(self, index: str | int | slice, value: str | int) -> None:
         if isinstance(value, int):
             value=str(value)    # All data is stored as strings
@@ -1900,7 +1900,7 @@ class FanzineIndexPage(GridDataSource):
         self._colDefs: ColDefinitionsList=ColDefinitionsList([])
         self._fanzineList: list[FanzineIndexPageTableRow]=[]
         self._gridDataRowClass=FanzineIndexPageTableRow
-        self._specialTextColor: Optional[Color, bool]=True
+        self._specialTextColor: Color|None=None
         self.TopComments: str=""
         self.Locale: list[str]=[]
         self._name: FanzineNames=FanzineNames()
@@ -1949,10 +1949,10 @@ class FanzineIndexPage(GridDataSource):
 
 
     @property
-    def SpecialTextColor(self) -> Optional[Color]:        # FanzineIndexPage(GridDataSource)
+    def SpecialTextColor(self) -> Color|None:        # FanzineIndexPage(GridDataSource)
         return self._specialTextColor
     @SpecialTextColor.setter
-    def SpecialTextColor(self, val: Optional[Color]) -> None:        # FanzineIndexPage(GridDataSource)
+    def SpecialTextColor(self, val: Color|None) -> None:        # FanzineIndexPage(GridDataSource)
         self._specialTextColor=val
 
 
