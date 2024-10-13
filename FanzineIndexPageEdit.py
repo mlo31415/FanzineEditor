@@ -29,7 +29,7 @@ from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, FanzineNameToDirName
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks
-from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList
+from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, StripSpecificTag
 from HelpersPackage import InsertInvisibleTextUsingFanacComments, InsertHTMLUsingFanacComments, ExtractHTMLUsingFanacComments, ExtractInvisibleTextUsingFanacComments
 from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename
 from PDFHelpers import GetPdfPageCount
@@ -2248,7 +2248,7 @@ class FanzineIndexPage(GridDataSource):
             m=re.match(r'<TD colspan=\"[0-9]+\">(.*?)</TD>', row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
             if m is not None:
                 fipr=FanzineIndexPageTableRow(self._colDefs)
-                fipr.Cells[0]=m.groups()[0]
+                fipr.Cells[0]=StripSpecificTag(m.groups()[0], "b")
                 fipr.IsTextRow=True
                 self.Rows.append(fipr)
                 continue
@@ -2403,7 +2403,7 @@ class FanzineIndexPage(GridDataSource):
                 continue
 
             if row.IsTextRow:
-                insert+=f'\n<TR><TD colspan="{self.NumCols}">{row.Cells[0]}</TD></TR>'
+                insert+=f'\n<TR><TD colspan="{self.NumCols}"><b>{row.Cells[0]}</b></TD></TR>'
                 continue
 
             if row.IsLinkRow:
