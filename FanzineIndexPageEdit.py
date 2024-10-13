@@ -116,7 +116,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Used to communicate with the fanzine list editor.  It is set to None, but is filled in with a CFL when something is uploaded.
         self.CFL: ClassicFanzinesLine|None=None
 
-        self._dataGrid: DataGrid=DataGrid(self.wxGrid, ColorCellByValue=self.ColorCellByValueOverride)
+        self._dataGrid: DataGrid=DataGrid(self.wxGrid, ColorSingleCellByValue=self.ColorSingleCellByValueOverride)
         self.Datasource=FanzineIndexPage()
 
         # Get the default PDF directory
@@ -1074,7 +1074,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.OnKeyUp(event) # Pass event to WxDataGrid to handle
 
     #------------------
-    def ColorCellByValueOverride(self, icol: int, irow: int) -> None:
+    def ColorSingleCellByValueOverride(self, icol: int, irow: int) -> None:
 
         # In normal rows and link rows, col 1 must be filled in
         if icol == 1:
