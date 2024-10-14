@@ -2097,7 +2097,6 @@ class FanzineIndexPage(GridDataSource):
         self._colDefs=ColDefinitionsList([ColDefinition("Link", 100, "url", IsEditable.Maybe)])
         self._colDefs.append(ColNamesToColDefs(headers))
 
-        rows: list[list[str]]=[]
         if len(theRows) > 1:
             for thisrow in theRows[1:]:
 
@@ -2111,10 +2110,7 @@ class FanzineIndexPage(GridDataSource):
                 else:
                     row=[url, text]
                 row.extend([RemoveAllHTMLLikeTags(str(x)) for x in cols[1:]])
-                rows.append(row)
-
-        for row in rows:
-            self.Rows.append(FanzineIndexPageTableRow(self._colDefs, row) )
+                self.Rows.append(FanzineIndexPageTableRow(self._colDefs, row) )
 
         credits=""
         loc=bodytext.rfind("</table>")
