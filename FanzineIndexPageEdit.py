@@ -25,7 +25,7 @@ from FTP import FTP
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
 from WxHelpers import OnCloseHandling, ProcessChar
 from WxHelpers import ModalDialogManager, ProgressMessage2
-from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, FanzineNameToDirName
+from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, FanzineNameToDirName,RemoveTopLevelHTMLTags, RegularizeBRTags
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks
@@ -2109,7 +2109,10 @@ class FanzineIndexPage(GridDataSource):
                     row=["", cols0]
                 else:
                     row=[url, text]
-                row.extend([RemoveAllHTMLLikeTags(str(x)) for x in cols[1:]])
+                cols=[RegularizeBRTags(str(x)) for x in cols[1:]]   # Turn all <br/> and </br> to <br>
+                cols=[RemoveTopLevelHTMLTags(x, LeaveLinks=True) for x in cols]     # Remove non-link HTML
+                cols=[x if x.strip().lower() != "<br>" else "" for x in cols]   # Remove all <br> (old FIPs sometimes has this in blank cells)
+                row.extend(cols)
                 self.Rows.append(FanzineIndexPageTableRow(self._colDefs, row) )
 
         credits=""
