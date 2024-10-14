@@ -1760,9 +1760,14 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         else:
             self._cells=row
 
-        self._isText: bool=False        # Is this a piece of text rather than a convention?
-        self._isLink: bool=False        # Is this a link?
+        if self._cells[0] == "" and len(self._cells[1]) > 0:
+            self._isText: bool=True
+            self._cells[0]=self._cells[1]   # In a text row, the text now is stored in cell 0
+            self._cells[1]=""
+        else:
+            self._isText: bool=False        # Is this a piece of text rather than a convention?
 
+        self._isLink: bool=False        # Is this a link?
         self._URL: str=""               # The URL to be used for a link. (This is ignored if _isLink == False.)
                                         # It will be displayed using the localfilename as the link text.
                                         # Note that this is different than the URL method in the other frames
