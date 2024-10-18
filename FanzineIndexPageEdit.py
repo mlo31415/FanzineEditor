@@ -2193,8 +2193,7 @@ class FanzineIndexPage(GridDataSource):
         # f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
         locale=RemoveFancyLink(ExtractTaggedText(html, "loc"))
         if locale == "":
-            LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('Locale')")
-            return False
+            Log(f"GetFanzineIndexPageNew(): ExtractHTMLUsingFanacComments('Locale') -- No locale found")
         # Remove the <h2>s that tend to decorate it
         self.Locale=locale
 
