@@ -2079,6 +2079,8 @@ class FanzineIndexPage(GridDataSource):
                 _, stuff=SearchAndReplace(r"(<.*?>)", stuff, "")
                 topmattersplit[i]=stuff
             topmattersplit=[x.replace("\n\n", "\n").removesuffix("\n") for x in topmattersplit if x != ""]
+            if len(topmattersplit) == 0:
+                LogError(f"Malformed top matter on page.")
             editors=topmattersplit[1].split("\n")
             dates, fanzinetype=topmattersplit[2].split("\n")
 
