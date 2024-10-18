@@ -2009,7 +2009,7 @@ class FanzineIndexPage(GridDataSource):
         html=None
         if testRootDirectory != "":
             # If there is a test directory, try loading from there, first
-            html=FTP().GetFileAsString(f"/{testRootDirectory}/{url}", "index.html")
+            html=FTP().GetFileAsString(f"/{testRootDirectory}/{url}", "index.html", TestLoad=True)
         if html is None:
             # If that failed (or there wasn't one) load from the default
             html=FTP().GetFileAsString(f"/{rootDirectory}/{url}", "index.html")
