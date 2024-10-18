@@ -2353,7 +2353,7 @@ class FanzineIndexPage(GridDataSource):
         output=InsertBetweenComments(output, "dates", self.Dates)
         output=InsertBetweenComments(output, "complete", "(Complete)" if self.Complete else "")
         output=InsertBetweenComments(output, "type", self.FanzineType)
-        output=InsertBetweenComments(output, "club", f" - {self.Clubname}")
+        output=InsertBetweenComments(output, "club", f" - {self.Clubname}" if self.Clubname!= "" else "")
         output=InsertBetweenComments(output, "loc", TurnPythonListIntoWordList(self.Locale))
 
         output=InsertInvisibleTextUsingFanacComments(output, "sig", self.Significance)
