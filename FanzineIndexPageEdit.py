@@ -2103,10 +2103,16 @@ class FanzineIndexPage(GridDataSource):
         self._colDefs=ColDefinitionsList([ColDefinition("Link", 100, "url", IsEditable.Maybe)])
         self._colDefs.append(ColNamesToColDefs(headers))
 
+        # Get the column number of the Mailing column, if any.
+        iMailingCol=None
+        if "Mailing" in self._colDefs:
+            iMailingCol=self._colDefs.index("Mailing")
+
         if len(theRows) > 1:
             for thisrow in theRows[1:]:
 
                 cols=thisrow.findAll("td")
+
                 # We treat column 0 specially, extracting its hyperref and turning it into two
                 cols0=str(cols[0])
                 _, url, text, _=FindLinkInString(cols0)
@@ -2115,9 +2121,15 @@ class FanzineIndexPage(GridDataSource):
                     row=["", cols0]
                 else:
                     row=[url, text]
+
                 cols=[RegularizeBRTags(str(x)) for x in cols[1:]]   # Turn all <br/> and </br> to <br>
                 cols=[RemoveTopLevelHTMLTags(x, LeaveLinks=True) for x in cols]     # Remove non-link HTML
                 cols=[x if x.strip().lower() != "<br>" else "" for x in cols]   # Remove all <br> (old FIPs sometimes has this in blank cells)
+
+                # We treat the Mailing column (if present) specially by removing the hyperlink to the issue -- it will be returned when it is loaded back to the server.
+                if iMailingCol is not None:
+                    cols[iMailingCol-2]=RemoveAllHTMLLikeTags(cols[iMailingCol-2])      # The -2 is because the first two columns were handled separately, above.
+
                 row.extend(cols)
                 self.Rows.append(FanzineIndexPageTableRow(self._colDefs, row) )
 
