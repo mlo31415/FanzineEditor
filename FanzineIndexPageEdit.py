@@ -33,6 +33,7 @@ from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonLi
 from HelpersPackage import InsertInvisibleTextUsingFanacComments, InsertHTMLUsingFanacComments, ExtractHTMLUsingFanacComments, ExtractInvisibleTextUsingFanacComments
 from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename
 from PDFHelpers import GetPdfPageCount
+from HtmlHelpersPackage import HtmlEscapesToUnicode, UnicodeToHtmlEscapes
 from Log import Log, LogError
 from Settings import Settings
 from FanzineIssueSpecPackage import MonthNameToInt
@@ -65,7 +66,10 @@ gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
 ])
 
 
-def SpecialNameFormatToHtmlFancylink(val: str) ->str:
+def SpecialNameFormatToHtmlFancylink(val: str|None) ->str|None:
+    if val is None:
+        return None
+
     # "Uncredited" is not linked
     if "uncredited" in val.lower() or "various" in val.lower():
         return val
@@ -2167,6 +2171,11 @@ class FanzineIndexPage(GridDataSource):
 
     def GetFanzineIndexPageNew(self, html: str, version: str) -> bool:
 
+        def CleanUnicodeText(s: str) -> str:
+            return HtmlEscapesToUnicode(RemoveFancyLink(s)).strip()
+
+        html2=CleanUnicodeText(html)
+
         # f"{self.Name.MainName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
         topstuff=ExtractHTMLUsingFanacComments(html, "header")
 
@@ -2181,23 +2190,23 @@ class FanzineIndexPage(GridDataSource):
                 return m.groups()[0]
             return ""
 
-        self.Name.MainName=RemoveFancyLink(ExtractTaggedText(topstuff, "name"))
+
+        self.Name.MainName=CleanUnicodeText(ExtractTaggedText(topstuff, "name"))
         other=ExtractTaggedText(topstuff, "other")
-        other=[RemoveFancyLink(x) for x in [y for y in SplitOnSpansOfLineBreaks(other)]]
+        other=[CleanUnicodeText(x) for x in [y for y in SplitOnSpansOfLineBreaks(other)]]
         self.Name.Othernames=other
-        self.Editors=[RemoveFancyLink(x).strip() for x in ExtractTaggedText(topstuff, "eds").split("<br>")]
+        self.Editors=[CleanUnicodeText(x) for x in ExtractTaggedText(topstuff, "eds").split("<br>")]
         self.Dates=ExtractTaggedText(topstuff, "dates")
         self.FanzineType=ExtractTaggedText(topstuff, "type")
-        self.Clubname=RemoveFancyLink(ExtractTaggedText(topstuff, "club"))
+        self.Clubname=CleanUnicodeText(ExtractTaggedText(topstuff, "club"))
 
         self.Significance=ExtractInvisibleTextUsingFanacComments(html, "sig")
 
         # f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
-        locale=RemoveFancyLink(ExtractTaggedText(html, "loc"))
-        if locale == "":
+        self.Locale=CleanUnicodeText(ExtractTaggedText(html, "loc"))
+        if self.Locale == "":
             Log(f"GetFanzineIndexPageNew(): ExtractHTMLUsingFanacComments('Locale') -- No locale found")
         # Remove the <h2>s that tend to decorate it
-        self.Locale=locale
 
         keywords=ExtractInvisibleTextUsingFanacComments(html, "keywords").split(",")
         keywords=[x.strip() for x in keywords]
@@ -2338,23 +2347,23 @@ class FanzineIndexPage(GridDataSource):
             output=f.read()
 
         # Insert the <head> matter: <meta name="description"...> and <title>
-        eds=", ".join([x.strip() for x in self.Editors.split("\n")])
-        meta=f'<meta name="description" content="{self.Name.MainName} {self.Name.OthernamesAsStr(", ")}{eds} {self.Dates} {self.FanzineType}">'
+        eds=", ".join([UnicodeToHtmlEscapes(x) for x in self.Editors.split("\n")])
+        meta=f'<meta name="description" content="{UnicodeToHtmlEscapes(self.Name.MainName)} {UnicodeToHtmlEscapes(self.Name.OthernamesAsStr(", "))}{eds} {self.Dates} {self.FanzineType}">'
         output=FindAndReplaceSingleBracketedText(output, "meta name=", meta)
 
-        output, rslt=FindAndReplaceBracketedText(output, "title", f"<title>{self.Name.MainName}</title>", caseInsensitive=True)
+        output, rslt=FindAndReplaceBracketedText(output, "title", f"<title>{UnicodeToHtmlEscapes(self.Name.MainName)}</title>", caseInsensitive=True)
 
         # Format the top-level stuff
         def InsertBetweenComments(s: str, tag: str, val: str) -> str:
             # Look for a section of the input string surrounded by  "<!--- tag -->" and replace it all by val
             return re.sub(rf"<!--\s*{tag}\s*-->(.*?)<!--\s*{tag}\s*-->", f"<!--{tag}-->{val}<!--{tag}-->", s, flags=re.IGNORECASE | re.DOTALL | re.MULTILINE)
-        output=InsertBetweenComments(output, "name", self.Name.MainName)
-        output=InsertBetweenComments(output, "other", self.Name.OthernamesAsHTML)
-        output=InsertBetweenComments(output, "eds", "<br>".join([SpecialNameFormatToHtmlFancylink(x.strip()) for x in self.Editors.split("\n")]))
+        output=InsertBetweenComments(output, "name", UnicodeToHtmlEscapes(self.Name.MainName))
+        output=InsertBetweenComments(output, "other", UnicodeToHtmlEscapes(self.Name.OthernamesAsHTML))
+        output=InsertBetweenComments(output, "eds", "<br>".join([SpecialNameFormatToHtmlFancylink(UnicodeToHtmlEscapes(x.strip())) for x in self.Editors.split("\n")]))
         output=InsertBetweenComments(output, "dates", self.Dates)
         output=InsertBetweenComments(output, "complete", "(Complete)" if self.Complete else "")
         output=InsertBetweenComments(output, "type", self.FanzineType)
-        output=InsertBetweenComments(output, "club", f" - {self.Clubname}" if self.Clubname!= "" else "")
+        output=InsertBetweenComments(output, "club", f" - {UnicodeToHtmlEscapes(self.Clubname)}" if self.Clubname != "" else "")
         output=InsertBetweenComments(output, "loc", TurnPythonListIntoWordList(self.Locale))
 
         output=InsertInvisibleTextUsingFanacComments(output, "sig", self.Significance)
@@ -2408,16 +2417,16 @@ class FanzineIndexPage(GridDataSource):
                 continue
 
             if row.IsTextRow:
-                insert+=f'\n<TR><TD colspan="{self.NumCols}"><b>{row.Cells[0]}</b></TD></TR>'
+                insert+=f'\n<TR><TD colspan="{self.NumCols}"><b>{UnicodeToHtmlEscapes(row.Cells[0])}</b></TD></TR>'
                 continue
 
             if row.IsLinkRow:
-                insert+=(fr'\n<TR><TD colspan="{self.NumCols}"><a href="{row.Cells[0]}">{row.Cells[1]}</a></TD></TR>')
+                insert+=(fr'\n<TR><TD colspan="{self.NumCols}"><a href="{row.Cells[0]}">{UnicodeToHtmlEscapes(row.Cells[1])}</a></TD></TR>')
                 continue
 
             # OK, it's an ordinary row
             insert+=f"\n<TR>"
-            insert+=f"\n<TD><a href='{row.Cells[0]}'>{row.Cells[1]}</A></TD>\n"
+            insert+=f"\n<TD><a href='{row.Cells[0]}'>{UnicodeToHtmlEscapes(row.Cells[1])}</A></TD>\n"
             for i, cell in enumerate(row.Cells[2:]):
                 if self.ColHeaders[i+2].lower() == "mailing":
                     insert+=f"<TD CLASS='left'>{self.ProcessAPALinks(cell)}</TD>\n"
@@ -2438,7 +2447,7 @@ class FanzineIndexPage(GridDataSource):
             return False
         output=temp
 
-        temp=InsertHTMLUsingFanacComments(output, "scan", self.Credits)
+        temp=InsertHTMLUsingFanacComments(output, "scan", UnicodeToHtmlEscapes(self.Credits))
         # Different test because we don't always have a credit in the file.
         if len(temp) > 0:
             output=temp
