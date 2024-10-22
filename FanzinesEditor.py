@@ -293,7 +293,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
                     fz.DuplicateCopy=True
                     duplicatelist.append(fz)
 
-    duplicatelist.sort(key=lambda x:x.Name.MainName.lower())
+    duplicatelist.sort(key=lambda x:x.DisplayNameSort)
 
     insert=""
     for fanzine in duplicatelist:
