@@ -1890,8 +1890,10 @@ def ColNamesToColDefs(headers: list[str]) -> ColDefinitionsList:
     colDefs: ColDefinitionsList=ColDefinitionsList([])
     for header in headers:
         # First cannonicize the header
-        if header == "Issue":
+        if header.lower() == "issue":
             header="Display Text"   # Display text is unique to Fanzines Index Page??
+        elif header.lower() == "title":
+            header="Display Text"   # But a few pages usne "Title"
         else:
             header=CanonicizeColumnHeaders(header)
         scd=ColDefinition(f"({header})", Type="str", Width=75)  # The default when it's unrecognizable
@@ -2383,7 +2385,7 @@ class FanzineIndexPage(GridDataSource):
         output=InsertInvisibleTextUsingFanacComments(output, "sig", self.Significance)
 
         insert=self.TopComments.replace("\n", "<br>")
-        temp=InsertHTMLUsingFanacComments(output, "topcomments", insert)
+        temp=InsertHTMLUsingFanacComments(output, "topcomments", UnicodeToHtmlEscapes(insert))
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('topcomments')")
             return False
