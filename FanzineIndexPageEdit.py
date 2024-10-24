@@ -1889,7 +1889,7 @@ class FanzineIndexPageTableRow(GridDataRowClass):
 def ColNamesToColDefs(headers: list[str]) -> ColDefinitionsList:
     colDefs: ColDefinitionsList=ColDefinitionsList([])
     for header in headers:
-        # First canonicize the header
+        # First cannonicize the header
         if header == "Issue":
             header="Display Text"   # Display text is unique to Fanzines Index Page??
         else:
