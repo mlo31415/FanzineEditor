@@ -58,6 +58,8 @@ gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
     ColDefinition("PDF", Type="str", Width=50),
     ColDefinition("Notes", Type="str", Width=120),
     ColDefinition("Scanned", Type="str", Width=100),
+    ColDefinition("Scan", Type="str", Width=100, Preferred="Scanned"),
+    ColDefinition("Scanned By", Type="str", Width=100, Preferred="Scanned"),
     ColDefinition("Country", Type="str", Width=50),
     ColDefinition("Editor", Type="str", Width=75),
     ColDefinition("Author", Type="str", Width=75),
