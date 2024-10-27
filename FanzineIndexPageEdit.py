@@ -2027,13 +2027,11 @@ class FanzineIndexPage(GridDataSource):
 
         # This is the tag that marks a new-style page.  The version number may someday be significant
         #<!-- fanac fanzine index page V1.0-->
-        m=re.search(r"<!-- fanac fanzine index page V([0-9]+\.[0-9]+)-->", html, flags=re.IGNORECASE|re.MULTILINE)
-        fip=None
-        if m is None:
+        version=ExtractInvisibleTextInsideFanacComment(html, "fanzine index page V")
+        if version == "":
             success=self.GetFanzineIndexPageOld(html)
         else:
-            version=m.groups()[0]
-            success=self.GetFanzineIndexPageNew(html, version)
+            success=self.GetFanzineIndexPageNew(html)
 
         if not success:
             return False
@@ -2185,27 +2183,28 @@ class FanzineIndexPage(GridDataSource):
 
 
 
-    def GetFanzineIndexPageNew(self, html: str, version: str) -> bool:
+    def GetFanzineIndexPageNew(self, html: str) -> bool:
 
         def CleanUnicodeText(s: str) -> str:
             return HtmlEscapesToUnicode(RemoveFancyLink(s)).strip()
 
         html2=CleanUnicodeText(html)
 
+        #<!-- fanac fanzine index page V1.0-->
+        version=ExtractInvisibleTextInsideFanacComment(html, "fanzine index page V")
+
         # f"{self.Name.MainName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
         topstuff=ExtractHTMLUsingFanacComments(html, "header")
-
-
         if topstuff == "":
             LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('header')")
             return False
+
         # Interpret the header
         def ExtractTaggedText(s: str, tag: str) -> str:
             m=re.search(rf"<!--{tag}-->(.*?)<!--{tag}-->", s)
             if m is not None:
                 return m.groups()[0]
             return ""
-
 
         self.Name.MainName=CleanUnicodeText(ExtractTaggedText(topstuff, "name"))
         other=ExtractTaggedText(topstuff, "other")
