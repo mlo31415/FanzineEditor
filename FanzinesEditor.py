@@ -15,7 +15,7 @@ from FTPLog import FTPLog
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMessage2, ModalDialogManager
 from HelpersPackage import MessageBox, ExtractInvisibleTextInsideFanacComment, ConvertHTMLishCharacters
-from HelpersPackage import InsertHTMLUsingFanacComments, UnicodeToHtml, StripSpecificTag, Int0, TimestampFilename
+from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, UnicodeToHtml, StripSpecificTag, Int0, TimestampFilename
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
@@ -360,14 +360,14 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
         row+=f'</TD></TR>\n'
         insert+=row
 
-    temp=InsertHTMLUsingFanacComments(output, "table", insert)
+    temp=InsertHTMLUsingFanacStartEndCommentPair(output, "table", insert)
     if temp == "":
         LogError(f"Could not InsertUsingFanacComments('table')")
         return False
     output=temp
 
     insert=f"Updated {ClassicFanzinesDate().Now()}"
-    temp=InsertHTMLUsingFanacComments(output, "updated", insert)
+    temp=InsertHTMLUsingFanacStartEndCommentPair(output, "updated", insert)
     if temp == "":
         LogError(f"Could not InsertUsingFanacComments('updated')")
         return False

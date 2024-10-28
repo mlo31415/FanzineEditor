@@ -30,8 +30,8 @@ from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndex
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, StripSpecificTag
-from HelpersPackage import InsertInvisibleTextUsingFanacComments, InsertHTMLUsingFanacComments, ExtractHTMLUsingFanacComments, ExtractInvisibleTextUsingFanacComments
-from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename
+from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, ExtractHTMLUsingFanacStartEndCommentPair
+from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename, InsertInvisibleTextInsideFanacComment
 from PDFHelpers import GetPdfPageCount
 from HtmlHelpersPackage import HtmlEscapesToUnicode, UnicodeToHtmlEscapes
 from Log import Log, LogError
@@ -2194,7 +2194,7 @@ class FanzineIndexPage(GridDataSource):
         version=ExtractInvisibleTextInsideFanacComment(html, "fanzine index page V")
 
         # f"{self.Name.MainName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
-        topstuff=ExtractHTMLUsingFanacComments(html, "header")
+        topstuff=ExtractHTMLUsingFanacStartEndCommentPair(html, "header")
         if topstuff == "":
             LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('header')")
             return False
@@ -2215,7 +2215,7 @@ class FanzineIndexPage(GridDataSource):
         self.FanzineType=ExtractTaggedText(topstuff, "type")
         self.Clubname=CleanUnicodeText(ExtractTaggedText(topstuff, "club"))
 
-        self.Significance=ExtractInvisibleTextUsingFanacComments(html, "sig")
+        self.Significance=ExtractInvisibleTextInsideFanacComment(html, "sig")
 
         # f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
         self.Locale=CleanUnicodeText(ExtractTaggedText(html, "loc"))
@@ -2223,7 +2223,7 @@ class FanzineIndexPage(GridDataSource):
             Log(f"GetFanzineIndexPageNew(): ExtractHTMLUsingFanacComments('Locale') -- No locale found")
         # Remove the <h2>s that tend to decorate it
 
-        keywords=ExtractInvisibleTextUsingFanacComments(html, "keywords").split(",")
+        keywords=ExtractInvisibleTextInsideFanacComment(html, "keywords").split(",")
         keywords=[x.strip() for x in keywords]
         for keyword in keywords:
             if keyword == "Alphabetize individually":
@@ -2231,12 +2231,12 @@ class FanzineIndexPage(GridDataSource):
             if keyword == "Complete":
                 self.Complete=True
 
-        comments=ExtractHTMLUsingFanacComments(html, "topcomments")
+        comments=ExtractHTMLUsingFanacStartEndCommentPair(html, "topcomments")
         if comments is not None:
             self.TopComments=comments.replace("<br>", "\n")
 
         # Now interpret the table to generate the column headers and data rows
-        headers=ExtractHTMLUsingFanacComments(html, "table-headers")
+        headers=ExtractHTMLUsingFanacStartEndCommentPair(html, "table-headers")
         if headers == "":
             LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('table-headers')")
             return False
@@ -2253,7 +2253,7 @@ class FanzineIndexPage(GridDataSource):
         self.Updated=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(html, "updated"))
 
         # Now the rows
-        rows=ExtractHTMLUsingFanacComments(html, "table-rows")
+        rows=ExtractHTMLUsingFanacStartEndCommentPair(html, "table-rows")
         rows=re.findall(r"<TR>(.+?)</TR>", rows, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
         if rows == "":
             LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('table-rows')")
@@ -2312,7 +2312,7 @@ class FanzineIndexPage(GridDataSource):
             fipr._UpdatedComment=updated
             self.Rows.append(fipr)
 
-        self.Credits=ExtractHTMLUsingFanacComments(html, "scan").strip()
+        self.Credits=ExtractHTMLUsingFanacStartEndCommentPair(html, "scan").strip()
 
         # Log(f"GetFanzinePageNew():")
         # Log(f"     {self.Credits=}")
@@ -2381,10 +2381,10 @@ class FanzineIndexPage(GridDataSource):
         output=InsertBetweenComments(output, "club", f" - {UnicodeToHtmlEscapes(self.Clubname)}" if self.Clubname != "" else "")
         output=InsertBetweenComments(output, "loc", TurnPythonListIntoWordList(self.Locale))
 
-        output=InsertInvisibleTextUsingFanacComments(output, "sig", self.Significance)
+        output=InsertInvisibleTextInsideFanacComment(output, "sig", self.Significance)
 
         insert=self.TopComments.replace("\n", "<br>")
-        temp=InsertHTMLUsingFanacComments(output, "topcomments", UnicodeToHtmlEscapes(insert))
+        temp=InsertHTMLUsingFanacStartEndCommentPair(output, "topcomments", UnicodeToHtmlEscapes(insert))
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('topcomments')")
             return False
@@ -2397,7 +2397,7 @@ class FanzineIndexPage(GridDataSource):
             if keywords != "":
                 keywords+=", "
             keywords+="Complete"
-        temp=InsertInvisibleTextUsingFanacComments(output, "keywords", keywords)
+        temp=InsertInvisibleTextInsideFanacComment(output, "keywords", keywords)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertInvisibleTextUsingFanacComments('fanac-keywords')")
             return False
@@ -2413,7 +2413,7 @@ class FanzineIndexPage(GridDataSource):
         for header in self.ColHeaders[2:]:
             insert+=f"<TH>{header}</TH>\n"
         insert+="</TR>\n"
-        temp=InsertHTMLUsingFanacComments(output, "table-headers", insert)
+        temp=InsertHTMLUsingFanacStartEndCommentPair(output, "table-headers", insert)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('table-headers')")
             return False
@@ -2456,20 +2456,20 @@ class FanzineIndexPage(GridDataSource):
             insert+=f"</TR>\n"
 
         # Insert the accumulated table lines into the template
-        temp=InsertHTMLUsingFanacComments(output, "table-rows", insert)
+        temp=InsertHTMLUsingFanacStartEndCommentPair(output, "table-rows", insert)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('table-rows')")
             return False
         output=temp
 
-        temp=InsertHTMLUsingFanacComments(output, "scan", UnicodeToHtmlEscapes(self.Credits))
+        temp=InsertHTMLUsingFanacStartEndCommentPair(output, "scan", UnicodeToHtmlEscapes(self.Credits))
         # Different test because we don't always have a credit in the file.
         if len(temp) > 0:
             output=temp
 
         # Update the updated text at the bottom of the page
         insert=f"Updated {ClassicFanzinesDate().Now()}"
-        temp=InsertHTMLUsingFanacComments(output, "updated", insert)
+        temp=InsertHTMLUsingFanacStartEndCommentPair(output, "updated", insert)
         if temp == "":
             LogError(f"Could not InsertUsingFanacComments('updated')")
         else:
