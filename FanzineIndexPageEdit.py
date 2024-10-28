@@ -31,7 +31,7 @@ from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, Ca
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, StripSpecificTag
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, ExtractHTMLUsingFanacStartEndCommentPair
-from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename, InsertInvisibleTextInsideFanacComment
+from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename, InsertInvisibleTextInsideFanacComment, ExtractHTMLUsingFanacTagCommentPair
 from PDFHelpers import GetPdfPageCount
 from HtmlHelpersPackage import HtmlEscapesToUnicode, UnicodeToHtmlEscapes
 from Log import Log, LogError
@@ -2199,26 +2199,19 @@ class FanzineIndexPage(GridDataSource):
             LogError(f"GetFanzineIndexPageNew() failed: ExtractHTMLUsingFanacComments('header')")
             return False
 
-        # Interpret the header
-        def ExtractTaggedText(s: str, tag: str) -> str:
-            m=re.search(rf"<!--{tag}-->(.*?)<!--{tag}-->", s)
-            if m is not None:
-                return m.groups()[0]
-            return ""
-
-        self.Name.MainName=CleanUnicodeText(ExtractTaggedText(topstuff, "name"))
-        other=ExtractTaggedText(topstuff, "other")
+        self.Name.MainName=CleanUnicodeText(ExtractHTMLUsingFanacTagCommentPair(topstuff, "name"))
+        other=ExtractHTMLUsingFanacTagCommentPair(topstuff, "other")
         other=[CleanUnicodeText(x) for x in [y for y in SplitOnSpansOfLineBreaks(other)]]
         self.Name.Othernames=other
-        self.Editors=[CleanUnicodeText(x) for x in ExtractTaggedText(topstuff, "eds").split("<br>")]
-        self.Dates=ExtractTaggedText(topstuff, "dates")
-        self.FanzineType=ExtractTaggedText(topstuff, "type")
-        self.Clubname=CleanUnicodeText(ExtractTaggedText(topstuff, "club"))
+        self.Editors=[CleanUnicodeText(x) for x in ExtractHTMLUsingFanacTagCommentPair(topstuff, "eds").split("<br>")]
+        self.Dates=ExtractHTMLUsingFanacTagCommentPair(topstuff, "dates")
+        self.FanzineType=ExtractHTMLUsingFanacTagCommentPair(topstuff, "type")
+        self.Clubname=CleanUnicodeText(ExtractHTMLUsingFanacTagCommentPair(topstuff, "club"))
 
         self.Significance=ExtractInvisibleTextInsideFanacComment(html, "sig")
 
         # f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
-        self.Locale=CleanUnicodeText(ExtractTaggedText(html, "loc"))
+        self.Locale=CleanUnicodeText(ExtractHTMLUsingFanacTagCommentPair(html, "loc"))
         if self.Locale == "":
             Log(f"GetFanzineIndexPageNew(): ExtractHTMLUsingFanacComments('Locale') -- No locale found")
         # Remove the <h2>s that tend to decorate it
