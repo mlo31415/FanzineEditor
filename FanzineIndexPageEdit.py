@@ -1999,7 +1999,7 @@ class FanzineIndexPage(GridDataSource):
     def Clubname(self, val: str) -> None:
         # We want to ignore leading spaces or a leading hyphen
         val=val.strip()
-        if val[0] == "-":
+        if len(val) > 0 and val[0] == "-":
             val=val[1:].strip()
         self._clubname=val
 
