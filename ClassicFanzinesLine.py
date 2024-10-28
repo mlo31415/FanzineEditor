@@ -214,7 +214,7 @@ class ClassicFanzinesLine:
 
     @property
     def EditorsSort(self) -> str:
-        eds=re.split(r"<br/?>|,", self.Editors)
+        eds=re.split(r"<br/?>|;", self.Editors)
         # Sort based on the 1st editor's last name all caps.
         ed=unidecode(eds[0])
         return SortPersonsName(ed).casefold()
