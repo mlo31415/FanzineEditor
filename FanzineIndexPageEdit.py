@@ -201,12 +201,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 self._dataGrid.AppendRows(self.Datasource.NumRows)
 
         # Read in the table of local directory to server directory equivalences
-        with open("ServerToLocal Conversion.txt", "r") as f:
+        s2l=Settings().Get("Server To Local Table Name")
+        with open(s2l, "r") as f:
             l2sLines=f.readlines()
         self.serverNameList: list[str]=[]
         self.localNameList: list[str]=[]
         for line in l2sLines:
-            line=line.split()
+            line=line.split("=")
             if len(line) == 2:
                 self.localNameList.append(line[0])
                 self.serverNameList.append(line[1])
