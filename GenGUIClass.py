@@ -210,7 +210,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		bSizer71.Add( self.m_staticText15, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		chSignificanceChoices = [ u"Focal Point", u"Important", u"Average", u"Minor", u"Cerudzine" ]
+		chSignificanceChoices = [ u"Focal Point", u"Important", u"Unclassified", u"Minor", u"Crudzine" ]
 		self.chSignificance = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, chSignificanceChoices, 0 )
 		self.chSignificance.SetSelection( 0 )
 		bSizer71.Add( self.chSignificance, 0, wx.ALL, 5 )

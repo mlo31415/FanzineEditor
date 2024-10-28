@@ -1802,7 +1802,7 @@
                                                         <property name="caption"></property>
                                                         <property name="caption_visible">1</property>
                                                         <property name="center_pane">0</property>
-                                                        <property name="choices">&quot;Focal Point&quot; &quot;Important&quot; &quot;Average&quot; &quot;Minor&quot; &quot;Cerudzine&quot;</property>
+                                                        <property name="choices">&quot;Focal Point&quot; &quot;Important&quot; &quot;Unclassified&quot; &quot;Minor&quot; &quot;Crudzine&quot;</property>
                                                         <property name="close_button">1</property>
                                                         <property name="context_help"></property>
                                                         <property name="context_menu">1</property>
