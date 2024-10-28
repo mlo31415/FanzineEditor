@@ -1920,7 +1920,7 @@ class FanzineIndexPage(GridDataSource):
         self._betterScanNeeded: bool=False
         self._Editors: str=""
         self.Dates: str=""
-        self.Significance: str="Average"
+        self.Significance: str="Unclassified"
         self.FanzineType: str=""
         self.Complete=False     # Is this fanzine series complete?
         self.AlphabetizeIndividually=False      # Treat all issues as part of main series
