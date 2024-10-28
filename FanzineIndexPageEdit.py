@@ -2355,8 +2355,14 @@ class FanzineIndexPage(GridDataSource):
             output=f.read()
 
         # Insert the <head> matter: <meta name="description"...> and <title>
-        eds=", ".join([x for x in self.Editors.split("\n")])
-        meta=f'meta name="description" content="{self.Name.MainName} {self.Name.OthernamesAsStr(", ")} {eds} {self.Dates} {self.FanzineType}"'
+        edlist=", ".join([x for x in self.Editors.split("\n")])
+        names=[self.Name.MainName]
+        names.extend(self.Name.Othernames)
+        namelist=", ".join(names)
+        content=f'{namelist}, {edlist}, {self.Dates}, {self.FanzineType}'
+        if self.Clubname != "":
+            content+=f", {self.Clubname}"
+        meta=f'meta name="description" content="{content}"'
         output=FindAndReplaceSingleBracketedText(output, "meta name=", f"<{UnicodeToHtmlEscapes(meta)}>")
 
         output, rslt=FindAndReplaceBracketedText(output, "title", f"<title>{UnicodeToHtmlEscapes(self.Name.MainName)}</title>", caseInsensitive=True)
