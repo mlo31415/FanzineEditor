@@ -1,6 +1,6 @@
 import re
 
-from HelpersPackage import SplitOnSpansOfLineBreaks, RemoveLinebreaks
+from HelpersPackage import SplitOnSpansOfLineBreaks, RemoveLinebreaks, ArticleToEnd, ArticleToFront
 
 from Log import Log
 
@@ -50,14 +50,14 @@ class FanzineNames:
         return self._mainname
     @MainName.setter
     def MainName(self, val: str):
-        self._mainname = RemoveLinebreaks(val)
+        self._mainname = ArticleToFront(RemoveLinebreaks(val))
 
     @property
     def Othernames(self) -> list[str]:
         return self._othernames
     @Othernames.setter
     def Othernames(self, val: list[str]):
-        self._othernames=[y for y in [RemoveLinebreaks(x).strip() for x in val] if len(y) > 0]
+        self._othernames=[y for y in [ArticleToFront(RemoveLinebreaks(x).strip()) for x in val] if len(y) > 0]
 
     @property
     def OthernamesAsHTML(self) -> str:
