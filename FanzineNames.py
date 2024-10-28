@@ -1,6 +1,7 @@
 import re
 
-from HelpersPackage import SplitOnSpansOfLineBreaks, RemoveLinebreaks, ArticleToEnd, ArticleToFront
+from HelpersPackage import SplitOnSpansOfLineBreaks, RemoveLinebreaks, ArticleToFront
+from HtmlHelpersPackage import UnicodeToHtmlEscapes
 
 from Log import Log
 
@@ -61,7 +62,7 @@ class FanzineNames:
 
     @property
     def OthernamesAsHTML(self) -> str:
-        return self.OthernamesAsStr("<br>")
+        return "<br>".join([UnicodeToHtmlEscapes(x) for x in self._othernames])
     @OthernamesAsHTML.setter
     def OthernamesAsHTML(self, val: str):
         fanzinename=SplitOnSpansOfLineBreaks(val)

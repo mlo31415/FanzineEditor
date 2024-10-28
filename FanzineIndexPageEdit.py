@@ -2377,7 +2377,7 @@ class FanzineIndexPage(GridDataSource):
             # Look for a section of the input string surrounded by  "<!--- tag -->" and replace it all by val
             return re.sub(rf"<!--\s*{tag}\s*-->(.*?)<!--\s*{tag}\s*-->", f"<!--{tag}-->{val}<!--{tag}-->", s, flags=re.IGNORECASE | re.DOTALL | re.MULTILINE)
         output=InsertBetweenComments(output, "name", UnicodeToHtmlEscapes(self.Name.MainName))
-        output=InsertBetweenComments(output, "other", UnicodeToHtmlEscapes(self.Name.OthernamesAsHTML))
+        output=InsertBetweenComments(output, "other", self.Name.OthernamesAsHTML)
         output=InsertBetweenComments(output, "eds", "<br>".join([SpecialNameFormatToHtmlFancylink(UnicodeToHtmlEscapes(x.strip())) for x in self.Editors.split("\n")]))
         output=InsertBetweenComments(output, "dates", self.Dates)
         output=InsertBetweenComments(output, "complete", "(Complete)" if self.Complete else "")
