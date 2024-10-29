@@ -19,6 +19,7 @@ from GenGUIClass import FanzineIndexPageEditGen
 from ClassicFanzinesLine import ClassicFanzinesLine, ClassicFanzinesDate
 from DeltaTracker import DeltaTracker, Delta
 from FanzineNames import FanzineNames
+from FanzineIssueSpecPackage import FanzineDate, YearName, MonthName, DayName
 
 from FTP import FTP
 
@@ -2151,6 +2152,31 @@ class FanzineIndexPage(GridDataSource):
             lasttext=[x for x in lasttext if len(x) > 0]
             if len(lasttext) == 2:
                 credits=lasttext[0]
+
+        # Some old FIPs have a Date column: Try to split it up into Day+Month+Year
+        datecol=max(self.ColHeaderIndex("Date"), self.ColHeaderIndex("(Date)"))
+        if datecol != -1:
+            # OK, first try to add Day, Month and Year cols
+            if self.ColHeaderIndex("Year") == -1:
+                self.InsertColumn2(datecol, gStdColHeaders["Year"])
+            if self.ColHeaderIndex("Day") == -1:
+                self.InsertColumn2(datecol, gStdColHeaders["Day"])
+            if self.ColHeaderIndex("Month") == -1:
+                self.InsertColumn2(datecol, gStdColHeaders["Month"])
+
+            datecol=max(self.ColHeaderIndex("Date"), self.ColHeaderIndex("(Date)"))     # The inserts will shuffle columns, so need to re-evaluate this
+            daycol=self.ColHeaderIndex("Day")
+            monthcol=self.ColHeaderIndex("Month")
+            yearcol=self.ColHeaderIndex("Year")
+            for row in self.Rows:
+                if row[datecol] != "":
+                    date=FanzineDate().Match(row[datecol])
+                    row[daycol]=date.DayText
+                    row[monthcol]=date.MonthText
+                    row[yearcol]=date.YearText
+                    i=0
+
+
 
 
         Log(f"GetFanzinePageOld():")
