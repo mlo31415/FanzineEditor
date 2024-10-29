@@ -30,7 +30,7 @@ from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndex
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, StripSpecificTag
-from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, ExtractHTMLUsingFanacStartEndCommentPair
+from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, ExtractHTMLUsingFanacStartEndCommentPair, SplitListOfNamesOnPattern
 from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename, InsertInvisibleTextInsideFanacComment, ExtractHTMLUsingFanacTagCommentPair
 from PDFHelpers import GetPdfPageCount
 from HtmlHelpersPackage import HtmlEscapesToUnicode, UnicodeToHtmlEscapes
@@ -2092,8 +2092,9 @@ class FanzineIndexPage(GridDataSource):
             topmattersplit=[x.replace("\n\n", "\n").removesuffix("\n") for x in topmattersplit if x != ""]
             if len(topmattersplit) == 0:
                 LogError(f"Malformed top matter on page.")
-            editors=topmattersplit[1].split("\n")
             dates, fanzinetype=topmattersplit[2].split("\n")
+            # Editors can be separated by "\n", "'", ";" and other stuff.  Split on spans of these characters
+            editors=SplitListOfNamesOnPattern(topmattersplit[1], r", and |,|/|;|and |&|\n|<br>")
 
         # Now interpret the table to generate the column headers and data rows
         theRows=theTable.findAll("tr")
