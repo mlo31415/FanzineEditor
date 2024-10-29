@@ -2092,9 +2092,9 @@ class FanzineIndexPage(GridDataSource):
             topmattersplit=[x.replace("\n\n", "\n").removesuffix("\n") for x in topmattersplit if x != ""]
             if len(topmattersplit) == 0:
                 LogError(f"Malformed top matter on page.")
-            dates, fanzinetype=topmattersplit[2].split("\n")
             # Editors can be separated by "\n", "'", ";" and other stuff.  Split on spans of these characters
             editors=SplitListOfNamesOnPattern(topmattersplit[1], r", and |,|/|;|and |&|\n|<br>")
+            dates, fanzinetype=topmattersplit[2].replace("&nbsp;", " ").split("\n")
 
         # Now interpret the table to generate the column headers and data rows
         theRows=theTable.findAll("tr")
