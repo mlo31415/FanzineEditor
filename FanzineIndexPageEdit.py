@@ -28,7 +28,7 @@ from WxHelpers import OnCloseHandling, ProcessChar
 from WxHelpers import ModalDialogManager, ProgressMessage2
 from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, FanzineNameToDirName,RemoveTopLevelHTMLTags, RegularizeBRTags
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
-from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
+from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles, CompressWhitespace
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, StripSpecificTag
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, ExtractHTMLUsingFanacStartEndCommentPair, SplitListOfNamesOnPattern
@@ -2096,6 +2096,16 @@ class FanzineIndexPage(GridDataSource):
             # Editors can be separated by "\n", "'", ";" and other stuff.  Split on spans of these characters
             editors=SplitListOfNamesOnPattern(topmattersplit[1], r", and |,|/|;|and |&|\n|<br>")
             dates, fanzinetype=topmattersplit[2].replace("&nbsp;", " ").split("\n")
+
+        # We look for a block of free-form comments.  It should lie between the <fanac-type>...</fanac-type> block and the start of the rows table.
+        loc=html.find("</fanac-type>")
+        if loc != -1:
+            locend=html.find("<TABLE", loc)
+            if locend != -1:
+                s=html[loc+len("</fanac-type>"):locend]
+                s=s.replace("<p>", "\n")
+                s=RemoveAllHTMLLikeTags(s)
+                self.TopComments=s.strip()
 
         # Now interpret the table to generate the column headers and data rows
         theRows=theTable.findAll("tr")
