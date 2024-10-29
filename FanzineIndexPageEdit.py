@@ -1929,7 +1929,7 @@ class FanzineIndexPage(GridDataSource):
         self.Updated: ClassicFanzinesDate=ClassicFanzinesDate("Long, long ago")
 
 
-    def Signature(self) -> int:        # FanzineIndexPage(GridDataSource)
+    def Signature(self) -> int:        
         s=0
         if self._colDefs is not None:
             s+=self._colDefs.Signature()
@@ -1943,29 +1943,29 @@ class FanzineIndexPage(GridDataSource):
 
     # Inherited from GridDataSource
     @property
-    def Rows(self) -> list[FanzineIndexPageTableRow]:        # FanzineIndexPage(GridDataSource)
+    def Rows(self) -> list[FanzineIndexPageTableRow]:        
         return self._fanzineList
     @Rows.setter
-    def Rows(self, rows: list) -> None:        # FanzineIndexPage(GridDataSource)
+    def Rows(self, rows: list) -> None:        
         self._fanzineList=rows
 
 
     @property
-    def NumRows(self) -> int:        # FanzineIndexPage(GridDataSource)
+    def NumRows(self) -> int:        
         return len(self._fanzineList)
 
-    def __getitem__(self, index: int) -> FanzineIndexPageTableRow:        # FanzineIndexPage(GridDataSource)
+    def __getitem__(self, index: int) -> FanzineIndexPageTableRow:        
         return self.Rows[index]
 
-    def __setitem__(self, index: int, val: FanzineIndexPageTableRow) -> None:        # FanzineIndexPage(GridDataSource)
+    def __setitem__(self, index: int, val: FanzineIndexPageTableRow) -> None:        
         self._fanzineList[index]=val
 
 
     @property
-    def SpecialTextColor(self) -> Color|None:        # FanzineIndexPage(GridDataSource)
+    def SpecialTextColor(self) -> Color|None:        
         return self._specialTextColor
     @SpecialTextColor.setter
-    def SpecialTextColor(self, val: Color|None) -> None:        # FanzineIndexPage(GridDataSource)
+    def SpecialTextColor(self, val: Color|None) -> None:        
         self._specialTextColor=val
 
 
@@ -1973,11 +1973,11 @@ class FanzineIndexPage(GridDataSource):
         return str(self.Updated)
 
 
-    def CanAddColumns(self) -> bool:        # FanzineIndexPage(GridDataSource)
+    def CanAddColumns(self) -> bool:        
         return True
 
 
-    def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        # FanzineIndexPage(GridDataSource)
+    def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        
         for i in range(num):
             ftr=FanzineIndexPageTableRow(self._colDefs)
             self._fanzineList.insert(insertat+i, ftr)
@@ -2011,12 +2011,12 @@ class FanzineIndexPage(GridDataSource):
 
 
     @staticmethod
-    def SelectNonNavigableStrings(soupstuff) -> list:        # FanzineIndexPage(GridDataSource)
+    def SelectNonNavigableStrings(soupstuff) -> list:        
         return [x for x in soupstuff if not isinstance(x, bs4.element.NavigableString)]
 
 
     # Download a fanzine index page fanac.org/fanzines/URL and fill in the class
-    def GetFanzineIndexPage(self, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
+    def GetFanzineIndexPage(self, url: str) -> bool:        
         testRootDirectory=Settings().Get("Test Root directory")
         rootDirectory=Settings().Get("Root directory")
         html=None
@@ -2048,7 +2048,7 @@ class FanzineIndexPage(GridDataSource):
         return True
 
 
-    def GetFanzineIndexPageOld(self, html: str) -> bool:  # FanzineIndexPage(GridDataSource)
+    def GetFanzineIndexPageOld(self, html: str) -> bool:  
         soup=BeautifulSoup(html, 'html.parser')
         body=soup.findAll("body")
         bodytext=str(body)
@@ -2351,7 +2351,7 @@ class FanzineIndexPage(GridDataSource):
 
     # Using the fanzine index page template, create a page and upload it.
     # This puts a Version 1.1 page
-    def PutFanzineIndexPage(self, root: str, url: str) -> bool:        # FanzineIndexPage(GridDataSource)
+    def PutFanzineIndexPage(self, root: str, url: str) -> bool:        
 
         # Get the Fanzine Index Page template
         if not os.path.exists("Template - Fanzine Index Page.html"):
