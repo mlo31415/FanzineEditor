@@ -2416,7 +2416,7 @@ class FanzineIndexPage(GridDataSource):
         output=InsertBetweenComments(output, "name", UnicodeToHtmlEscapes(self.Name.MainName))
         output=InsertBetweenComments(output, "other", self.Name.OthernamesAsHTML)
         output=InsertBetweenComments(output, "eds", "<br>".join([SpecialNameFormatToHtmlFancylink(UnicodeToHtmlEscapes(x.strip())) for x in self.Editors.split("\n")]))
-        output=InsertBetweenComments(output, "dates", self.Dates)
+        output=InsertBetweenComments(output, "dates", UnicodeToHtmlEscapes(self.Dates))
         output=InsertBetweenComments(output, "complete", "(Complete)" if self.Complete else "")
         output=InsertBetweenComments(output, "type", self.FanzineType)
         output=InsertBetweenComments(output, "club", f" - {UnicodeToHtmlEscapes(self.Clubname)}" if self.Clubname != "" else "")
