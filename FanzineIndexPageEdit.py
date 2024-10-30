@@ -1124,7 +1124,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # If needed, queue the Delta
         if icol == 0 and self.Datasource.Rows[irow].IsNormalRow:
-            self.deltaTracker.Rename(oldURL, self.Datasource.Rows[irow][icol], irow=irow)
+            # If we are changing the cell's text from onew filename to another, we do a rename.
+            # But if we are inserting an external URL, there is no need to create a rename on the old contents
+            newurl=self.Datasource.Rows[irow][icol]
+            if "http:" not in newurl.lower() and "//" not in newurl:
+                self.deltaTracker.Rename(oldURL, newurl, irow=irow)
 
         if event.GetCol() == 0:    # If the Filename changes, we may need to update the PDF and the Pages columns
             self.FillInPDFColumn()
