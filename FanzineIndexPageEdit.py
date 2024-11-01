@@ -2251,6 +2251,7 @@ class FanzineIndexPage(GridDataSource):
         self.Name.Othernames=other
         self.Editors=[CleanUnicodeText(x) for x in ExtractHTMLUsingFanacTagCommentPair(topstuff, "eds").split("<br>")]
         self.Dates=ExtractHTMLUsingFanacTagCommentPair(topstuff, "dates")
+        self.Complete="complete" in ExtractHTMLUsingFanacTagCommentPair(topstuff, "complete").lower()
         self.FanzineType=ExtractHTMLUsingFanacTagCommentPair(topstuff, "type")
         self.Clubname=CleanUnicodeText(ExtractHTMLUsingFanacTagCommentPair(topstuff, "club"))
 
@@ -2267,8 +2268,6 @@ class FanzineIndexPage(GridDataSource):
         for keyword in keywords:
             if keyword == "Alphabetize individually":
                 self.AlphabetizeIndividually=True
-            if keyword == "Complete":
-                self.Complete=True
 
         comments=ExtractHTMLUsingFanacStartEndCommentPair(html, "topcomments")
         if comments is not None:
@@ -2438,10 +2437,6 @@ class FanzineIndexPage(GridDataSource):
         keywords=""
         if self.AlphabetizeIndividually:
             keywords+="Alphabetize individually"
-        if self.Complete:
-            if keywords != "":
-                keywords+=", "
-            keywords+="Complete"
         temp=InsertInvisibleTextInsideFanacComment(output, "keywords", keywords)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertInvisibleTextUsingFanacComments('fanac-keywords')")
