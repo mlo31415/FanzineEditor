@@ -2263,11 +2263,9 @@ class FanzineIndexPage(GridDataSource):
             Log(f"GetFanzineIndexPageNew(): ExtractHTMLUsingFanacComments('Locale') -- No locale found")
         # Remove the <h2>s that tend to decorate it
 
-        keywords=ExtractInvisibleTextInsideFanacComment(html, "keywords").split(",")
-        keywords=[x.strip() for x in keywords]
-        for keyword in keywords:
-            if keyword == "Alphabetize individually":
-                self.AlphabetizeIndividually=True
+        keywords=[x.strip() for x in ExtractInvisibleTextInsideFanacComment(html, "keywords").split("; ")]
+        if "Alphabetize individually" in keywords:
+            self.AlphabetizeIndividually=True
 
         comments=ExtractHTMLUsingFanacStartEndCommentPair(html, "topcomments")
         if comments is not None:
@@ -2436,6 +2434,8 @@ class FanzineIndexPage(GridDataSource):
 
         keywords=""
         if self.AlphabetizeIndividually:
+            if len(keywords) > 0:
+                keywords+="; "
             keywords+="Alphabetize individually"
         temp=InsertInvisibleTextInsideFanacComment(output, "keywords", keywords)
         if temp == "":
