@@ -2286,7 +2286,7 @@ class FanzineIndexPage(GridDataSource):
         self._colDefs=ColDefinitionsList([ColDefinition("Link", 100, "url", IsEditable.Maybe)])+self._colDefs
 
         self.Created=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(html, "created"))
-        self.Updated=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(html, "updated"))
+        self.Updated=ClassicFanzinesDate(ExtractHTMLUsingFanacTagCommentPair(html, "updated"))
 
         # Now the rows
         rows=ExtractHTMLUsingFanacStartEndCommentPair(html, "table-rows")
@@ -2508,8 +2508,7 @@ class FanzineIndexPage(GridDataSource):
             output=temp
 
         # Update the updated text at the bottom of the page
-        insert=f"Updated {ClassicFanzinesDate().Now()}"
-        temp=InsertHTMLUsingFanacStartEndCommentPair(output, "updated", insert)
+        temp=InsertHTMLUsingFanacStartEndCommentPair(output, "updated", f"Updated {ClassicFanzinesDate().Now()}")
         if temp == "":
             LogError(f"Could not InsertUsingFanacComments('updated')")
         else:
