@@ -132,15 +132,16 @@ def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear
 #==========================================================================================================
 # Read the classic fanzine list on fanac.org and return a list of all *fanzine directory names*
 def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
-    testRootDirectory=Settings().Get("Test Root directory")
     html=None
-    if testRootDirectory != "":
-        testRootDirectory="/"+testRootDirectory
-        # If there is a test directory, try loading from there, first
-        html=FTP().GetFileAsString(testRootDirectory, "Classic_Fanzines.html")
+    if Settings().Get("Test mode", "False") == "True":
+        testRootDirectory=Settings().Get("Test Root directory")
+        if testRootDirectory != "":
+            testRootDirectory="/"+testRootDirectory
+            # If there is a test directory, try loading from there, first
+            html=FTP().GetFileAsString(testRootDirectory, "Classic_Fanzines.html")
     if html is None:
-        # If that failed (or there wasn't one) load from the default
-        html=FTP().GetFileAsString("fanzines", "Classic_Fanzines.html")
+        # If we're not in test mode or if that failed (or there wasn't one) load from the default
+        html=FTP().GetFileAsString("/fanzines", "Classic_Fanzines.html")
     if html is None:
         LogError(f"Unable to download 'Classic_Fanzines.html'")
         return None
