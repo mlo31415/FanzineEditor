@@ -613,7 +613,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if d.IssueName != "":
                     issuename=f"<issue>{d.IssueName}</issue>"
                 elif d.Irow is not None:
-                    issuename=f"<issue>self.Datasource.Rows[d.Irow][1]</issue>"
+                    issuename=f"<issue>{self.Datasource.Rows[d.Irow][1]}</issue>"
 
                 sfn=f"<sname>{d.SourceFilename}</sname>"
 
