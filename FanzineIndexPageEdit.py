@@ -619,9 +619,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
                 match d.Verb:
                     case "add":
-                        return f"<verb>{d.Verb}</verb>{sfn}{issuename}{nsfn}<spath>{d.SourcePath}<spath>"
+                        return f"<verb>{d.Verb}</verb>{sfn}{issuename}{nsfn}<spath>{d.SourcePath}</spath>"
                     case "replace":
-                        return f"<verb>{d.Verb}</verb>{sfn}{issuename}{nsfn}<spath>{d.SourcePath}<spath>"
+                        return f"<verb>{d.Verb}</verb>{sfn}{issuename}{nsfn}<spath>{d.SourcePath}</spath>"
                     case "rename":
                         return f"<verb>{d.Verb}</verb>{sfn}{issuename}<newname>{d.NewSourceFilename}</newname>"
                     case "delete":
