@@ -103,8 +103,8 @@ def main():
             dlg=wx.MessageDialog(None, f"Unable to establish a lock for id '{id}' in directory '{rootDir}' because: \n{rslt}. \n\n Do you wish to proceed, anyway? ", "Continue (and risk disaster)?", wx.YES_NO|wx.ICON_QUESTION)
             result=dlg.ShowModal()
             dlg.Destroy()
-            if result != wx.ID_YES:
-                lockEstablished=False
+            if result == wx.ID_YES:
+                lockEstablished=True
 
     if lockEstablished:
         # Initialize the GUI
