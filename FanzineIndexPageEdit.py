@@ -106,7 +106,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.serverDir=serverDir.strip()
 
         # Figure out the root directory which depends on whether we are in test mode or not
-        self.RootDir="Fanzines"
+        self.RootDir="fanzines"
         if Settings().IsTrue("Test mode"):
             self.RootDir=Settings().Get("Test Root Directory", self.RootDir)
 

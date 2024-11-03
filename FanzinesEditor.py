@@ -75,7 +75,7 @@ def main():
     FTP().LoggingOff()
 
     id=Settings().Get("ID")
-    rootDir="/Fanzines"
+    rootDir="/fanzines"
     if Settings().IsTrue("Test mode"):
         rootDir="/"+Settings().Get("Test Root Directory", rootDir)
 
@@ -415,7 +415,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
             exit(999)
 
         # Figure out the server directory
-        self.RootDir="Fanzines"
+        self.RootDir="fanzines"
         if Settings().IsTrue("Test mode"):
             self.RootDir=Settings().Get("Test Root Directory", self.RootDir)
 
