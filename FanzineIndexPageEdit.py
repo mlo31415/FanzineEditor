@@ -37,7 +37,7 @@ from PDFHelpers import GetPdfPageCount
 from HtmlHelpersPackage import HtmlEscapesToUnicode, UnicodeToHtmlEscapes
 from Log import Log, LogError
 from Settings import Settings
-from FanzineIssueSpecPackage import MonthNameToInt
+from FanzineDateTime import MonthNameToInt
 
 # Create default column headers
 gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
