@@ -19,7 +19,7 @@ from GenGUIClass import FanzineIndexPageEditGen
 from ClassicFanzinesLine import ClassicFanzinesLine, ClassicFanzinesDate
 from DeltaTracker import DeltaTracker, Delta
 from FanzineNames import FanzineNames
-from FanzineIssueSpecPackage import FanzineDate, YearName, MonthName, DayName
+from FanzineDateTime import FanzineDate
 
 from FTP import FTP
 
