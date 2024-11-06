@@ -2175,7 +2175,7 @@ class FanzineIndexPage(GridDataSource):
         Log(f"     {editors=}")
         Log(f"     {fanzinetype=}")
         Log(f"     {locale=}")
-        Log(f"     {name=}")
+        Log(f"     {name.MainName=}")
         self.Credits=credits
         self.Dates=dates
         self.Editors=editors
