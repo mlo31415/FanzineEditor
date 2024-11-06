@@ -12,13 +12,16 @@ from FTP import FTP
 #   for the upload so that all the accumulated edits get up there.
 
 class Delta:
-    def __init__(self, verb: str, sourceFilename: str, irow: int|None=None, issuename: str= "", sourcePath: str="", newSourceFilename: str=""):
+    def __init__(self, verb: str, sourceFilename: str="", issuename: str= "", sourcePath: str="", serverDirName: str="", serverFilename: str="", newSourceFilename: str="", oldSourceFilename: str="", irow: int|None=None):
         self.Verb: str=verb     # Verb is add, rename, delete, replace
         self.IssueName: str=issuename
-        self.Irow: int|None=irow
+        self.ServerDirName=serverDirName
+        self.ServerFilename=serverFilename
+        self.Irow=irow
         self.SourceFilename: str=sourceFilename     # The name of the file to be operated on (needed for all)
         self.SourcePath: str=sourcePath     # The path (no filename) of the file on the local disk (needed only for add and replace)
         self.NewSourceFilename: str=newSourceFilename       # The new name for the file on the server (needed only for a rename)
+        self.OldSourceFilename: str=oldSourceFilename       # The new fileename. Used in a replace
         self.Uploaded: bool=False       # As an upload proceeds, successful deltas are flagged as uploaded, so if it fails later and the upload is re-run, it isn't duplicated
 
 
@@ -47,12 +50,12 @@ class DeltaTracker:
             s+=">>"+str(d)+"\n"
         return s
 
-    def Add(self, sourceFilepathname: str, irow: int|None=None, issuename: str="") -> None:
+    def Add(self, sourceFilepathname: str, irow: int|None=None, issuename: str="", serverDirName: str="") -> None:
         path, filename=os.path.split(sourceFilepathname)
-        self._deltas.append(Delta("add", filename, irow, issuename, sourcePath=path))
+        self._deltas.append(Delta("add", sourceFilename=filename, issuename=issuename, sourcePath=path, serverDirName=serverDirName, irow=irow))
 
 
-    def Delete(self, sourceFilename: str, issuename: str="", irow: int|None=None) -> None:
+    def Delete(self, sourceFilename: str="", issuename: str="", serverDirName: str="") -> None:
         # If the item being deleted was just added, simply remove the add from the deltas list
         for i, item in enumerate(self._deltas):
             if item.Verb == "add":
@@ -61,11 +64,11 @@ class DeltaTracker:
                     return
 
         # OK, the item is not queued to be added, so it must already be on the website: add a delete action to the deltas list
-        self._deltas.append(Delta("delete", sourceFilename, issuename=issuename, irow=irow))
+        self._deltas.append(Delta("delete", sourceFilename=sourceFilename, issuename=issuename, serverDirName=serverDirName))
 
 
     # Change the filename of a file. It may be on the server already or yet to be added.
-    def Rename(self, sourceFilename: str, newname: str="", issuename: str="", irow: int|None=None) -> None:
+    def Rename(self, sourceFilename: str, newname: str="", issuename: str="", serverDirName: str="") -> None:
         # If the old and new names are gthe same, we'd done.
         if sourceFilename == newname:
             return
@@ -85,12 +88,12 @@ class DeltaTracker:
                     return
 
         # If it doesn't match anything in the delta list, then it must be a rename of an existing file.
-        self._deltas.append(Delta("rename", sourceFilename, issuename=issuename, irow=irow, newSourceFilename=newname))
+        self._deltas.append(Delta("rename", sourceFilename=sourceFilename, issuename=issuename, newSourceFilename=newname, serverDirName=serverDirName))
 
 
     # We want to replace one file on the server with another, leaving the rest of the data unchanged
     # This will cause a new upload and may change the name of the pdf on the server
-    def Replace(self, oldSourceFilename: str, newfilepathname: str, issuename: str|None, irow: int|None=None):
+    def Replace(self, oldSourceFilename: str="", newfilepathname: str="", issuename: str|None=None, irow: int|None=None, serverDirName: str=""):
         newfilepath, newfilename=os.path.split(newfilepathname)
         # Check to see if the replacement is in a row already scheduled to be renamed.
         for i, item in enumerate(self._deltas):
@@ -99,7 +102,7 @@ class DeltaTracker:
                 # First, the user elected to change an existing filename on the server and later decided to replace it by uploading a new file.
                 # Question: Is the new file supposed to be given the new name, also?  It's hard to see why, so we'll change this to:
                 # Upload the new file
-                self.Add(newfilepathname, issuename)
+                self.Add(newfilepathname, issuename=issuename, irow=irow)
                 # Delete the old file
                 self.Delete(oldSourceFilename, issuename)
                 # Delete the rename request
@@ -114,19 +117,15 @@ class DeltaTracker:
                 return
 
         # If it doesn't match anything in the delta list, then it must be a new local file to replace the server file in an existing entry
-        # Delete the old server file and add the new
-        path, filename=os.path.split(oldSourceFilename)
-        self._deltas.append(Delta("add", filename, issuename, sourcePath=path))
 
-        # If the item being deleted was just added, simply remove the add from the deltas list
+        # If the item being replaced was just added and isn't yet on the server, simply swap the names in the add already in the deltas list
         for i, item in enumerate(self._deltas):
             if item.Verb == "add":
-                if item.SourceFilename == newfilepathname:
-                    del self._deltas[i]
-                    return
+                if item.SourceFilename == oldSourceFilename:
+                    item.SourceFilename=newfilename
 
         # OK, the item is not queued to be added, so it must already be on the website: add a delete action to the deltas list
-        self._deltas.append(Delta("delete", oldSourceFilename))
+        self._deltas.append(Delta("replace", oldSourceFilename=oldSourceFilename, irow=irow, serverDirName=serverDirName, newSourceFilename=newfilepathname))
 
 
 
