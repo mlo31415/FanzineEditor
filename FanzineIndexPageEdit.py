@@ -667,7 +667,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                                        f"{Tagit("sourcepathname", delta.SourcePath)}", Flush=True)
 
             if failure:
-                dlg=wx.MessageDialog(self, f"Upload failed")
+                dlg=wx.MessageDialog(self, f"One or more uploads failed")
                 dlg.ShowModal()
 
             FTPLog.Flush()
