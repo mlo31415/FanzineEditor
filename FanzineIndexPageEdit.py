@@ -165,6 +165,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     self.failure=True
                     return
 
+            # Now load the fanzine issue data
+            #self._dataGrid.HideRowLabels()
+            self._dataGrid._grid.SetRowLabelSize(40)
+
+            self._dataGrid.NumCols=self.Datasource.NumCols
+            if self._dataGrid.NumRows > self.Datasource.NumRows:
+                self._dataGrid.DeleteRows(self.Datasource.NumRows, self._dataGrid.NumRows-self.Datasource.NumRows)
+            else:
+                self._dataGrid.AppendRows(self.Datasource.NumRows)
+
             # Add the various values into the dialog
             self.tCredits.SetValue(self.Datasource.Credits)
             self.tDates.SetValue(self.Datasource.Dates)
@@ -191,16 +201,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if self.localDir is not None:
                 self.tLocalDirectory.SetValue(self.localDir)
                 self.tLocalDirectory.Disable()
-
-            # Now load the fanzine issue data
-            #self._dataGrid.HideRowLabels()
-            self._dataGrid._grid.SetRowLabelSize(40)
-
-            self._dataGrid.NumCols=self.Datasource.NumCols
-            if self._dataGrid.NumRows > self.Datasource.NumRows:
-                self._dataGrid.DeleteRows(self.Datasource.NumRows, self._dataGrid.NumRows-self.Datasource.NumRows)
-            else:
-                self._dataGrid.AppendRows(self.Datasource.NumRows)
 
         # Read in the table of local directory to server directory equivalences
         s2l=Settings().Get("Server To Local Table Name")
