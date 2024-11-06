@@ -614,30 +614,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
                 match delta.Verb:
                     case "add":
-                        # First, we figure out what row it's in by comparing URLs
-                        irow=delta.Irow
-                        assert irow is not None
-                        if irow is None:
-                            for i, row in enumerate(self.Datasource.Rows):
-                                if delta.SourceFilename == row.Cells[0]:    # Sourcefilename is the new name because it's already been added to the grid
-                                    irow=i
-                            if irow is None:
-                                LogError(f"Upload case 'add': {delta.SourceFilename} can't be found")
-                                dlg=wx.MessageDialog(None, f"Upload case 'add': {delta.SourceFilename} can't be found", "Oopsie")
-                                dlg.ShowModal()
-                                dlg.Destroy()
-                                return
-
-                        # Copy a file to server, possibly renaming it
-                        path=delta.SourcePath
+                        assert delta.Irow is not None
 
                         # Update the PDF's metadata
-                        newfilename=self.Datasource.Rows[irow].Cells[0]
-                        self.UpdateAndUpload(cfl, delta, irow, newfilename, path, pm)
+                        newfilename=self.Datasource.Rows[delta.Irow].Cells[0]
+                        if not self.UpdateAndUpload(cfl, delta, delta.Irow, newfilename, delta.SourcePath, pm):
+                            failure=True
 
-                        FTPLog().AppendItemVerb("add", f"{Tagit("issuename", self.Datasource.Rows[irow][1])} {Tagit("servdirname", delta.ServerDirName)} "
+                        FTPLog().AppendItemVerb("add", f"{Tagit("issuename", self.Datasource.Rows[delta.Irow][1])} {Tagit("servdirname", delta.ServerDirName)} "
                                                    f"{Tagit("sourcepathname", delta.SourcePath)} {Tagit("sourcefilename", delta.SourceFilename)}", Flush=True)
-                        continue
 
                     case "delete":
                         # Delete a file on the server
@@ -654,7 +639,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         delta.Uploaded=True
                         FTPLog().AppendItemVerb("delete", f"{Tagit("servdirname", delta.ServerDirName)} {Tagit("sourcefilename", delta.ServerFilename)}  "
                                                       f"{Tagit("issuename", delta.IssueName)}", Flush=True)
-                        continue
 
                     case "rename":
                         # Rename file on the server
@@ -672,38 +656,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         delta.Uploaded=True
                         FTPLog().AppendItemVerb("rename", f"{Tagit("sourcefilename", delta.SourceFilename)} {Tagit("issuename", delta.IssueName)} "
                                                       f"{Tagit("newname", delta.NewSourceFilename)} {Tagit("sourcepathname", delta.SourcePath)}", Flush=True)
-                        continue
 
                     case "replace":
-                        # Update metadata and ody file to server.
-                        irow=delta.Irow
-                        newfilename=self.Datasource.Rows[irow].Cells[0]
-                        self.UpdateAndUpload(cfl, delta, irow, newfilename, delta.SourcePath, pm)
-                        # # Update the new PDF's metadata
-                        # copyfilepath=SetPDFMetadata(delta.NewSourceFilename, cfl, self.Datasource.Rows[delta.Irow].Cells, self.Datasource.ColDefs)
-                        # Log(f"{copyfilepath=}")     #TODO delete these logging messages once sure that this code is working
-                        #
-                        # serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
-                        # Log(f"{serverpathfile=}")
-                        #
-                        # if delta.NewSourceFilename != "":
-                        #
-                        #     serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
-                        #     Log(f"Renamed {serverpathfile=}")
-                        #
-                        # pm.Update(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
-                        # if not FTP().PutFile(copyfilepath, serverpathfile):
-                        #     dlg=wx.MessageDialog(self, f"Y+Unable to replace {copyfilepath}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
-                        #     result=dlg.ShowModal()
-                        #     dlg.Destroy()
-                        #     if result != wx.ID_YES:
-                        #         failure=True
-                        #         break
-                        # del copyfilepath
-                        # delta.Uploaded=True
+                        # Update metadata and odd file to server.  We ignore the old file. (Maybe ought to delete it?)
+                        newfilename=self.Datasource.Rows[delta.Irow].Cells[0]
+                        if not self.UpdateAndUpload(cfl, delta, delta.Irow, newfilename, delta.SourcePath, pm):
+                            failure=True
+
                         FTPLog().AppendItemVerb("replace", f"{Tagit("sourcefilename", delta.SourceFilename)} {Tagit("issuename", delta.IssueName)} "
                                                        f"{Tagit("sourcepathname", delta.SourcePath)}", Flush=True)
-                        continue
 
             if failure:
                 dlg=wx.MessageDialog(self, f"Upload failed")
