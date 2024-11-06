@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from FTP import FTP
+from Log import Log
 
 class FTPLog:
     g_ID: str|None =None
@@ -22,19 +23,27 @@ class FTPLog:
 
     @staticmethod
     def Flush():
-        items="\n".join(FTPLog.g_pendinglist)
-        FTP().AppendString(FTPLog.g_Logfilename, items)
+        items="".join(FTPLog.g_pendinglist).strip(" ")
+        if items != "":
+            FTP().AppendString(FTPLog.g_Logfilename, items)
+        FTPLog.g_pendinglist=[]
+    #
+    # @staticmethod
+    # def AppendRawTextStringImmediate(lines: str) -> None:
+    #     FTP().AppendString(FTPLog.g_Logfilename, f"<item><rawtext>{lines}</rawtext>{FTPLog.Tagstring()}</item>\n")
+    # @staticmethod
+    # def AppendRawTextString(lines: str) -> None:
+    #     FTPLog.g_pendinglist.append(f"<item><rawtext>{lines}</rawtext>{FTPLog.Tagstring()}</item>\n")
 
     @staticmethod
-    def AppendRawTextStringImmediate(lines: str) -> None:
-        FTP().AppendString(FTPLog.g_Logfilename, f"<item>{FTPLog.Tagstring()}<rawtext>{lines}</rawtext></item>\n")
+    def AppendItem(txt: str, Flush: bool=False) -> None:
+        Log(f"AppendItem: {txt=}")
+        FTPLog.g_pendinglist.append(f"<item>{txt.strip()}{FTPLog.Tagstring()}/item>\n")
+        if Flush:
+            FTPLog.Flush()
     @staticmethod
-    def AppendRawTextString(lines: str) -> None:
-        FTPLog.g_pendinglist.append(f"<item>{FTPLog.Tagstring()}<rawtext>{lines}</rawtext></item>\n")
-
-    @staticmethod
-    def AppendItemImmediate(txt: str) -> None:
-        FTP().AppendString(FTPLog.g_Logfilename, f"<item>{FTPLog.Tagstring()}<txt>{txt}</txt></item>\n")
-    @staticmethod
-    def AppendItem(txt: str) -> None:
-        FTPLog.g_pendinglist.append(f"<item>{FTPLog.Tagstring()}<txt>{txt}</txt></item>\n")
+    def AppendItemVerb(verb: str, txt: str, Flush: bool=False) -> None:
+        Log(f"AppendItem: {verb=} {txt=}")
+        FTPLog.g_pendinglist.append(f"<item><verb>{verb}</verb>{txt.strip()}{FTPLog.Tagstring()}</item>\n\n")
+        if Flush:
+            FTPLog.Flush()
