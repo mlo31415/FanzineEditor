@@ -262,7 +262,9 @@ class ClassicFanzinesLine:
     def Issues(self) -> str:
         return self._issues
     @Issues.setter
-    def Issues(self, val: str):
+    def Issues(self, val: str|int):
+        if isinstance(val, int):
+            val=str(int)
         self._issues=val
 
     @property
