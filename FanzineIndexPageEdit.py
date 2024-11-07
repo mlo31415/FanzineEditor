@@ -1877,9 +1877,13 @@ def ColNamesToColDefs(headers: list[str]) -> ColDefinitionsList:
             header="Display Text"   # But a few pages usne "Title"
         else:
             header=CanonicizeColumnHeaders(header)
-        scd=ColDefinition(f"({header})", Type="str", Width=75)  # The default when it's unrecognizable
+
         if header in gStdColHeaders:
             scd=gStdColHeaders[gStdColHeaders.index(header)]
+        else:
+            header=header.strip("(").strip(")")     # Remove existing parens so when we add one back. there's just one.
+            scd=ColDefinition(f"({header})", Type="str", Width=75)  # The default when it's unrecognizable
+
         colDefs.append(scd)
     return colDefs
 
