@@ -267,7 +267,7 @@ class ClassicFanzinesLine:
 
     @property
     def IssuesSort(self) -> str:
-        return f"{Int0(self.Issues):0{5}}"
+        return f"{Int0(self.Issues.replace(',', '')):0{5}}"     # Need to handle page counts like 1,404
     @IssuesSort.setter
     def IssuesSort(self, val: str):
         assert False
