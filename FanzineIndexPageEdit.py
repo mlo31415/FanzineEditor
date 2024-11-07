@@ -19,7 +19,7 @@ from GenGUIClass import FanzineIndexPageEditGen
 from ClassicFanzinesLine import ClassicFanzinesLine, ClassicFanzinesDate
 from DeltaTracker import DeltaTracker, Delta
 from FanzineNames import FanzineNames
-from FanzineDateTime import FanzineDate
+from FanzineDateTime import FanzineDate, InterpretRelativeWords
 
 from FTP import FTP
 
@@ -2161,7 +2161,10 @@ class FanzineIndexPage(GridDataSource):
             for row in self.Rows:
                 if row[datecol] != "":
                     date=FanzineDate().Match(row[datecol])
-                    row[daycol]=date.DayText
+                    d=InterpretRelativeWords(date.DayText)
+                    if d is None:
+                        d=date.DayText
+                    row[daycol]=d
                     row[monthcol]=date.MonthText
                     row[yearcol]=date.YearText
                     i=0
