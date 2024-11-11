@@ -25,7 +25,6 @@ class FanzineNames:
             else:
                 self.Othernames=othernames.split(",")
 
-
     def __hash__(self):
         return hash(self._mainname)+sum([hash(x) for x in self._othernames])
 
@@ -37,7 +36,6 @@ class FanzineNames:
         if len(self._othernames) > 0:
             otherstuff=" / "+self.OthernamesAsStr(", ")
         return self._mainname+otherstuff
-
 
     def DeepCopy(self) -> "FanzineNames":
         fn=FanzineNames()
