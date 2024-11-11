@@ -17,7 +17,7 @@ import pyperclip
 from FTPLog import FTPLog
 from GenGUIClass import FanzineIndexPageEditGen
 from ClassicFanzinesLine import ClassicFanzinesLine, ClassicFanzinesDate
-from DeltaTracker import DeltaTracker, Delta
+from DeltaTracker import DeltaTracker
 from FanzineNames import FanzineNames
 from FanzineDateTime import FanzineDate, InterpretRelativeWords
 
@@ -622,8 +622,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         newfilename=self.Datasource.Rows[delta.Irow].Cells[0]
                         if self.UpdateAndUpload(cfl, delta.Irow, newfilename, delta.SourcePath, pm):
                             delta.Uploaded=True
-
-                        FTPLog().AppendItemVerb("add", f"{Tagit("issuename", self.Datasource.Rows[delta.Irow][1])} {Tagit("servdirname", delta.ServerDirName)} "
+                            FTPLog().AppendItemVerb("add", f"{Tagit("issuename", self.Datasource.Rows[delta.Irow][1])} {Tagit("servdirname", delta.ServerDirName)} "
                                                    f"{Tagit("sourcepathname", delta.SourcePath)} {Tagit("sourcefilename", delta.SourceFilename)}", Flush=True)
 
                     case "delete":
@@ -631,14 +630,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         servername=delta.SourceFilename
                         serverpathfile=f"/{self.RootDir}/{self.serverDir}/{servername}"
                         pm.Update(f"Deleting {serverpathfile} from server")
-                        if not FTP().DeleteFile(serverpathfile):
+                        delta.Uploaded= FTP().DeleteFile(serverpathfile)
+                        if not delta.Uploaded:
                             dlg=wx.MessageDialog(self, f"Y+Unable to delete {serverpathfile}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
                             dlg.Destroy()
                             if result != wx.ID_YES:
                                 break
-                        delta.Uploaded=True
-                        FTPLog().AppendItemVerb("delete", f"{Tagit("servdirname", delta.ServerDirName)} {Tagit("sourcefilename", delta.ServerFilename)}  "
+                        if delta.Uploaded:
+                            FTPLog().AppendItemVerb("delete", f"{Tagit("servdirname", delta.ServerDirName)} {Tagit("sourcefilename", delta.ServerFilename)}  "
                                                       f"{Tagit("issuename", delta.IssueName)}", Flush=True)
 
                     case "rename":
@@ -647,14 +647,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         oldserverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
                         newserverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
                         pm.Update(f"Renaming {oldserverpathfile} as {newserverpathfile}")
-                        if not FTP().Rename(oldserverpathfile, newserverpathfile):
+                        delta.Uploaded=FTP().Rename(oldserverpathfile, newserverpathfile)
+                        if not delta.Uploaded:
                             dlg=wx.MessageDialog(self, f"Unable to rename {oldserverpathfile} to {newserverpathfile}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
                             dlg.Destroy()
                             if result != wx.ID_YES:
                                 break
-                        delta.Uploaded=True
-                        FTPLog().AppendItemVerb("rename", f"{Tagit("sourcefilename", delta.SourceFilename)} {Tagit("issuename", delta.IssueName)} "
+                        if delta.Uploaded:
+                            FTPLog().AppendItemVerb("rename", f"{Tagit("sourcefilename", delta.SourceFilename)} {Tagit("issuename", delta.IssueName)} "
                                                       f"{Tagit("newname", delta.NewSourceFilename)} {Tagit("sourcepathname", delta.SourcePath)}", Flush=True)
 
                     case "replace":
@@ -664,8 +665,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         # delta.SourcePath=path
                         if self.UpdateAndUpload(cfl, delta.Irow, filename, path, pm):
                             delta.Uploaded=True
-
-                        FTPLog().AppendItemVerb("replace", f"{Tagit("sourcefilename", delta.SourceFilename)} {Tagit("issuename", delta.IssueName)} "
+                            FTPLog().AppendItemVerb("replace", f"{Tagit("sourcefilename", delta.SourceFilename)} {Tagit("issuename", delta.IssueName)} "
                                                        f"{Tagit("sourcepathname", delta.SourcePath)}", Flush=True)
 
 
