@@ -26,10 +26,10 @@ from FTP import FTP
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
 from WxHelpers import OnCloseHandling, ProcessChar
 from WxHelpers import ModalDialogManager, ProgressMessage2
-from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, FanzineNameToDirName,RemoveTopLevelHTMLTags, RegularizeBRTags
+from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, FanzineNameToDirName, RemoveTopLevelHTMLTags, RegularizeBRTags, Pluralize
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
-from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks
+from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks, RemoveFunnyWhitespace
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, StripSpecificTag
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, ExtractHTMLUsingFanacStartEndCommentPair, SplitListOfNamesOnPattern
 from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename, InsertInvisibleTextInsideFanacComment, ExtractHTMLUsingFanacTagCommentPair
@@ -357,11 +357,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # Sort the new files by name and add them to the rows at the bottom, and add them to the changelist
         files.sort()
-        newrows=self.Datasource.AppendEmptyRows(len(files))
+        oldNrows=self.Datasource.NumRows
+        self.Datasource.AppendEmptyRows(len(files))
         for i, file in enumerate(files):
-            newrows[i].FileSourcePath=files[i]
-            newrows[i][0]=os.path.basename(files[i])
-            self.deltaTracker.Add(file, irow=i)
+            irow=oldNrows+i
+            self.Datasource.Rows[irow].FileSourcePath=files[i]
+            self.Datasource.Rows[irow][0]=os.path.basename(files[i])
+            self.deltaTracker.Add(file, irow=irow)
 
         # Add a PDF column (if needed) and fill in the PDF column and page counts
         self.FillInPDFColumn()
@@ -618,8 +620,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
                         # Update the PDF's metadata
                         newfilename=self.Datasource.Rows[delta.Irow].Cells[0]
-                        if not self.UpdateAndUpload(cfl, delta, delta.Irow, newfilename, delta.SourcePath, pm):
-                            failure=True
+                        if self.UpdateAndUpload(cfl, delta.Irow, newfilename, delta.SourcePath, pm):
+                            delta.Uploaded=True
 
                         FTPLog().AppendItemVerb("add", f"{Tagit("issuename", self.Datasource.Rows[delta.Irow][1])} {Tagit("servdirname", delta.ServerDirName)} "
                                                    f"{Tagit("sourcepathname", delta.SourcePath)} {Tagit("sourcefilename", delta.SourceFilename)}", Flush=True)
@@ -634,7 +636,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             result=dlg.ShowModal()
                             dlg.Destroy()
                             if result != wx.ID_YES:
-                                failure=True
                                 break
                         delta.Uploaded=True
                         FTPLog().AppendItemVerb("delete", f"{Tagit("servdirname", delta.ServerDirName)} {Tagit("sourcefilename", delta.ServerFilename)}  "
@@ -651,7 +652,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             result=dlg.ShowModal()
                             dlg.Destroy()
                             if result != wx.ID_YES:
-                                failure=True
                                 break
                         delta.Uploaded=True
                         FTPLog().AppendItemVerb("rename", f"{Tagit("sourcefilename", delta.SourceFilename)} {Tagit("issuename", delta.IssueName)} "
@@ -659,15 +659,19 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
                     case "replace":
                         # Update metadata and odd file to server.  We ignore the old file. (Maybe ought to delete it?)
-                        newfilename=self.Datasource.Rows[delta.Irow].Cells[0]
-                        if not self.UpdateAndUpload(cfl, delta, delta.Irow, newfilename, delta.SourcePath, pm):
-                            failure=True
+                        path, filename=os.path.split(delta.NewSourceFilename)
+                        # delta.SourceFilename=filename
+                        # delta.SourcePath=path
+                        if self.UpdateAndUpload(cfl, delta.Irow, filename, path, pm):
+                            delta.Uploaded=True
 
                         FTPLog().AppendItemVerb("replace", f"{Tagit("sourcefilename", delta.SourceFilename)} {Tagit("issuename", delta.IssueName)} "
                                                        f"{Tagit("sourcepathname", delta.SourcePath)}", Flush=True)
 
-            if failure:
-                dlg=wx.MessageDialog(self, f"One or more uploads failed")
+
+            c=sum([1 for x in self.deltaTracker.Deltas if not x.Uploaded])
+            if c > 0:
+                dlg=wx.MessageDialog(self, f"{Pluralize(c, "upload")} failed")
                 dlg.ShowModal()
 
             FTPLog.Flush()
@@ -720,26 +724,22 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.UpdateDialogComponentEnabledStatus()
 
     # Update the new pdf's metadata and then upload it
-    def UpdateAndUpload(self, cfl: ClassicFanzinesLine, delta: Delta, irow: int|None, newfilename: str, path: str, pm: ProgressMessage2) -> bool:
+    def UpdateAndUpload(self, cfl: ClassicFanzinesLine, irow: int|None, sourcefilename: str, sourcepath: str, pm: ProgressMessage2) -> bool:
 
-        _, ext=os.path.splitext(newfilename)
+        _, ext=os.path.splitext(sourcefilename)
         isPdf=ext.lower() == ".pdf"
         # If this is a PDF, we need to update the metadata
         if isPdf:
-            copyfilepath=SetPDFMetadata(delta.NewSourceFilename, cfl, self.Datasource.Rows[irow].Cells, self.Datasource.ColDefs)
+            copyfilepath=SetPDFMetadata(sourcepath+"/"+sourcefilename, cfl, self.Datasource.Rows[irow].Cells, self.Datasource.ColDefs)
             Log(f"{copyfilepath=}")  # TODO delete these logging messages once sure that this code is working
             assert copyfilepath != ""
         else:
-            copyfilepath=os.path.join(path, newfilename)
+            copyfilepath=os.path.join(sourcepath, sourcefilename)
 
-        serverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
-        Log(f"{serverpathfile=}")
-        if delta.NewSourceFilename != "":
-            fn=os.path.split(delta.NewSourceFilename)[1]
-            serverpathfile=f"/{self.RootDir}/{self.serverDir}/{fn}"
-            Log(f"Renamed {serverpathfile=}")
+        serverpathfile=f"/{self.RootDir}/{self.serverDir}/{sourcefilename}"
 
-        pm.Update(f"Uploading {delta.SourceFilename} as {delta.NewSourceFilename}")
+
+        pm.Update(f"Uploading {sourcefilename} as {sourcefilename}")
         Log(f"FTP().PutFile({copyfilepath}, {serverpathfile})")
         if not FTP().PutFile(copyfilepath, serverpathfile):
             dlg=wx.MessageDialog(self, f"Y+Unable to upload {copyfilepath}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
@@ -751,7 +751,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if isPdf:
             # If this is a PDF, then we created a temporary file when adding the metadata. Delete it now.
             del copyfilepath
-        delta.Uploaded=True
         return True
 
     # Take the date range (if any) on the Fanzine Index Page and return a years start, end tuple
