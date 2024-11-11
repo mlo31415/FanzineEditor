@@ -2031,12 +2031,21 @@ class FanzineIndexPage(GridDataSource):
 
         return True
 
+    # Dunno why this keeps croppying up in some of the html...
+    def RemoveA0C2Crap(self, s: str) -> str:
+        x=s.replace("\xc2\xa0", " ").replace(u"\u00A0", " ")
+        x=x.replace("0xa0", " ").replace("0xc2", " ")
+        return x
+
 
     def GetFanzineIndexPageOld(self, html: str) -> bool:  
         soup=BeautifulSoup(html, 'html.parser')
         body=soup.findAll("body")
         bodytext=str(body)
+
+        bodytext=self.RemoveA0C2Crap(bodytext)
         _, bodytext=SearchAndReplace(r"(<script>.+?</script>)", bodytext, "", ignorenewlines=True)
+
 
         tables=body[0].findAll("table")
         top=tables[0]
@@ -2117,6 +2126,7 @@ class FanzineIndexPage(GridDataSource):
 
                 # We treat column 0 specially, extracting its hyperref and turning it into two
                 cols0=str(cols[0])
+                cols0=self.RemoveA0C2Crap(cols0)
                 _, url, text, _=FindLinkInString(cols0)
                 if url == "" and text == "":
                     cols0=RemoveAllHTMLLikeTags(cols0)
@@ -2217,6 +2227,9 @@ class FanzineIndexPage(GridDataSource):
             return HtmlEscapesToUnicode(RemoveFancyLink(s)).strip()
 
         html2=CleanUnicodeText(html)
+        html=RemoveFunnyWhitespace(html)
+
+        html=self.RemoveA0C2Crap(html)
 
         #<!-- fanac fanzine index page V1.0-->
         version=ExtractInvisibleTextInsideFanacComment(html, "fanzine index page V")
