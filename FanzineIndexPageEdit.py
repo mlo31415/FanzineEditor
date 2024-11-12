@@ -623,8 +623,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
                         # Update the PDF's metadata
                         newfilename=self.Datasource.Rows[delta.Irow].Cells[0]
-                        if self.UpdateAndUpload(cfl, delta.Irow, newfilename, delta.SourcePath, pm):
-                            delta.Uploaded=True
+                        delta.Uploaded=self.UpdateAndUpload(cfl, delta.Irow, newfilename, delta.SourcePath, pm)
+                        if delta.Uploaded:
                             FTPLog().AppendItemVerb("add", f"{Tagit("issuename", self.Datasource.Rows[delta.Irow][1])} {Tagit("servdirname", delta.ServerDirName)} "
                                                    f"{Tagit("sourcepathname", delta.SourcePath)} {Tagit("sourcefilename", delta.SourceFilename)}", Flush=True)
 
