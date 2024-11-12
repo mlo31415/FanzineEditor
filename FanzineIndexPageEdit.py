@@ -2479,7 +2479,7 @@ class FanzineIndexPage(GridDataSource):
 
             # OK, it's an ordinary row
             insert+=f"\n<TR>"
-            insert+=f'\n<TD><a href="{row.Cells[0]}">{UnicodeToHtmlEscapes(row.Cells[1])}</A></TD>\n'
+            insert+=f'\n<TD><a href="{row.Cells[0].replace("#", "%23").replace("&", "%26")}">{UnicodeToHtmlEscapes(row.Cells[1])}</A></TD>\n'
             for i, cell in enumerate(row.Cells[2:]):
                 if self.ColHeaders[i+2].lower() == "mailing":
                     insert+=f"<TD CLASS='left'>{self.ProcessAPALinks(cell)}</TD>\n"
