@@ -347,6 +347,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if len(files) == 0:     # Should never happen as there's no way to return from dlg w/o selecting pdfs or hitting cancel.  But just in case...
             return
 
+        # Thwe files come back with '//' as the separator which gives troubel downstream. Fix it.
+        files=[file.replace("\\", "/") for file in files]
+
         # We have a list of file names and need to add them to the fanzine index page
         # Start by removing any already-existing empty trailing rows from the datasource
         while self.Datasource.Rows:
