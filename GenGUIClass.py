@@ -96,7 +96,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		fgSizer9.Add( self.m_staticTextEditors, 0, wx.ALIGN_RIGHT|wx.ALIGN_TOP|wx.FIXED_MINSIZE, 5 )
 
 		self.tEditors = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE )
-		self.tEditors.SetToolTip( u"A list of editors separated by commans." )
+		self.tEditors.SetToolTip( u"A list of editors, one per line" )
 		self.tEditors.SetMinSize( wx.Size( 200,90 ) )
 
 		fgSizer9.Add( self.tEditors, 0, wx.ALIGN_TOP|wx.EXPAND, 5 )
