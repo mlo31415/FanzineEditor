@@ -280,20 +280,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.bAddNewIssues.Enable(True)
 
 
-    #
-    # #------------------
-    # # An override of DataGrids's method ColorCellsByValue() for columns 0 and 1 only
-    # def ColorCells01ByValue(self, icol: int, irow: int):            
-    #     if icol != 0 and icol != 1:
-    #         return
-    #     if icol < 0 or icol >= self.Datasource.NumCols:
-    #         return
-    #     if irow < 0 or irow >= self.Datasource.NumRows:
-    #         return
-    #
-    #     return
-
-
 
     def OnClose(self, event):       
         if not self.OKToClose(event):
@@ -366,7 +352,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             irow=oldNrows+i
             self.Datasource.Rows[irow].FileSourcePath=files[i]
             self.Datasource.Rows[irow][0]=os.path.basename(files[i])
-            self.deltaTracker.Add(file, irow=irow)
+            self.deltaTracker.Add(file, row=self.Datasource.Rows[irow].Cells)
 
         # Add a PDF column (if needed) and fill in the PDF column and page counts
         self.FillInPDFColumn()
@@ -619,13 +605,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
                 match delta.Verb:
                     case "add":
-                        assert delta.Irow is not None
+                        assert delta.Row is not None
 
                         # Update the PDF's metadata
-                        newfilename=self.Datasource.Rows[delta.Irow].Cells[0]
-                        delta.Uploaded=self.UpdateAndUpload(cfl, delta.Irow, newfilename, delta.SourcePath, pm)
+                        newfilename=delta.Row[0]
+                        delta.Uploaded=self.UpdateAndUpload(cfl, delta.Row, newfilename, delta.SourcePath, pm)
                         if delta.Uploaded:
-                            FTPLog().AppendItemVerb("add", f"{Tagit("issuename", self.Datasource.Rows[delta.Irow][1])} {Tagit("servdirname", delta.ServerDirName)} "
+                            FTPLog().AppendItemVerb("add", f"{Tagit("issuename", delta.Row[1])} {Tagit("servdirname", delta.ServerDirName)} "
                                                    f"{Tagit("sourcepathname", delta.SourcePath)} {Tagit("sourcefilename", delta.SourceFilename)}", Flush=True)
 
                     case "delete":
@@ -666,7 +652,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         path, filename=os.path.split(delta.NewSourceFilename)
                         # delta.SourceFilename=filename
                         # delta.SourcePath=path
-                        if self.UpdateAndUpload(cfl, delta.Irow, filename, path, pm):
+                        if self.UpdateAndUpload(cfl, delta.Row, filename, path, pm):
                             delta.Uploaded=True
                             FTPLog().AppendItemVerb("replace", f"{Tagit("sourcefilename", delta.SourceFilename)} {Tagit("issuename", delta.IssueName)} "
                                                        f"{Tagit("sourcepathname", delta.SourcePath)}", Flush=True)
@@ -727,13 +713,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.UpdateDialogComponentEnabledStatus()
 
     # Update the new pdf's metadata and then upload it
-    def UpdateAndUpload(self, cfl: ClassicFanzinesLine, irow: int|None, sourcefilename: str, sourcepath: str, pm: ProgressMessage2) -> bool:
+    def UpdateAndUpload(self, cfl: ClassicFanzinesLine, row: list[str]|None, sourcefilename: str, sourcepath: str, pm: ProgressMessage2) -> bool:
 
         _, ext=os.path.splitext(sourcefilename)
         isPdf=ext.lower() == ".pdf"
         # If this is a PDF, we need to update the metadata
         if isPdf:
-            copyfilepath=SetPDFMetadata(sourcepath+"/"+sourcefilename, cfl, self.Datasource.Rows[irow].Cells, self.Datasource.ColDefs)
+            copyfilepath=SetPDFMetadata(sourcepath+"/"+sourcefilename, cfl, row, self.Datasource.ColDefs)
             Log(f"{copyfilepath=}")  # TODO delete these logging messages once sure that this code is working
             assert copyfilepath != ""
         else:
@@ -1404,7 +1390,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         oldfile=self.Datasource.Rows[irow][0]
         newfilepath, newfilename=os.path.split(filepath[0])
         self.Datasource.Rows[irow][0]=newfilename
-        self.deltaTracker.Replace(oldSourceFilename=oldfile, newfilepathname=filepath[0], irow=irow, issuename=self.Datasource.Rows[irow][1])
+        self.deltaTracker.Replace(oldSourceFilename=oldfile, newfilepathname=filepath[0], row=self.Datasource.Rows[irow].Cells, issuename=self.Datasource.Rows[irow][1])
         self.RefreshWindow()
 
         event.Skip()
