@@ -76,7 +76,7 @@ class DeltaTracker:
         # First check to see if this is a rename of a rename.  If it is, merge them by replacing the existing rename.
         for item in self._deltas:
             if item.Verb == "rename":
-                if item.SourceFilename == sourceFilename:
+                if item.NewSourceFilename == sourceFilename:        # Is the *old* filename for this rename the same as the *new* filename for a previous one
                     item.NewSourceFilename=newname
                     return
 
