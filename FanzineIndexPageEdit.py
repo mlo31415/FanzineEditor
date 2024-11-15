@@ -2003,6 +2003,11 @@ class FanzineIndexPage(GridDataSource):
             LogError(f"Unable to download 'index.html' from '{url}'")
             return False
 
+        # Remove the &amp;amp;amp;amp;amp;... that has crept in to some pages.
+        while "&amp;amp;" in html:
+            html=html.replace("amp;amp;", "amp;")
+            Log(f"redundant 'amp;'s removed from {url}")
+
         # This is the tag that marks a new-style page.  The version number may someday be significant
         #<!-- fanac fanzine index page V1.0-->
         version=ExtractInvisibleTextInsideFanacComment(html, "fanzine index page V")

@@ -144,6 +144,11 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
         LogError(f"Unable to download 'Classic_Fanzines.html'")
         return None
 
+    # Remove the &amp;amp;amp;amp;amp;... that has crept in to some pages.
+    while "&amp;amp;" in html:
+        html=html.replace("amp;amp;", "amp;")
+        Log(f"redundant 'amp;'s removed from Classic_Fanzines.html")
+
     soup=BeautifulSoup(html, 'html.parser')
     table=soup.find_all("table", class_="sortable")[0]
     rows=table.find_all_next("tr")
