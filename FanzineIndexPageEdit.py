@@ -30,7 +30,7 @@ from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, FanzineNameToDirName, R
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
 from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks, RemoveFunnyWhitespace
-from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, StripSpecificTag
+from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, StripSpecificTag, RemoveHyperlink
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, ExtractHTMLUsingFanacStartEndCommentPair, SplitListOfNamesOnPattern
 from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename, InsertInvisibleTextInsideFanacComment, ExtractHTMLUsingFanacTagCommentPair
 from PDFHelpers import GetPdfPageCount
@@ -2117,6 +2117,7 @@ class FanzineIndexPage(GridDataSource):
                 cols0=str(cols[0])
                 cols0=self.RemoveA0C2Crap(cols0)
                 _, url, text, _=FindLinkInString(cols0)
+                url=HtmlEscapesToUnicode(url, isURL=True)
                 if url == "" and text == "":
                     cols0=RemoveAllHTMLLikeTags(cols0)
                     row=["", cols0]
@@ -2216,7 +2217,7 @@ class FanzineIndexPage(GridDataSource):
             return HtmlEscapesToUnicode(RemoveFancyLink(s)).strip()
 
         html2=CleanUnicodeText(html)
-        html=RemoveFunnyWhitespace(html)
+        #html=RemoveFunnyWhitespace(html)
 
         html=self.RemoveA0C2Crap(html)
 
@@ -2233,7 +2234,7 @@ class FanzineIndexPage(GridDataSource):
         other=ExtractHTMLUsingFanacTagCommentPair(topstuff, "other")
         other=[CleanUnicodeText(x) for x in [y for y in SplitOnSpansOfLineBreaks(other)]]
         self.Name.Othernames=other
-        self.Editors=[CleanUnicodeText(x) for x in ExtractHTMLUsingFanacTagCommentPair(topstuff, "eds").split("<br>")]
+        self.Editors=[CleanUnicodeText(x) for x in RemoveHyperlink(ExtractHTMLUsingFanacTagCommentPair(topstuff, "eds"), repeat=True).split("<br>")]
         self.Dates=ExtractHTMLUsingFanacTagCommentPair(topstuff, "dates")
         self.Complete="complete" in ExtractHTMLUsingFanacTagCommentPair(topstuff, "complete").lower()
         self.FanzineType=ExtractHTMLUsingFanacTagCommentPair(topstuff, "type")
@@ -2317,6 +2318,7 @@ class FanzineIndexPage(GridDataSource):
             # We treat the web page's column 0 specially, extracting its hyperref and display name and showing them as two column in FanzinesEditor
             cols0=str(cols[0])
             _, url, text, _=FindLinkInString(cols0)
+            url=HtmlEscapesToUnicode(url, isURL=True)
             if url == "" and text == "":
                 cols=["", cols0].extend(cols[1:])
             else:
@@ -2465,7 +2467,7 @@ class FanzineIndexPage(GridDataSource):
 
             # OK, it's an ordinary row
             insert+=f"\n<TR>"
-            insert+=f'\n<TD><a href="{row.Cells[0].replace("#", "%23").replace("&", "%26")}">{UnicodeToHtmlEscapes(row.Cells[1])}</A></TD>\n'
+            insert+=f'\n<TD><a href="{row.Cells[0].replace("#", "%23").replace("&", "%26")}">{row.Cells[1]}</A></TD>\n'
             for i, cell in enumerate(row.Cells[2:]):
                 if self.ColHeaders[i+2].lower() == "mailing":
                     insert+=f"<TD CLASS='left'>{self.ProcessAPALinks(cell)}</TD>\n"
@@ -2508,7 +2510,13 @@ class FanzineIndexPage(GridDataSource):
 
 def SetPDFMetadata(pdfPathname: str, cfl: ClassicFanzinesLine, row: list[str], colNames: ColDefinitionsList) -> str:
 
-    writer=PdfWriter(clone_from=pdfPathname)
+    try:
+        writer=PdfWriter(clone_from=pdfPathname)
+    except FileNotFoundError:
+        wx.MessageBox(f"Unable to open file {pdfPathname}")
+        LogError((f"SetPDFMetadata: Unable to open file {pdfPathname}"))
+        return ""
+
 
     # Title, issue, date, editors, country code, apa
     metadata={"/Title": row[colNames.index("Display Text")], "/Author": cfl.Editors.replace("<br>", ", ")}
