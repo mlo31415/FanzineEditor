@@ -7,6 +7,11 @@ PDF Source Path=C:\Users\mlo\Documents\usr\Fancyclopedia\Python\FanacLSTGenerato
 # Pathname of the (local) table relating server directories to local directories
 Server To Local Table Name=S2L\ServerToLocal Conversion.txt
 
+# If you wish files to be moved to the local directory after uploading, provide a complete path to a diretcory 
+# containing the local directories.  (A directory will be created at need.)
+# Leave blank if you do not want files moved after uploading.xy
+Local Directory Root Path=C:\Users\mlo\Documents\usr\Fancyclopedia\Python\FanzinesEditor\Local Directories
+
 # The root server directory. Normally "Fanzines" but may be changed for testing.
 Root directory=fanzines	
 
