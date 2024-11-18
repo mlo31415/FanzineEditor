@@ -2441,6 +2441,7 @@ class FanzineIndexPage(GridDataSource):
         output=InsertInvisibleTextInsideFanacComment(output, "sig", self.Significance)
 
         insert=UnicodeToHtmlEscapes(self.TopComments).replace("\n", "<br>")
+        insert=self.TopComments.replace("\n", "<br>")
         temp=InsertHTMLUsingFanacStartEndCommentPair(output, "topcomments", insert)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('topcomments')")
