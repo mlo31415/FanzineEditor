@@ -100,10 +100,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # IsNewDirectory True means this FIP is newly created and has not yet been uploaded.
         # We can tell because an existing fanzine must be opened by supplying a server directory, while for a new fanzine, the server directory must be the empty string
         # Some fields are editable only for new fanzines (which will be in new server directories, allowing some things to be set for the first time.).
-        self.IsNewDirectory=False
-        if serverDir == "":
-            self.IsNewDirectory=True
-        self.serverDir=serverDir.strip()
+        serverDir=serverDir.strip()
+        self.IsNewDirectory=serverDir == ""
+        self.tServerDirectory.SetValue(serverDir)
 
         # Figure out the root directory which depends on whether we are in test mode or not
         self.RootDir="fanzines"
@@ -191,13 +190,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.cbComplete.SetValue(self.Datasource.Complete)
             self.cbAlphabetizeIndividually.SetValue(self.Datasource.AlphabetizeIndividually)
 
-            # The server directory is not editable when it already exists.
-            # If the input parameter serverDirectory is empty, then we're creating a new fanzine entry and the serverDirectory can and must be edited.
-            if self.serverDir != "":
-                self.tServerDirectory.SetValue(self.serverDir)
-                self.tServerDirectory.Disable()
+            self.tServerDirectory.SetValue(serverDir)
+            self.tServerDirectory.Disable()
 
-            self.localDir=Settings("ServerToLocal").Get(self.serverDir)
+            self.localDir=Settings("ServerToLocal").Get(self.ServerDir)
             if self.localDir is not None:
                 self.tLocalDirectory.SetValue(self.localDir)
                 self.tLocalDirectory.Disable()
@@ -558,8 +554,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if result != wx.ID_YES:
                     return
 
-        with ModalDialogManager(ProgressMessage2, f"Uploading FanzineIndexPage {self.serverDir}", parent=self) as pm:
-            Log(f"Uploading Fanzine Index Page: {self.serverDir}")
         # Save the fanzine's values to return to the main fanzines page.
         cfl=ClassicFanzinesLine()
         cfl.Issues=self.Datasource.NumRows
@@ -576,25 +570,44 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             cfl.Created=datetime.now()      # We only update the created time when were actually creating something...
         cfl.TopComments=self.tTopComments.GetValue()
         cfl.Country=self.tLocaleText.GetValue()
+
+        # We may need to move the files
+        localDirectoryRootPath=Settings().Get("Local Directory Root Path")
+        localDirectoryPath=""
+        localDirectoryName=self.tLocalDirectory.GetValue()
+        moveFilesAfterUploading=False
+        # If a local directory root path exists, then we will move files there once they are uploaded
+        if localDirectoryRootPath != "":
+            moveFilesAfterUploading=True
+            localDirectoryPath=localDirectoryRootPath+"/"+localDirectoryName
+
+            # If this is a new fanzine, create the local directory if necessary
+            if self.IsNewDirectory:
+                if not os.path.exists(localDirectoryPath):
+                    os.mkdir(localDirectoryPath)
+
+        with ModalDialogManager(ProgressMessage2, f"Uploading FanzineIndexPage {self.ServerDir}", parent=self) as pm:
+            Log(f"Uploading Fanzine Index Page: {self.ServerDir}")
             self.failure=False
 
-            # During the test phase, we have a bogus root directory and the fanzine's directory may noy yet have an idnex file to be backed up.
-            # So, when we edit a new fanzine, we copy it from the true root to the bogus root, giving us an index file to backup..
+            # During the test phase, we have a bogus root directory and the fanzine's directory may noy yet have an index file to be backed up.
+            # So, when we edit a new fanzine, we copy it from the true root to the bogus root, giving us an index file to back up.
             # This will go away when we dispense with the bogus root.
             if self.RootDir.lower() != "fanzines":
-                if not FTP().FileExists(f"/{self.RootDir}/{self.serverDir}/index.html"):    # Check to see if the bigus root already has an index file
-                    FTP().CopyFile(f"/fanzines/{self.serverDir}",   # If not, copy one in.
-                                   f"/{self.RootDir}/{self.serverDir}", "index.html", Create=True)
+                if not FTP().FileExists(f"/{self.RootDir}/{self.ServerDir}/index.html"):    # Check to see if the bogus root already has an index file
+                    # If not, copy the existing index.htl file on /fanzines/ in to the test root.
+                    # Note that this will create the server directory if it does not already exist.
+                    FTP().CopyFile(f"/fanzines/{self.ServerDir}",
+                                   f"/{self.RootDir}/{self.ServerDir}", "index.html", Create=True)
 
             # Make a dated backup copy of the existing index page
-            ret=FTP().BackupServerFile(f"/{self.RootDir}/{self.serverDir}/index.html")
+            ret=FTP().BackupServerFile(f"/{self.RootDir}/{self.ServerDir}/index.html")
             if not ret:
-                Log(f"Could not make a backup copy: {self.RootDir}/{self.serverDir}/{TimestampFilename('index.html')}")
+                Log(f"Could not make a backup copy: {self.RootDir}/{self.ServerDir}/{TimestampFilename('index.html')}")
                 self.failure=True
                 return
 
-            pm.Update(f"Uploading new Fanzine Index Page: {self.serverDir}")
-            self.serverDir=self.tServerDirectory.GetValue()
+            pm.Update(f"Uploading new Fanzine Index Page: {self.ServerDir}")
 
             def Tagit(tag: str, contents: str) -> str:
                 contents=contents.strip()
@@ -602,29 +615,36 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     return ""
                 return f"<{tag}>{contents}</{tag}>"
 
+            def MoveToLocalDirectory(sourcepath: str, localdirpath: str, filename: str):
+                # if the target directory does not exist, create it
+                if not os.path.exists(localdirpath):
+                    os.makedirs(localdirpath)
+                shutil.move(sourcepath+"/"+filename, localdirpath+"/"+filename)
+
             # Now execute the delta list on the files.
             failure=False
             for delta in self.deltaTracker.Deltas:
 
                 match delta.Verb:
                     case "add":
+                        # Add a new file to the server
                         assert delta.Row is not None
-
-                        # Update the PDF's metadata
                         newfilename=delta.Row[0]
                         delta.Uploaded=self.UpdateAndUpload(cfl, delta.Row, newfilename, delta.SourcePath, pm)
                         if delta.Uploaded:
+                            if moveFilesAfterUploading:
+                                MoveToLocalDirectory(delta.SourcePath, localDirectoryPath, delta.SourceFilename)
                             FTPLog().AppendItemVerb("add", f"{Tagit("issuename", delta.Row[1])} {Tagit("servdirname", delta.ServerDirName)} "
                                                    f"{Tagit("sourcepathname", delta.SourcePath)} {Tagit("sourcefilename", delta.SourceFilename)}", Flush=True)
 
                     case "delete":
                         # Delete a file on the server
                         servername=delta.SourceFilename
-                        serverpathfile=f"/{self.RootDir}/{self.serverDir}/{servername}"
+                        serverpathfile=f"/{self.RootDir}/{self.ServerDir}/{servername}"
                         pm.Update(f"Deleting {serverpathfile} from server")
                         delta.Uploaded= FTP().DeleteFile(serverpathfile)
                         if not delta.Uploaded:
-                            dlg=wx.MessageDialog(self, f"Y+Unable to delete {serverpathfile}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+                            dlg=wx.MessageDialog(self, f"Unable to delete {serverpathfile}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
                             dlg.Destroy()
                             if result != wx.ID_YES:
@@ -636,8 +656,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     case "rename":
                         # Rename file on the server
                         assert delta.NewSourceFilename != ""
-                        oldserverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.SourceFilename}"
-                        newserverpathfile=f"/{self.RootDir}/{self.serverDir}/{delta.NewSourceFilename}"
+                        oldserverpathfile=f"/{self.RootDir}/{self.ServerDir}/{delta.SourceFilename}"
+                        newserverpathfile=f"/{self.RootDir}/{self.ServerDir}/{delta.NewSourceFilename}"
                         pm.Update(f"Renaming {oldserverpathfile} as {newserverpathfile}")
                         delta.Uploaded=FTP().Rename(oldserverpathfile, newserverpathfile)
                         if not delta.Uploaded:
@@ -651,15 +671,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                                       f"{Tagit("newname", delta.NewSourceFilename)} {Tagit("sourcepathname", delta.SourcePath)}", Flush=True)
 
                     case "replace":
-                        # Update metadata and odd file to server.  We ignore the old file. (Maybe ought to delete it?)
+                        # Replace a file already on server.  We ignore the old file. It gets overwritten if the filename is the same or just left otherwise.
                         path, filename=os.path.split(delta.NewSourceFilename)
-                        # delta.SourceFilename=filename
-                        # delta.SourcePath=path
-                        if self.UpdateAndUpload(cfl, delta.Row, filename, path, pm):
-                            delta.Uploaded=True
+                        delta.Uploaded=self.UpdateAndUpload(cfl, delta.Row, filename, path, pm)
+                        if delta.Uploaded:
+                            if moveFilesAfterUploading:
+                                MoveToLocalDirectory(delta.SourcePath, localDirectoryPath, delta.SourceFilename)
                             FTPLog().AppendItemVerb("replace", f"{Tagit("sourcefilename", delta.SourceFilename)} {Tagit("issuename", delta.IssueName)} "
                                                        f"{Tagit("sourcepathname", delta.SourcePath)}", Flush=True)
-
 
             c=sum([1 for x in self.deltaTracker.Deltas if not x.Uploaded])
             if c > 0:
@@ -676,15 +695,17 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     self.deltaTracker.Deltas.append(delta)
 
             # If this is a new fanzine, it needs to be in a new directory.  Check it.
-            if self.IsNewDirectory:
-                path=f"/{self.RootDir}/{self.serverDir}"
-                if FTP().PathExists(path):
-                    wx.MessageBox(f"'Directory {path}' already exists.  Please change the server directory name.", parent=self)
-                    self.failure=True
-                    return
+            # if self.IsNewDirectory:
+            #     path=f"/{self.RootDir}/{self.ServerDir}"
+            #     if FTP().PathExists(path):
+            #         if self.RootDir == "fanzines":      # We only care about this in the real root directory
+            #             wx.MessageBox(f"'Directory {path}' already exists.  Please change the server directory name.", parent=self)
+            #             self.failure=True
+            #             return
 
             # Put the FanzineIndexPage on the server as an HTML file
             if not self.Datasource.PutFanzineIndexPage(self.RootDir, self.serverDir):
+            if not self.Datasource.PutFanzineIndexPage(self.RootDir, self.ServerDir):
                 self.failure=True
                 Log("Failed\n")
                 return
@@ -715,6 +736,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             self.UpdateDialogComponentEnabledStatus()
 
+
     # Update the new pdf's metadata and then upload it
     def UpdateAndUpload(self, cfl: ClassicFanzinesLine, row: list[str]|None, sourcefilename: str, sourcepath: str, pm: ProgressMessage2) -> bool:
 
@@ -728,13 +750,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         else:
             copyfilepath=os.path.join(sourcepath, sourcefilename)
 
-        serverpathfile=f"/{self.RootDir}/{self.serverDir}/{sourcefilename}"
+        serverpathfile=f"/{self.RootDir}/{self.ServerDir}/{sourcefilename}"
 
 
         pm.Update(f"Uploading {sourcefilename} as {sourcefilename}")
         Log(f"FTP().PutFile({copyfilepath}, {serverpathfile})")
         if not FTP().PutFile(copyfilepath, serverpathfile):
-            dlg=wx.MessageDialog(self, f"Y+Unable to upload {copyfilepath}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+            dlg=wx.MessageDialog(self, f"Unable to upload {copyfilepath}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
             result=dlg.ShowModal()
             dlg.Destroy()
             if result != wx.ID_YES:
@@ -825,7 +847,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     def UpdateNeedsSavingFlag(self):       
-        s="Editing "+self.serverDir
+        s="Editing "+self.ServerDir
         if self.NeedsSaving():
             s=s+" *"        # Append a change marker if needed
         self.SetTitle(s)
@@ -886,9 +908,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Suppress leading articles, eg The or A
         # Remove non-letter characters, eg apostrophes or commas
         # Local directories all in caps Server directories with first letters of words capitalized
-        # Spaces around dashes suppressed (eg fanzine title of: Bangsund - Other Publications)
-        # Ability to manually add text to the server and local directories (eg fanzine title: Cinder ; server directory Cinder-Williams)
-        # Ability to manually delete text for the server and local directories (eg fanzine title: Prolapse / Relapse ; server directory Prolapse)
+        # Spaces around dashes suppressed (e.g. fanzine title of: Bangsund - Other Publications)
+        # Ability to manually add text to the server and local directories (e.g. fanzine title: Cinder ; server directory Cinder-Williams)
+        # Ability to manually delete text for the server and local directories (e.g. fanzine title: Prolapse / Relapse ; server directory Prolapse)
 
         # Pick up the current value of the fanzine name field
         fname, cursorloc=ProcessChar(self.tFanzineName.GetValue(), event.GetKeyCode(), self.tFanzineName.GetInsertionPoint())
@@ -923,8 +945,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     def OnFanzineNameText(self, event):
 
-        serverdir=self.tServerDirectory.GetValue()
-        if self.IsNewDirectory and self._existingFanzinesServerDirs is not None and serverdir in self._existingFanzinesServerDirs:
+        if self.IsNewDirectory and self._existingFanzinesServerDirs is not None and self.ServerDir in self._existingFanzinesServerDirs:
             self.tServerDirectory.SetBackgroundColour(Color.Pink)
             self.tFanzineName.SetBackgroundColour(Color.Pink)
         else:
@@ -2103,8 +2124,7 @@ class FanzineIndexPage(GridDataSource):
             row0=theRows[0].findAll("th")
             if len(row0) > 0:
                 headers=[RemoveAllHTMLLikeTags(str(x)) for x in row0]
-        # self.rows=rows
-        # self.cols=headers
+
         # And construct the grid
         # Column #1 is always a link to the fanzine, and we split this into two parts, the URL and the display text
         # We prepend a URL column before the Issue column. This will hold the filename which is the URL for the link
