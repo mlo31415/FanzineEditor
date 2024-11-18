@@ -530,23 +530,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             wx.MessageBox(f"There is already a directory named {self.tServerDirectory.GetValue()} on the server. Please select another name.", parent=self)
             return
 
-        # Save the fanzine's values to return to the main fanzines page.
-        cfl=ClassicFanzinesLine()
-        cfl.Issues=self.Datasource.NumRows
-        cfl.Editors=self.tEditors.GetValue().replace("\n", "<br>")
-        cfl.ServerDir=self.tServerDirectory.GetValue()
-        cfl.Name=FanzineNames(self.tFanzineName.GetValue(), self.tOthernames.GetValue())
-        cfl.Dates=self.tDates.GetValue()
-        cfl.Type=self.chFanzineType.Items[self.chFanzineType.GetSelection()]
-        cfl.Significance=self.chSignificance.Items[self.chSignificance.GetSelection()]
-        cfl.Clubname=self.tClubname.GetValue()
-        cfl.Complete=self.cbComplete.GetValue()
-        cfl.Updated=datetime.now()
-        if self.IsNewDirectory:
-            cfl.Created=datetime.now()      # We only update the created time when were actually creating something...
-        cfl.TopComments=self.tTopComments.GetValue()
-        cfl.Country=self.tLocaleText.GetValue()
-
         # Check the dates to make sure that the dated issues all fall into the date range given for the fanzine
         # Date range should be of the form yyyy-yyyy with question marks abounding
         d1, d2=self.DateRange
@@ -573,6 +556,22 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         with ModalDialogManager(ProgressMessage2, f"Uploading FanzineIndexPage {self.serverDir}", parent=self) as pm:
             Log(f"Uploading Fanzine Index Page: {self.serverDir}")
+        # Save the fanzine's values to return to the main fanzines page.
+        cfl=ClassicFanzinesLine()
+        cfl.Issues=self.Datasource.NumRows
+        cfl.Editors=self.tEditors.GetValue().replace("\n", "<br>")
+        cfl.ServerDir=self.tServerDirectory.GetValue()
+        cfl.Name=FanzineNames(self.tFanzineName.GetValue(), self.tOthernames.GetValue())
+        cfl.Dates=self.tDates.GetValue()
+        cfl.Type=self.chFanzineType.Items[self.chFanzineType.GetSelection()]
+        cfl.Significance=self.chSignificance.Items[self.chSignificance.GetSelection()]
+        cfl.Clubname=self.tClubname.GetValue()
+        cfl.Complete=self.cbComplete.GetValue()
+        cfl.Updated=datetime.now()
+        if self.IsNewDirectory:
+            cfl.Created=datetime.now()      # We only update the created time when were actually creating something...
+        cfl.TopComments=self.tTopComments.GetValue()
+        cfl.Country=self.tLocaleText.GetValue()
             self.failure=False
 
             # During the test phase, we have a bogus root directory and the fanzine's directory may noy yet have an idnex file to be backed up.
