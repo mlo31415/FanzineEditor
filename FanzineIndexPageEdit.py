@@ -243,6 +243,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             return ""
         return eds
 
+    @property
+    def ServerDir(self) -> str:
+        return self.tServerDirectory.GetValue()
+
 
     # Look at information available and color buttons and fields accordingly.
     def EnableDialogFields(self):                      
