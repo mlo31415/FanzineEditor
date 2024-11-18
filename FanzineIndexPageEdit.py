@@ -709,15 +709,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 self.failure=True
                 Log("Failed\n")
                 return
-            for row in self.Datasource.Rows:
-                if row.FileSourcePath != "":
-                    pm.Update(f"Uploading file: {row.FileSourcePath}")
-                    Log(f"Uploading file: {row.FileSourcePath}")
-                    if not FTP().PutFile(row.FileSourcePath, f"/{self.RootDir}/{self.serverDir}/{row.Cells[0]}"):
-                        Log("Failed\n")
-                        self.failure=True
-                        return
-                    row.FileSourcePath=""
+            # for row in self.Datasource.Rows:
+            #     if row.FileSourcePath != "":
+            #         pm.Update(f"Uploading file: {row.FileSourcePath}")
+            #         Log(f"Uploading file: {row.FileSourcePath}")
+            #         if not FTP().PutFile(row.FileSourcePath, f"/{self.RootDir}/{self.ServerDir}/{row.Cells[0]}"):
+            #             wx.MessageBox(f"Upload of {row.Cells[0]} failed")
+            #             Log("Failed\n")
+            #             self.failure=True
+            #             return
+            #         row.FileSourcePath=""
 
             Log("All uploads succeeded.")
 
