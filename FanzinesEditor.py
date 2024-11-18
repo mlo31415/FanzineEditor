@@ -548,11 +548,6 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
 
     def OnAddNewFanzine(self, event):       
-        # fsw=FanzineIndexPageWindow(None, ExistingFanzinesServerDirs=self.Datasource.FanzineList)
-        # if fsw.failure:
-        #     MessageBox(f"Unable to load new fanzine window", Title="Loading Fanzine Index page", ignoredebugger=True)
-        #     Log(f"FanzineIndexPageWindow('') failed")
-        #     return
 
         with FanzineIndexPageWindow(None, ExistingFanzinesServerDirs=self.Datasource.FanzineList) as fsw:
             fsw.ShowModal()
@@ -592,7 +587,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
     def OpenClickedCell(self, icol: int, irow: int):
 
         serverDir=self._Datasource.Rows[irow][icol]
-        with FanzineIndexPageWindow(None, serverDir) as fipw:
+        with FanzineIndexPageWindow(None, serverDir=serverDir) as fipw:
             if fipw.failure:
                 wx.MessageBox(f"Unable to load {serverDir}", caption="Loading Fanzine Index page", parent=self)
                 Log(f"FanzineIndexPageWindow('{serverDir}') failed")
