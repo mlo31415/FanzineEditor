@@ -704,7 +704,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             #             return
 
             # Put the FanzineIndexPage on the server as an HTML file
-            if not self.Datasource.PutFanzineIndexPage(self.RootDir, self.serverDir):
             if not self.Datasource.PutFanzineIndexPage(self.RootDir, self.ServerDir):
                 wx.MessageBox(f"Upload of index file failed")
                 self.failure=True
