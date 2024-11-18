@@ -264,7 +264,7 @@ class ClassicFanzinesLine:
     @Issues.setter
     def Issues(self, val: str|int):
         if isinstance(val, int):
-            val=str(int)
+            val=str(val)
         self._issues=val
 
     @property
