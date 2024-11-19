@@ -184,6 +184,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_bpButton1 = wx.BitmapButton( self, wx.ID_ANY, wx.NullBitmap, wx.DefaultPosition, wx.Size( 25,25 ), wx.BU_AUTODRAW|0 )
 		self.m_bpButton1.SetForegroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_ACTIVECAPTION ) )
 		self.m_bpButton1.SetBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_ACTIVECAPTION ) )
+		self.m_bpButton1.SetToolTip( u"Copy the server directory to the clipboard." )
 
 		fgSizer6.Add( self.m_bpButton1, 0, wx.ALIGN_CENTER|wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
