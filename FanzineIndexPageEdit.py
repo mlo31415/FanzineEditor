@@ -28,7 +28,7 @@ from WxHelpers import OnCloseHandling, ProcessChar
 from WxHelpers import ModalDialogManager, ProgressMessage2
 from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, FanzineNameToDirName, RemoveTopLevelHTMLTags, RegularizeBRTags, Pluralize
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
-from HelpersPackage import RemoveHyperlink, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
+from HelpersPackage import InsertBetweenHTMLComments, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks, RemoveFunnyWhitespace
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, StripSpecificTag, RemoveHyperlink
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, ExtractHTMLUsingFanacStartEndCommentPair, SplitListOfNamesOnPattern
@@ -998,7 +998,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         return
 
 
-    def OnEditorsText(self, event):       
+    def OnEditorsText(self, event):
         self.Datasource.Editors=self.tEditors.GetValue()
         self.RefreshWindow(DontRefreshGrid=True)
 
@@ -2425,18 +2425,14 @@ class FanzineIndexPage(GridDataSource):
 
         output, rslt=FindAndReplaceBracketedText(output, "title", f"<title>{UnicodeToHtmlEscapes(self.Name.MainName)}</title>", caseInsensitive=True)
 
-        # Format the top-level stuff
-        def InsertBetweenComments(s: str, tag: str, val: str) -> str:
-            # Look for a section of the input string surrounded by  "<!--- tag -->" and replace it all by val
-            return re.sub(rf"<!--\s*{tag}\s*-->(.*?)<!--\s*{tag}\s*-->", f"<!--{tag}-->{val}<!--{tag}-->", s, flags=re.IGNORECASE | re.DOTALL | re.MULTILINE)
-        output=InsertBetweenComments(output, "name", UnicodeToHtmlEscapes(self.Name.MainName))
-        output=InsertBetweenComments(output, "other", self.Name.OthernamesAsHTML)
-        output=InsertBetweenComments(output, "eds", "<br>".join([SpecialNameFormatToHtmlFancylink(UnicodeToHtmlEscapes(x.strip())) for x in self.Editors.split("\n")]))
-        output=InsertBetweenComments(output, "dates", UnicodeToHtmlEscapes(self.Dates))
-        output=InsertBetweenComments(output, "complete", "(Complete)" if self.Complete else "")
-        output=InsertBetweenComments(output, "type", self.FanzineType)
-        output=InsertBetweenComments(output, "club", f" - {UnicodeToHtmlEscapes(self.Clubname)}" if self.Clubname != "" else "")
-        output=InsertBetweenComments(output, "loc", TurnPythonListIntoWordList(self.Locale))
+        output=InsertBetweenHTMLComments(output, "name", UnicodeToHtmlEscapes(self.Name.MainName))
+        output=InsertBetweenHTMLComments(output, "other", self.Name.OthernamesAsHTML)
+        output=InsertBetweenHTMLComments(output, "eds", "<br>".join([SpecialNameFormatToHtmlFancylink(UnicodeToHtmlEscapes(x.strip())) for x in self.Editors.split("\n")]))
+        output=InsertBetweenHTMLComments(output, "dates", UnicodeToHtmlEscapes(self.Dates))
+        output=InsertBetweenHTMLComments(output, "complete", "(Complete)" if self.Complete else "")
+        output=InsertBetweenHTMLComments(output, "type", self.FanzineType)
+        output=InsertBetweenHTMLComments(output, "club", f" - {UnicodeToHtmlEscapes(self.Clubname)}" if self.Clubname != "" else "")
+        output=InsertBetweenHTMLComments(output, "loc", TurnPythonListIntoWordList(self.Locale))
 
         output=InsertInvisibleTextInsideFanacComment(output, "sig", self.Significance)
 
