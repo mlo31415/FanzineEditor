@@ -616,6 +616,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 return f"<{tag}>{contents}</{tag}>"
 
             def MoveToLocalDirectory(sourcepath: str, localdirpath: str, filename: str):
+                if filename is None or filename == "":
+                    return  # Nothing to do here, move along...
                 # if the target directory does not exist, create it
                 if not os.path.exists(localdirpath):
                     os.makedirs(localdirpath)
