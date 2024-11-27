@@ -1418,6 +1418,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         newfilepath, newfilename=os.path.split(filepath[0])
         self.Datasource.Rows[irow][0]=newfilename
         self.deltaTracker.Replace(oldSourceFilename=oldfile, newfilepathname=filepath[0], row=self.Datasource.Rows[irow].Cells, issuename=self.Datasource.Rows[irow][1])
+        self.FillInPDFColumn()
         self.RefreshWindow()
 
         event.Skip()
