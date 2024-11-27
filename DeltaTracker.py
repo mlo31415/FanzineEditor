@@ -109,7 +109,7 @@ class DeltaTracker:
                 del self._deltas[i]
                 return
 
-        # Check to see if this is a replacement of a file scheduled to be added
+        # Check to see if this is a replacement of a file already scheduled to be added
         for item in self._deltas:
             if item.Verb == "add" and item.SourceFilename == oldSourceFilename:
                 # Just update the local pathname in the add entry
