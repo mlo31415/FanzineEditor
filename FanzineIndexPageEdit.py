@@ -2391,7 +2391,8 @@ class FanzineIndexPage(GridDataSource):
             mailing=mailing.strip()
             if len(mailing) == 0:
                 continue
-            m=re.match(r"([a-zA-Z'1-9_\- ]*)\s+([0-9]+[a-zA-Z]*)\s*(pm|postmailing)?$", mailing, flags=re.IGNORECASE)      # Split the FAPA 103A into an apa name and the mailing number (which may have trailing characters '30A')
+            # Split mailing titles like FAPA 103A into an apa name and the mailing number (which may have trailing characters '30A')
+            m=re.match(r"([a-zA-Z'1-9_\- ]*)\s+([0-9]+[a-zA-Z]*)\s*(pm|postmailing)?$", mailing, flags=re.IGNORECASE)
             if m is not None:
                 apa=m.groups()[0]
                 number=m.groups()[1]
@@ -2400,7 +2401,7 @@ class FanzineIndexPage(GridDataSource):
                     pm=" "+pm
                 else:
                     pm=""
-                out.append(f'<a href="https://fanac.org/fanzines/APA_Mailings/{FanzineNameToDirName(apa)}/{number}.html">{apa} {number}</a>{pm}')
+                out.append(f'<a href="https://fanac.org/fanzines/APA_Mailings/{apa}/{number}.html">{apa} {number}</a>{pm}')
         return ", ".join(out)
 
 
