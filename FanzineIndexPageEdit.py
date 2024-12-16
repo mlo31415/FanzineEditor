@@ -2488,7 +2488,13 @@ class FanzineIndexPage(GridDataSource):
                 continue
 
             if row.IsTextRow:
-                insert+=f'\n<TR><TD colspan="{self.NumCols}"><b>{UnicodeToHtmlEscapes(row.Cells[0])}</b></TD></TR>'
+                # If the row is an anchor for an in-page href, we need to detect it and handle it correctly.
+                m=re.match(r"<a name=.*>", row.Cells[0], flags=re.IGNORECASE)
+                if m is not None:
+                    contents=row.Cells[0]
+                else:
+                    contents=UnicodeToHtmlEscapes(row.Cells[0])
+                insert+=f'\n<TR><TD colspan="{self.NumCols}"><b>{contents}</b></TD></TR>'
                 continue
 
             if row.IsLinkRow:
