@@ -2489,11 +2489,9 @@ class FanzineIndexPage(GridDataSource):
 
             if row.IsTextRow:
                 # If the row is an anchor for an in-page href, we need to detect it and handle it correctly.
-                m=re.match(r"<a name=.*>", row.Cells[0], flags=re.IGNORECASE)
-                if m is not None:
-                    contents=row.Cells[0]
-                else:
-                    contents=UnicodeToHtmlEscapes(row.Cells[0])
+                contents=row.Cells[0]
+                if re.match(r"<a name=.*>", contents, flags=re.IGNORECASE):
+                    contents=UnicodeToHtmlEscapes(contents)
                 insert+=f'\n<TR><TD colspan="{self.NumCols}"><b>{contents}</b></TD></TR>'
                 continue
 
