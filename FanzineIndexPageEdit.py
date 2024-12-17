@@ -678,7 +678,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         delta.Uploaded=self.UpdateAndUpload(cfl, delta.Row, filename, path, pm)
                         if delta.Uploaded:
                             if moveFilesAfterUploading:
-                                MoveToLocalDirectory(delta.SourcePath, localDirectoryPath, delta.SourceFilename)
+                                MoveToLocalDirectory(path, localDirectoryPath, filename)
                             FTPLog().AppendItemVerb("replace", f"{Tagit("sourcefilename", delta.SourceFilename)} {Tagit("issuename", delta.IssueName)} "
                                                        f"{Tagit("sourcepathname", delta.SourcePath)}", Flush=True)
 
