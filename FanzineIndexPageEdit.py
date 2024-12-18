@@ -34,7 +34,7 @@ from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonLi
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, ExtractHTMLUsingFanacStartEndCommentPair, SplitListOfNamesOnPattern
 from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename, InsertInvisibleTextInsideFanacComment, ExtractHTMLUsingFanacTagCommentPair
 from PDFHelpers import GetPdfPageCount
-from HtmlHelpersPackage import HtmlEscapesToUnicode, UnicodeToHtmlEscapes
+from HtmlHelpersPackage import HtmlEscapesToUnicode, UnicodeToHtmlEscapes, ConvertHTMLEscapes
 from Log import Log, LogError
 from Settings import Settings
 from FanzineDateTime import MonthNameToInt
@@ -578,6 +578,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         moveFilesAfterUploading=False
         # If a local directory root path exists, then we will move files there once they are uploaded
         if localDirectoryRootPath != "":
+
             moveFilesAfterUploading=True
             localDirectoryPath=localDirectoryRootPath+"/"+localDirectoryName
 
@@ -1939,6 +1940,7 @@ class FanzineIndexPage(GridDataSource):
         self._clubname: str=""
         self._betterScanNeeded: bool=False
         self._Editors: str=""
+        self._version: str=""
         self.Dates: str=""
         self.Significance: str="Unclassified"
         self.FanzineType: str=""
@@ -2055,13 +2057,16 @@ class FanzineIndexPage(GridDataSource):
             html=html.replace("amp;amp;", "amp;")
             Log(f"redundant 'amp;'s removed from {url}")
 
-        # This is the tag that marks a new-style page.  The version number may someday be significant
-        #<!-- fanac fanzine index page V1.0-->
-        version=ExtractInvisibleTextInsideFanacComment(html, "fanzine index page V")
-        if version == "":
+        # This is the tag that marks a new-style page and its version.
+        # e.g., <!-- fanac fanzine index page V1.0-->
+        # Version " " -- old (Jack) pages
+        # Version "2" -- The first batch of FanzinesEditor pages
+        # Version "2.1" -- starting mid-December 2024, pages where we have guaranteed that ampersands in URLs are correctly written
+        self._version=ExtractInvisibleTextInsideFanacComment(html, "fanzine index page V").strip()
+        if self._version == "":
             success=self.GetFanzineIndexPageOld(html)
         else:
-            success=self.GetFanzineIndexPageNew(html)
+            success=self.GetFanzineIndexPageNew(html, fanzineServerDir)
 
         if not success:
             return False
@@ -2262,7 +2267,7 @@ class FanzineIndexPage(GridDataSource):
 
 
 
-    def GetFanzineIndexPageNew(self, html: str) -> bool:
+    def GetFanzineIndexPageNew(self, html: str, fanzineServerDir: str) -> bool:
 
         def CleanUnicodeText(s: str) -> str:
             return HtmlEscapesToUnicode(RemoveFancyLink(s)).strip()
@@ -2272,8 +2277,8 @@ class FanzineIndexPage(GridDataSource):
 
         html=self.RemoveA0C2Crap(html)
 
-        #<!-- fanac fanzine index page V1.0-->
-        version=ExtractInvisibleTextInsideFanacComment(html, "fanzine index page V")
+        # Update the version number
+        html=InsertInvisibleTextInsideFanacComment(html, "fanzine index page V", "2.1")   # Version being written.  self._version is what was read.
 
         # f"{self.Name.MainName}<BR><H2>{self.Editors}<BR><H2>{self.Dates}<BR><BR>{self.FanzineType}"
         topstuff=ExtractHTMLUsingFanacStartEndCommentPair(html, "header")
@@ -2324,6 +2329,12 @@ class FanzineIndexPage(GridDataSource):
         self.Created=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(html, "created"))
         self.Updated=ClassicFanzinesDate(ExtractHTMLUsingFanacTagCommentPair(html, "updated"))
 
+        # There is an issue with V2 pages in which the code for the '&' in "Laurel & Hardy" in a URL was mis-handled.
+        # If this page began as a V2 page, we'll need to look carefully at the filenames on the site and adjust the URLs in the rows to match.
+        urlsOnServer: list[str]=[]
+        if self._version == "2":
+            urlsOnServer=FTP().Nlst(fanzineServerDir)
+
         # Now the rows
         rows=ExtractHTMLUsingFanacStartEndCommentPair(html, "table-rows")
         rows=re.findall(r"<TR>(.+?)</TR>", rows, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
@@ -2349,7 +2360,10 @@ class FanzineIndexPage(GridDataSource):
             m=re.match(r'<TD colspan=\"[0-9]+\">(.*?)</TD>', row, flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
             if m is not None:
                 fipr=FanzineIndexPageTableRow(self._colDefs)
-                fipr.Cells[0]=StripSpecificTag(m.groups()[0], "b")
+                contents=StripSpecificTag(m.groups()[0], "b")
+                contents=ConvertHTMLEscapes(contents)
+                fipr.Cells[0]=contents
+
                 fipr.IsTextRow=True
                 self.Rows.append(fipr)
                 continue
@@ -2367,11 +2381,16 @@ class FanzineIndexPage(GridDataSource):
             cols=[x[1] for x in rowsfound]
 
             # We treat the web page's column 0 specially, extracting its hyperref and display name and showing them as two column in FanzinesEditor
+            # The first col is complicated, because it needs to have URLs which match the actual filename on the server. This is only an issue the first time we write a V2.1 or later FIP.
+            # Expand the first col in the FIP into two columens for display
             cols0=str(cols[0])
             _, url, text, _=FindLinkInString(cols0)
-            url=HtmlEscapesToUnicode(url, isURL=True)
+            if self._version == "2":
+                url=HtmlEscapesToUnicode(url, isURL=True).replace("&amp;", "&")
+            else:
+                url=HtmlEscapesToUnicode(url, isURL=True)
             if url == "" and text == "":
-                cols=["", cols0].extend(cols[1:])
+                cols=["", cols0]+cols[1:]
             else:
                 cols=[url, text]+cols[1:]
 
@@ -2425,7 +2444,7 @@ class FanzineIndexPage(GridDataSource):
 
 
     # Using the fanzine index page template, create a page and upload it.
-    # This puts a Version 1.1 page
+    # This puts a Version 2.1 page
     def PutFanzineIndexPage(self, root: str, url: str) -> bool:        
 
         # Get the Fanzine Index Page template
