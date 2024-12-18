@@ -2037,17 +2037,19 @@ class FanzineIndexPage(GridDataSource):
 
 
     # Download a fanzine index page fanac.org/fanzines/URL and fill in the class
-    def GetFanzineIndexPage(self, url: str) -> bool:        
+    def GetFanzineIndexPage(self, url: str) -> bool:
+        fanzineServerDir=""
         testRootDirectory=Settings().Get("Test Root directory")
-        rootDirectory=Settings().Get("Root directory")
         html=None
         if Settings().Get("Test mode", "False") == "True":
             if testRootDirectory != "":
                 # If there is a test directory, try loading from there, first
-                html=FTP().GetFileAsString(f"/{testRootDirectory}/{url}", "index.html", TestLoad=True)
+                fanzineServerDir=f"/{testRootDirectory}/{url}"
+                html=FTP().GetFileAsString(fanzineServerDir, "index.html", TestLoad=True)
         if html is None:
-            # If we're not in test mode or if that failed (or there wasn't one) load from the default
-            html=FTP().GetFileAsString(f"/{rootDirectory}/{url}", "index.html")
+            # If we're not in test mode or if that failed (or there wasn't one) load from the default server directory
+            fanzineServerDir=f"/{Settings().Get("Root directory")}/{url}"
+            html=FTP().GetFileAsString(fanzineServerDir, "index.html")
         if html is None:
             LogError(f"Unable to download 'index.html' from '{url}'")
             return False
