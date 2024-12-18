@@ -943,6 +943,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             lname=lname.strip("_")  # Do not start or end names with underscores
             lname=lname.upper()
             self.tLocalDirectory.SetValue(lname)
+            self.ColortLocalDirectory(lname)
             #Log(f"OnFanzineNameChar: Local directory name updated to '{lname}'")
 
 
@@ -995,10 +996,28 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tLocalDirectory.SetValue(fname)
         self.tLocalDirectory.SetInsertionPoint(cursorloc)
 
+        self.ColortLocalDirectory(fname)
+
         self._manualEditOfLocalDirectoryNameBegun=True
         Log(f"OnLocalDirectoryChar: updated to '{fname}'")
         return
 
+    # Color the field pink if this newly-entered name is an existing directory
+    def ColortLocalDirectory(self, fname):
+
+        localDirectoryRootPath=Settings().Get("Local Directory Root Path")
+        if localDirectoryRootPath is None:
+            return      # If there's no local directory supplied, there's nothing to do.
+
+        coloritpink=False
+        if localDirectoryRootPath != "":
+            localDirectoryPath=localDirectoryRootPath+"/"+fname
+            if os.path.isdir(localDirectoryPath):
+                coloritpink=True
+        if coloritpink:
+            self.tLocalDirectory.SetBackgroundColour(Color.Pink)
+        else:
+            self.tLocalDirectory.SetBackgroundColour(Color.White)
 
     def OnEditorsText(self, event):
         self.Datasource.Editors=self.tEditors.GetValue()
