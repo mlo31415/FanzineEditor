@@ -1465,7 +1465,7 @@
                                                 <property name="maxlength"></property>
                                                 <property name="min_size"></property>
                                                 <property name="minimize_button">0</property>
-                                                <property name="minimum_size">250,-1</property>
+                                                <property name="minimum_size">300,-1</property>
                                                 <property name="moveable">1</property>
                                                 <property name="name">tServerDirectory</property>
                                                 <property name="pane_border">1</property>
@@ -1574,7 +1574,7 @@
                                             <object class="spacer" expanded="0">
                                                 <property name="height">0</property>
                                                 <property name="permission">protected</property>
-                                                <property name="width">30</property>
+                                                <property name="width">20</property>
                                             </object>
                                         </object>
                                         <object class="sizeritem" expanded="0">
@@ -1640,7 +1640,7 @@
                                         </object>
                                         <object class="sizeritem" expanded="0">
                                             <property name="border">5</property>
-                                            <property name="flag">wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL</property>
+                                            <property name="flag">wxALIGN_CENTER_VERTICAL|wxALIGN_LEFT</property>
                                             <property name="proportion">0</property>
                                             <object class="wxTextCtrl" expanded="0">
                                                 <property name="BottomDockable">1</property>
@@ -1676,7 +1676,7 @@
                                                 <property name="maxlength"></property>
                                                 <property name="min_size"></property>
                                                 <property name="minimize_button">0</property>
-                                                <property name="minimum_size">180,-1</property>
+                                                <property name="minimum_size">300,-1</property>
                                                 <property name="moveable">1</property>
                                                 <property name="name">tLocalDirectory</property>
                                                 <property name="pane_border">1</property>
@@ -1715,12 +1715,12 @@
                                                 <property name="permission">none</property>
                                                 <object class="sizeritem" expanded="1">
                                                     <property name="border">5</property>
-                                                    <property name="flag">wxRIGHT</property>
+                                                    <property name="flag"></property>
                                                     <property name="proportion">0</property>
                                                     <object class="spacer" expanded="1">
                                                         <property name="height">0</property>
                                                         <property name="permission">protected</property>
-                                                        <property name="width">150</property>
+                                                        <property name="width">30</property>
                                                     </object>
                                                 </object>
                                                 <object class="sizeritem" expanded="1">
