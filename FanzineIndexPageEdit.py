@@ -2135,7 +2135,7 @@ class FanzineIndexPage(GridDataSource):
                 LogError(f"Malformed top matter on page.")
             # Editors can be separated by "\n", "'", ";" and other stuff.  Split on spans of these characters
             editors=SplitListOfNamesOnPattern(topmattersplit[1], r", and |,|/|;|and |&|\n|<br>")
-            dates, fanzinetype=topmattersplit[2].replace("&nbsp;", " ").split("\n")
+            dates, fanzinetype=topmattersplit[2].replace("&nbsp;", " ").replace("&NBSP;", " ").split("\n")
 
         # We look for a block of free-form comments.  It should lie between the <fanac-type>...</fanac-type> block and the start of the rows table.
         loc=html.find("</fanac-type>")
