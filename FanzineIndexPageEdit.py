@@ -572,7 +572,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.Country=self.tLocaleText.GetValue()
 
         # We may need to move the files
-        localDirectoryRootPath=Settings().Get("Local Directory Root Path")
+        localDirectoryRootPath=Settings().Get("Local Directory Root Path", default="")
         localDirectoryPath=""
         localDirectoryName=self.tLocalDirectory.GetValue()
         moveFilesAfterUploading=False
