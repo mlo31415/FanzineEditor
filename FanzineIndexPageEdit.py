@@ -652,7 +652,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                                            f"{Tagit("SourcePath", delta.SourcePath)} {Tagit("SourceFilename", sourceFilename)}", Flush=True)
                         else:
                             FTPLog().AppendItemVerb("replace", f"{Tagit("SourceFilename", sourceFilename)} {Tagit("IssueName", delta.Row[1])} "
-                                                               f"{Tagit("SourcePath", delta.SourcePath)}", Flush=True)
+                                                               f"{Tagit("SourcePath", delta.SourcePath)}  {Tagit("RootDir", self.RootDir)}", Flush=True)
 
                     case "delete":
                         # Delete a file on the server
@@ -668,7 +668,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                 break
                         if delta.Uploaded:
                             FTPLog().AppendItemVerb("delete", f"{Tagit("ServerDirName", delta.ServerDirName)} {Tagit("ServerFilename", delta.ServerFilename)}  "
-                                                      f"{Tagit("IssueName", delta.Row[1])}", Flush=True)
+                                                      f"{Tagit("IssueName", delta.Row[1])}  {Tagit("RootDir", self.RootDir)}", Flush=True)
 
                     case "rename":
                         # Rename file on the server
@@ -686,7 +686,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                 break
                         if delta.Uploaded:
                             FTPLog().AppendItemVerb("rename", f"{Tagit("Oldname", delta.OldFilename)} {Tagit("Issuename", delta.Row[1])} "
-                                                      f"{Tagit("Newname", delta.Row[0])} {Tagit("ServerDirName", delta.ServerDirName)}", Flush=True)
+                                                      f"{Tagit("Newname", delta.Row[0])} {Tagit("ServerDirName", delta.ServerDirName)} {Tagit("RootDir", self.RootDir)}", Flush=True)
 
             c=sum([1 for x in self.deltaTracker.Deltas if not x.Uploaded])
             if c > 0:
