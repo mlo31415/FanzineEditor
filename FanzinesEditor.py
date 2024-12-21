@@ -18,7 +18,7 @@ from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
 
-from FanzineIndexPageEdit import FanzineIndexPageWindow, ClassicFanzinesDate
+from FanzineIndexPageEdit import FanzineIndexPageWindow, ClassicFanzinesDate, Tagit
 from FanzineNames import FanzineNames
 from GenGUIClass import FanzinesGridGen
 from GenLogDialogClass import LogDialog
@@ -389,6 +389,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
         if not ret:
             Log(f"Could not FTP().PutFileAsString: /{rootDir}/Classic_Fanzines.html because {FTP().LastMessage}")
             return False
+    FTPLog().AppendItemVerb("upload Classic_Fanzines succeeded", f"{Tagit("RootDir", rootDir)}", Flush=True)
     return True
 
 
