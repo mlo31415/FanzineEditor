@@ -649,7 +649,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         delta.Uploaded=self.UpdateAndUpload(delta.Row, sourceFilename, delta.SourcePath, editors=cfl.Editors, mainName=cfl.Name.MainName, country=cfl.Country, pm=pm)
                         if delta.Uploaded:
                             if moveFilesAfterUploading:
-                                MoveToLocalDirectory(delta.SourcePath, localDirectoryPath, delta.SourceFilename)
+                                MoveToLocalDirectory(delta.SourcePath, localDirectoryPath, sourceFilename)
 
                         if delta.Verb == "add":
                             FTPLog().AppendItemVerb("add", f"{Tagit("Issuename", delta.Row[1])} {Tagit("ServerDir", self.ServerDir)} {Tagit("RootDir", self.RootDir)}"
