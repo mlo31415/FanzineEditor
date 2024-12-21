@@ -587,9 +587,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         Log(f"{localDirectoryRootPath=}")
         Log(f"{localDirectoryPath=}")
         Log(f"{localDirectoryName=}")
+
         # If a local directory root path exists, then we will move files there once they are uploaded
         if localDirectoryRootPath != "":
-
             moveFilesAfterUploading=True
             localDirectoryPath=localDirectoryRootPath+"/"+localDirectoryName
 
@@ -598,6 +598,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if not os.path.exists(localDirectoryPath):
                     Log(f"mkdir({localDirectoryPath})")
                     os.mkdir(localDirectoryPath)
+
 
         Log("About to start ModalDialogManager")
         with ModalDialogManager(ProgressMessage2, f"Uploading FanzineIndexPage {self.ServerDir}", parent=self) as pm:
@@ -705,15 +706,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if not delta.Uploaded:
                     self.deltaTracker.Deltas.append(delta)
 
-            # If this is a new fanzine, it needs to be in a new directory.  Check it.
-            # if self.IsNewDirectory:
-            #     path=f"/{self.RootDir}/{self.ServerDir}"
-            #     if FTP().PathExists(path):
-            #         if self.RootDir == "fanzines":      # We only care about this in the real root directory
-            #             wx.MessageBox(f"'Directory {path}' already exists.  Please change the server directory name.", parent=self)
-            #             self.failure=True
-            #             return
-
             # Put the FanzineIndexPage on the server as an HTML file
             Log(f"Datasource.PutFanzineIndexPage({self.RootDir}, {self.ServerDir})")
             if not self.Datasource.PutFanzineIndexPage(self.RootDir, self.ServerDir):
@@ -722,16 +714,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 self.failure=True
                 Log("Failed\n")
                 return
-            # for row in self.Datasource.Rows:
-            #     if row.FileSourcePath != "":
-            #         pm.Update(f"Uploading file: {row.FileSourcePath}")
-            #         Log(f"Uploading file: {row.FileSourcePath}")
-            #         if not FTP().PutFile(row.FileSourcePath, f"/{self.RootDir}/{self.ServerDir}/{row.Cells[0]}"):
-            #             wx.MessageBox(f"Upload of {row.Cells[0]} failed")
-            #             Log("Failed\n")
-            #             self.failure=True
-            #             return
-            #         row.FileSourcePath=""
 
             Log("All uploads succeeded.")
             FTPLog().AppendItemVerb("upload FIP succeeded", f"{Tagit("RootDir", self.RootDir)} {Tagit("ServerDir", self.ServerDir)}", Flush=True)
