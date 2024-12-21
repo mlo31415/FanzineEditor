@@ -141,7 +141,8 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
         # If we're not in test mode or if that failed (or there wasn't one) load from the default
         html=FTP().GetFileAsString("/fanzines", "Classic_Fanzines.html")
     if html is None:
-        LogError(f"Unable to download 'Classic_Fanzines.html'")
+        LogError(f"Unable to download 'Classic_Fanzines.html' because: {FTP().LastMessage}")
+
         return None
 
     # Remove the &amp;amp;amp;amp;amp;... that has crept in to some pages.
@@ -381,12 +382,12 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
         ret=FTP().BackupServerFile(f"/{rootDir}/Classic_Fanzines.html")
 
         if not ret:
-            Log(f"Could not make a backup copy: {rootDir}/{TimestampFilename('Classic_Fanzines.html')}")
+            Log(f"Could not make a backup copy: {rootDir}/{TimestampFilename('Classic_Fanzines.html')}because {FTP().LastMessage}")
             return False
 
         ret=FTP().PutFileAsString(f"/{rootDir}", "Classic_Fanzines.html", output, create=True)
         if not ret:
-            Log(f"Could not FTP().PutFileAsString: /{rootDir}/Classic_Fanzines.html")
+            Log(f"Could not FTP().PutFileAsString: /{rootDir}/Classic_Fanzines.html because {FTP().LastMessage}")
             return False
     return True
 

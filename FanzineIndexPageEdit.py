@@ -598,13 +598,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if not FTP().FileExists(f"/{self.RootDir}/{self.ServerDir}/index.html"):    # Check to see if the bogus root already has an index file
                     # If not, copy the existing index.htl file on /fanzines/ in to the test root.
                     # Note that this will create the server directory if it does not already exist.
-                    FTP().CopyFile(f"/fanzines/{self.ServerDir}",
-                                   f"/{self.RootDir}/{self.ServerDir}", "index.html", Create=True)
+                    if not FTP().CopyFile(f"/fanzines/{self.ServerDir}", "/{self.RootDir}/{self.ServerDir}", "index.html", Create=True):
+                        wx.MessageBox(f"Attempt to copy index.html from /fanzines/{self.ServerDir} to /{self.RootDir}/{self.ServerDir} failed with error messahe {FTP().LastMessage}.")
 
             # Make a dated backup copy of the existing index page
             ret=FTP().BackupServerFile(f"/{self.RootDir}/{self.ServerDir}/index.html")
             if not ret:
-                Log(f"Could not make a backup copy: {self.RootDir}/{self.ServerDir}/{TimestampFilename('index.html')}")
+                Log(f"Could not make a backup copy: {self.RootDir}/{self.ServerDir}/{TimestampFilename('index.html')} because {FTP().LastMessage}")
                 self.failure=True
                 return
 
@@ -622,7 +622,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 # if the target directory does not exist, create it
                 if not os.path.exists(localdirpath):
                     os.makedirs(localdirpath)
+                Log(f"MoveToLocalDirectory({sourcepath}, {localdirpath}, {filename})")
                 shutil.move(sourcepath+"/"+filename, localdirpath+"/"+filename)
+                Log(f"shutil.move({sourcepath+"/"+filename}, {localdirpath+"/"+filename})")
 
             # Now execute the delta list on the files.
             failure=False
@@ -654,7 +656,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         pm.Update(f"Deleting {serverpathfile} from server")
                         delta.Uploaded= FTP().DeleteFile(serverpathfile)
                         if not delta.Uploaded:
-                            dlg=wx.MessageDialog(self, f"Unable to delete {serverpathfile}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+                            dlg=wx.MessageDialog(self, f"Unable to delete {serverpathfile} because {FTP().LastMessage}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
                             dlg.Destroy()
                             if result != wx.ID_YES:
@@ -672,14 +674,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         pm.Update(f"Renaming {oldserverpathfile} as {newserverpathfile}")
                         delta.Uploaded=FTP().Rename(oldserverpathfile, newserverpathfile)
                         if not delta.Uploaded:
-                            dlg=wx.MessageDialog(self, f"Unable to rename {oldserverpathfile} to {newserverpathfile}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+                            dlg=wx.MessageDialog(self, f"Unable to rename {oldserverpathfile} to {newserverpathfile} because {FTP().LastMessage}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
                             result=dlg.ShowModal()
                             dlg.Destroy()
                             if result != wx.ID_YES:
                                 break
                         if delta.Uploaded:
-                            FTPLog().AppendItemVerb("rename", f"{Tagit("Oldname", delta.SourceFilename)} {Tagit("Issuename", delta.row[1])} "
-                                                      f"{Tagit("Newname", delta.Row[1])} {Tagit("ServerDirName", delta.ServerDirName)}", Flush=True)
+                            FTPLog().AppendItemVerb("rename", f"{Tagit("Oldname", delta.OldFilename)} {Tagit("Issuename", delta.Row[1])} "
+                                                      f"{Tagit("Newname", delta.Row[0])} {Tagit("ServerDirName", delta.ServerDirName)}", Flush=True)
 
             c=sum([1 for x in self.deltaTracker.Deltas if not x.Uploaded])
             if c > 0:
@@ -761,7 +763,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         pm.Update(f"Uploading {sourcefilename} as {sourcefilename}")
         Log(f"FTP().PutFile({copyfilepath}, {serverpathfile})")
         if not FTP().PutFile(copyfilepath, serverpathfile):
-            dlg=wx.MessageDialog(self, f"Unable to upload {copyfilepath}?", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+            dlg=wx.MessageDialog(self, f"Unable to upload {copyfilepath} because {FTP().LastMessage}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
             result=dlg.ShowModal()
             dlg.Destroy()
             if result != wx.ID_YES:
@@ -1137,7 +1139,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # But if we are inserting an external URL, there is no need to create a rename on the old contents
             newurl=self.Datasource.Rows[irow][icol]
             if "http:" not in newurl.lower() and "//" not in newurl:
-                self.deltaTracker.Rename(sourceFilename=oldURL, newname=newurl, row=self.Datasource.Rows[irow].Cells)
+                self.deltaTracker.Rename(oldURL, newurl, serverDirName=self.ServerDir, row=self.Datasource.Rows[irow].Cells)
 
         if event.GetCol() == 0:    # If the Filename changes, we may need to update the PDF and the Pages columns
             self.FillInPDFColumn()
@@ -2052,7 +2054,7 @@ class FanzineIndexPage(GridDataSource):
             fanzineServerDir=f"/{Settings().Get("Root directory")}/{url}"
             html=FTP().GetFileAsString(fanzineServerDir, "index.html")
         if html is None:
-            LogError(f"Unable to download 'index.html' from '{url}'")
+            LogError(f"Unable to download 'index.html' from '{url}' because {FTP().LastMessage}")
             return False
 
         # Remove the &amp;amp;amp;amp;amp;... that has crept in to some pages.
@@ -2577,7 +2579,7 @@ class FanzineIndexPage(GridDataSource):
 
         ret=FTP().PutFileAsString(f"/{root}/{url}", "index.html", output, create=True)
         if not ret:
-            LogError(f"Could not FTP().PutFileAsString FIP '/{root}/{url}/index.html'")
+            LogError(f"Could not FTP().PutFileAsString FIP '/{root}/{url}/index.html' because {FTP().LastMessage}")
 
         return ret
 
