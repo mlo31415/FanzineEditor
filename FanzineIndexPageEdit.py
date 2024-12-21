@@ -69,6 +69,12 @@ gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
 ])
 
 
+def Tagit(tag: str, contents: str) -> str:
+    contents=contents.strip()
+    if contents == "":
+        return ""
+    return f"<{tag}>{contents}</{tag}>"
+
 def SpecialNameFormatToHtmlFancylink(val: str|None) ->str|None:
     if val is None:
         return None
@@ -614,12 +620,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 return
 
             pm.Update(f"Uploading new Fanzine Index Page: {self.ServerDir}")
-
-            def Tagit(tag: str, contents: str) -> str:
-                contents=contents.strip()
-                if contents == "":
-                    return ""
-                return f"<{tag}>{contents}</{tag}>"
 
             def MoveToLocalDirectory(sourcepath: str, localdirpath: str, filename: str):
                 if filename is None or filename == "":
