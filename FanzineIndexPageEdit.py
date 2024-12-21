@@ -613,7 +613,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     # If not, copy the existing index.htl file on /fanzines/ in to the test root.
                     # Note that this will create the server directory if it does not already exist.
                     if not FTP().CopyFile(f"/fanzines/{self.ServerDir}", f"/{self.RootDir}/{self.ServerDir}", "index.html", Create=True):
-                        wx.MessageBox(f"Attempt to copy index.html from /fanzines/{self.ServerDir} to /{self.RootDir}/{self.ServerDir} failed with error messahe {FTP().LastMessage}.")
+                        wx.MessageBox(f"Attempt to copy index.html from /fanzines/{self.ServerDir} to /{self.RootDir}/{self.ServerDir} failed with error message {FTP().LastMessage}.")
 
             # Make a dated backup copy of the existing index page
             ret=FTP().BackupServerFile(f"/{self.RootDir}/{self.ServerDir}/index.html")
