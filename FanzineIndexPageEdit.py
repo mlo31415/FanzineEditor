@@ -358,7 +358,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.FillInPDFColumn()
         self.FillInPagesColumn()
 
-
+        # self._dataGrid.RefreshWxGridFromDatasource(RetainSelection=False)
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
 
@@ -525,7 +525,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     #------------------
     # Upload the current FanzineIndexPage (including any added fanzines) to the server
     def OnUpload(self, event):
-
+        Log("OnUpload pressed")
         if self.tServerDirectory.GetBackgroundColour() == Color.Pink:
             wx.MessageBox(f"There is already a directory named {self.tServerDirectory.GetValue()} on the server. Please select another name.", parent=self)
             return
@@ -576,6 +576,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         localDirectoryPath=""
         localDirectoryName=self.tLocalDirectory.GetValue()
         moveFilesAfterUploading=False
+        Log(f"{localDirectoryRootPath=}")
+        Log(f"{localDirectoryPath=}")
+        Log(f"{localDirectoryName=}")
         # If a local directory root path exists, then we will move files there once they are uploaded
         if localDirectoryRootPath != "":
 
@@ -585,8 +588,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # If this is a new fanzine, create the local directory if necessary
             if self.IsNewDirectory:
                 if not os.path.exists(localDirectoryPath):
+                    Log(f"mkdir({localDirectoryPath})")
                     os.mkdir(localDirectoryPath)
 
+        Log("About to start ModalDialogManager")
         with ModalDialogManager(ProgressMessage2, f"Uploading FanzineIndexPage {self.ServerDir}", parent=self) as pm:
             Log(f"Uploading Fanzine Index Page: {self.ServerDir}")
             self.failure=False
