@@ -560,6 +560,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if result != wx.ID_YES:
                     return
 
+        FTPLog().AppendItemVerb("upload FIP starts", f"{Tagit("RootDir", self.RootDir)} {Tagit("ServerDir", self.ServerDir)}", Flush=True)
+
         # Save the fanzine's values to return to the main fanzines page.
         cfl=ClassicFanzinesLine()
         cfl.Issues=self.Datasource.NumRows
@@ -618,6 +620,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 Log(f"Could not make a backup copy: {self.RootDir}/{self.ServerDir}/{TimestampFilename('index.html')} because {FTP().LastMessage}")
                 self.failure=True
                 return
+            FTPLog().AppendItemVerb("backup index.html", f"{Tagit("RootDir", self.RootDir)} {Tagit("ServerDir", self.ServerDir)}", Flush=True)
 
             pm.Update(f"Uploading new Fanzine Index Page: {self.ServerDir}")
 
@@ -715,6 +718,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             Log(f"Datasource.PutFanzineIndexPage({self.RootDir}, {self.ServerDir})")
             if not self.Datasource.PutFanzineIndexPage(self.RootDir, self.ServerDir):
                 wx.MessageBox(f"Upload of index file failed")
+                FTPLog().AppendItemVerb("upload FIP partial ended", f"{Tagit("RootDir", self.RootDir)} {Tagit("ServerDir", self.ServerDir)}", Flush=True)
                 self.failure=True
                 Log("Failed\n")
                 return
@@ -730,6 +734,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             #         row.FileSourcePath=""
 
             Log("All uploads succeeded.")
+            FTPLog().AppendItemVerb("upload FIP succeeded", f"{Tagit("RootDir", self.RootDir)} {Tagit("ServerDir", self.ServerDir)}", Flush=True)
 
             self.CFL=cfl
 
