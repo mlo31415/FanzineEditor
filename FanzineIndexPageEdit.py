@@ -653,7 +653,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
                         if delta.Verb == "add":
                             FTPLog().AppendItemVerb("add", f"{Tagit("Issuename", delta.Row[1])} {Tagit("ServerDir", self.ServerDir)} {Tagit("RootDir", self.RootDir)}"
-                                                           f"{Tagit("SourcePath", delta.SourcePath)} {Tagit("SourceFilename", sourceFilename)}", Flush=True)
+                                                           f"{Tagit("SourcePath", delta.SourcePath)} {Tagit("SourceFilename", sourceFilename)} {Tagit("NewFilename", delta.NewFilename)} ", Flush=True)
                         else:
                             FTPLog().AppendItemVerb("replace", f"{Tagit("SourceFilename", sourceFilename)} {Tagit("IssueName", delta.Row[1])}  {Tagit("ServerFilename", delta.ServerFilename)}"
                                                                f"{Tagit("SourcePath", delta.SourcePath)} {Tagit("OldName", delta.OldFilename)} {Tagit("RootDir", self.RootDir)}", Flush=True)
