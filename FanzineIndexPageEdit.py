@@ -655,8 +655,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             FTPLog().AppendItemVerb("add", f"{Tagit("Issuename", delta.Row[1])} {Tagit("ServerDir", self.ServerDir)} {Tagit("RootDir", self.RootDir)}"
                                                            f"{Tagit("SourcePath", delta.SourcePath)} {Tagit("SourceFilename", sourceFilename)}", Flush=True)
                         else:
-                            FTPLog().AppendItemVerb("replace", f"{Tagit("SourceFilename", sourceFilename)} {Tagit("IssueName", delta.Row[1])} "
-                                                               f"{Tagit("SourcePath", delta.SourcePath)}  {Tagit("RootDir", self.RootDir)}", Flush=True)
+                            FTPLog().AppendItemVerb("replace", f"{Tagit("SourceFilename", sourceFilename)} {Tagit("IssueName", delta.Row[1])}  {Tagit("ServerFilename", delta.ServerFilename)}"
+                                                               f"{Tagit("SourcePath", delta.SourcePath)} {Tagit("OldName", delta.OldFilename)} {Tagit("RootDir", self.RootDir)}", Flush=True)
 
                     case "delete":
                         # Delete a file on the server

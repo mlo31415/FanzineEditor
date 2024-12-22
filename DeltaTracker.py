@@ -38,13 +38,14 @@ class DeltaAdd(Delta):
         return s
 
 class DeltaReplace(Delta):
-    def __init__(self, SourcePath: str|None=None, serverDirName: str|None=None, NewSourceFilename: str|None=None, row: list[str]|None=None):
+    def __init__(self, SourcePath: str|None=None, serverDirName: str|None=None, NewSourceFilename: str|None=None, OldFilename: str|None=None, row: list[str]|None=None):
         # This is basically just an Add with some addition information for logging purposes
         # The filename to be loaded and the issuename to be used comes from Row to allow for later editing by the user
         Delta.__init__(self, "replace", serverDirName, row)
         self.oldServerFilename=row[0]   # The name of the file being replaced
         self.SourcePath=SourcePath
         self.NewSourceFilename=NewSourceFilename
+        self.OldFilename=OldFilename
 
     def __str__(self) -> str:
         s="Replace: "+self.SourceFilename
@@ -162,7 +163,7 @@ class DeltaTracker:
 
         # If it doesn't match anything in the delta list, then it must be a new local file to replace the server file in an existing entry
         # Just upload the replacement.  It may or may not overwrite the existing file; we don't care.  Nor do we try to remove the existing file.
-        self._deltas.append(DeltaReplace(newfilepath, row=row, serverDirName=serverDirName, NewSourceFilename=newfilepathname))
+        self._deltas.append(DeltaReplace(newfilepath, row=row, serverDirName=serverDirName, NewSourceFilename=newfilepathname, OldFilename=oldSourceFilename))
 
 
 
