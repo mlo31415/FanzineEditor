@@ -652,11 +652,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                 MoveToLocalDirectory(delta.SourcePath, localDirectoryPath, sourceFilename)
 
                         if delta.Verb == "add":
-                            FTPLog().AppendItemVerb("add", f"{Tagit("Issuename", delta.Row[1])} {Tagit("ServerDir", self.ServerDir)} {Tagit("RootDir", self.RootDir)}"
-                                                           f"{Tagit("SourcePath", delta.SourcePath)} {Tagit("SourceFilename", sourceFilename)} {Tagit("NewFilename", delta.NewFilename)} ", Flush=True)
+                            FTPLog().AppendItemVerb("add", f"{Tagit("IssueName", delta.Row[1])} {Tagit("ServerDir", self.ServerDir)} {Tagit("RootDir", self.RootDir)}"
+                                                           f"{Tagit("SourcePath", delta.SourcePath)} {Tagit("SourceFilename", sourceFilename)} ", Flush=True)
                         else:
-                            FTPLog().AppendItemVerb("replace", f"{Tagit("SourceFilename", sourceFilename)} {Tagit("IssueName", delta.Row[1])}  {Tagit("ServerFilename", delta.ServerFilename)}"
-                                                               f"{Tagit("SourcePath", delta.SourcePath)} {Tagit("OldName", delta.OldFilename)} {Tagit("RootDir", self.RootDir)}", Flush=True)
+                            FTPLog().AppendItemVerb("replace", f"{Tagit("SourceFilename", sourceFilename)} {Tagit("IssueName", delta.Row[1])} "
+                                                               f"{Tagit("SourcePath", delta.SourcePath)} {Tagit("Oldame", delta.OldFilename)} {Tagit("RootDir", self.RootDir)}", Flush=True)
 
                     case "delete":
                         # Delete a file on the server
@@ -689,7 +689,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             if result != wx.ID_YES:
                                 break
                         if delta.Uploaded:
-                            FTPLog().AppendItemVerb("rename", f"{Tagit("Oldname", delta.OldFilename)} {Tagit("Issuename", delta.Row[1])} "
+                            FTPLog().AppendItemVerb("rename", f"{Tagit("Oldname", delta.OldFilename)} {Tagit("IssueName", delta.Row[1])} "
                                                       f"{Tagit("Newname", delta.Row[0])} {Tagit("ServerDirName", delta.ServerDirName)} {Tagit("RootDir", self.RootDir)}", Flush=True)
 
             c=sum([1 for x in self.deltaTracker.Deltas if not x.Uploaded])
@@ -1431,6 +1431,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         irow=self._dataGrid.clickedRow
         oldfile=self.Datasource.Rows[irow][0]
         newfilepath, newfilename=os.path.split(filepath[0])
+        oldfilename=self.Datasource.Rows[irow][0]
         self.Datasource.Rows[irow][0]=newfilename
         self.deltaTracker.Replace(oldSourceFilename=oldfile, newfilepathname=filepath[0], row=self.Datasource.Rows[irow].Cells)
         self.FillInPDFColumn()
