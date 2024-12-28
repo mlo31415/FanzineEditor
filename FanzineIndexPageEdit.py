@@ -20,6 +20,7 @@ from ClassicFanzinesLine import ClassicFanzinesLine, ClassicFanzinesDate
 from DeltaTracker import DeltaTracker
 from FanzineNames import FanzineNames
 from FanzineDateTime import FanzineDate, InterpretRelativeWords
+from FanzineIndexPageTableRow import FanzineIndexPageTableRow
 
 from FTP import FTP
 
@@ -75,18 +76,18 @@ def Tagit(tag: str, contents: str) -> str:
         return ""
     return f"<{tag}>{contents}</{tag}>"
 
-def ColSelect(row: list[str], coldefs: ColDefinitionsList, col: str) -> str:
+def ColSelect(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList, col: str) -> str:
     if col not in coldefs:
         return ""
-    return row[coldefs.index(col)]
+    return row.Cells[coldefs.index(col)]
 
-def Editors(row: list[str], coldefs: ColDefinitionsList, editor: str) -> str:
+def Editors(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList, editor: str) -> str:
     issueed=ColSelect(row, coldefs, "editor")
     if len(issueed) > 0:
         return issueed
     return editor
 
-def IssueNumber(row: list[str], coldefs: ColDefinitionsList) -> str:
+def IssueNumber(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList) -> str:
     issue=ColSelect(row, coldefs, "whole")
     if len(issue) > 0:
         return issue
@@ -383,7 +384,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             irow=oldNrows+i
             self.Datasource.Rows[irow].FileSourcePath=files[i]
             self.Datasource.Rows[irow][0]=os.path.basename(files[i])
-            self.deltaTracker.Add(file, row=self.Datasource.Rows[irow].Cells)
+            self.deltaTracker.Add(file, row=self.Datasource.Rows[irow])
 
         # Add a PDF column (if needed) and fill in the PDF column and page counts
         self.FillInPDFColumn()
@@ -661,6 +662,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # Now execute the delta list on the files.
             failure=False
             Log("Begin delta processing.")
+            # Due to a very reasonable (but as it turns out unhelpful) decision, rows
             for delta in self.deltaTracker.Deltas:
 
                 match delta.Verb:
@@ -675,14 +677,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                 MoveToLocalDirectory(delta.SourcePath, localDirectoryPath, sourceFilename)
 
                         if delta.Verb == "add":
-                            FTPLog().AppendItemVerb("add", f"{Tagit("IssueName", delta.Row[1])} {Tagit("ServerDir", self.ServerDir)} {Tagit("RootDir", self.RootDir)}"
-                                                           f"{Tagit("issuenum", IssueNumber(delta.Row, self.Datasource.ColDefs))}"
-                                                           f"{Tagit("date", ColSelect(delta.Row, self.Datasource.ColDefs, "month"))} {ColSelect(delta.Row, self.Datasource.ColDefs, "year")}"
-                                                           f"{Tagit("editor", Editors(delta.Row, self.Datasource.ColDefs, self.Editors))}"
-                                                           f"{Tagit("SourcePath", delta.SourcePath)} {Tagit("SourceFilename", sourceFilename)} ", Flush=True)
+                            FTPLog().AppendItemVerb("add", f'{Tagit("IssueName", delta.Row[1])} {Tagit("ServerDir", self.ServerDir)} {Tagit("RootDir", self.RootDir)}'+
+                                                           f'{Tagit("issuenum", IssueNumber(delta.Row, self.Datasource.ColDefs))}'+
+                                                           f'{Tagit("date", ColSelect(delta.Row, self.Datasource.ColDefs, "month")+" "+ColSelect(delta.Row, self.Datasource.ColDefs, "day")+" "+ColSelect(delta.Row, self.Datasource.ColDefs, "year"))}'+
+                                                           f'{Tagit("editor", Editors(delta.Row, self.Datasource.ColDefs, self.Editors))}'+
+                                                           f'{Tagit("SourcePath", delta.SourcePath)} {Tagit("SourceFilename", sourceFilename)} ', Flush=True)
                         else:
-                            FTPLog().AppendItemVerb("replace", f"{Tagit("SourceFilename", sourceFilename)} {Tagit("IssueName", delta.Row[1])} "
-                                                               f"{Tagit("SourcePath", delta.SourcePath)} {Tagit("Oldame", delta.OldFilename)} {Tagit("RootDir", self.RootDir)}", Flush=True)
+                            FTPLog().AppendItemVerb("replace", f'{Tagit("SourceFilename", sourceFilename)} {Tagit("IssueName", delta.Row[1])} '
+                                                               f'{Tagit("SourcePath", delta.SourcePath)} {Tagit("Oldame", delta.OldFilename)} {Tagit("RootDir", self.RootDir)}', Flush=True)
 
                     case "delete":
                         # Delete a file on the server
@@ -697,7 +699,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             if result != wx.ID_YES:
                                 break
                         if delta.Uploaded:
-                            FTPLog().AppendItemVerb("delete", f"{Tagit("ServerDirName", delta.ServerDirName)} {Tagit("ServerFilename", delta.ServerFilename)}  "
+                            FTPLog().AppendItemVerb("delete", f'{Tagit("ServerDirName", delta.ServerDirName)} {Tagit("ServerFilename", delta.ServerFilename)}  '
                                                       f"{Tagit("IssueName", delta.Row[1])}  {Tagit("RootDir", self.RootDir)}", Flush=True)
 
                     case "rename":
@@ -715,8 +717,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             if result != wx.ID_YES:
                                 break
                         if delta.Uploaded:
-                            FTPLog().AppendItemVerb("rename", f"{Tagit("Oldname", delta.OldFilename)} {Tagit("IssueName", delta.Row[1])} "
-                                                      f"{Tagit("Newname", delta.Row[0])} {Tagit("ServerDirName", delta.ServerDirName)} {Tagit("RootDir", self.RootDir)}", Flush=True)
+                            FTPLog().AppendItemVerb("rename", f'{Tagit("Oldname", delta.OldFilename)} {Tagit("IssueName", delta.Row[1])} '
+                                                      f'{Tagit("Newname", delta.Row[0])} {Tagit("ServerDirName", delta.ServerDirName)} {Tagit("RootDir", self.RootDir)}', Flush=True)
 
             c=sum([1 for x in self.deltaTracker.Deltas if not x.Uploaded])
             if c > 0:
@@ -761,7 +763,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     # Update the new pdf's metadata and then upload it
-    def UpdateAndUpload(self, row: list[str], sourcefilename: str, sourcepath: str, editors: str="", mainName: str="", country: str="", pm: ProgressMessage2|None=None) -> bool:
+    def UpdateAndUpload(self, row: FanzineIndexPageTableRow, sourcefilename: str, sourcepath: str, editors: str="", mainName: str="", country: str="", pm: ProgressMessage2|None=None) -> bool:
         # Note that we passed in Row because the row is likely to have been updated after the DeltaAdd is created, and we want to capture those updates
         _, ext=os.path.splitext(sourcefilename)
         isPdf=ext.lower() == ".pdf"
@@ -1157,7 +1159,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # But if we are inserting an external URL, there is no need to create a rename on the old contents
             newurl=self.Datasource.Rows[irow][icol]
             if "http:" not in newurl.lower() and "//" not in newurl:
-                self.deltaTracker.Rename(oldURL, newurl, serverDirName=self.ServerDir, row=self.Datasource.Rows[irow].Cells)
+                self.deltaTracker.Rename(oldURL, newurl, serverDirName=self.ServerDir, row=self.Datasource.Rows[irow])
 
         if event.GetCol() == 0:    # If the Filename changes, we may need to update the PDF and the Pages columns
             self.FillInPDFColumn()
@@ -1459,7 +1461,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         newfilepath, newfilename=os.path.split(filepath[0])
         oldfilename=self.Datasource.Rows[irow][0]
         self.Datasource.Rows[irow][0]=newfilename
-        self.deltaTracker.Replace(oldSourceFilename=oldfile, newfilepathname=filepath[0], row=self.Datasource.Rows[irow].Cells)
+        self.deltaTracker.Replace(oldSourceFilename=oldfile, newfilepathname=filepath[0], row=self.Datasource.Rows[irow])
         self.FillInPDFColumn()
         self.RefreshWindow()
 
@@ -1484,7 +1486,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         irow=self._dataGrid.clickedRow
         self.Datasource.Rows[irow][0]=newname
         self.RefreshWindow()
-        self.deltaTracker.Rename(oldname, newname, serverDirName=self.ServerDir, row=self.Datasource.Rows[irow].Cells)
+        self.deltaTracker.Rename(oldname, newname, serverDirName=self.ServerDir, row=self.Datasource.Rows[irow])
 
         event.Skip()
 
@@ -1787,140 +1789,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 row[editorscol]=eds
 
         self.RefreshWindow()
-
-
-#=============================================================
-# An individual fanzine to be listed in a fanzine index table
-# This is a single row
-class FanzineIndexPageTableRow(GridDataRowClass):
-
-    def __init__(self, coldefs: ColDefinitionsList, row: None | list[str]=None):
-        GridDataRowClass.__init__(self)
-        self.FileSourcePath: str=""
-        self._tableColdefs=coldefs
-        self._Signature: int=0
-        self._UpdatedComment: str=""
-        if row is None:
-            self._cells=[""]*len(self._tableColdefs)
-        else:
-            self._cells=row
-
-        if self._cells[0] == "" and len(self._cells[1]) > 0:
-            self._isText: bool=True
-            self._cells[0]=self._cells[1]   # In a text row, the text now is stored in cell 0
-            self._cells[1]=""
-        else:
-            self._isText: bool=False        # Is this a piece of text rather than a convention?
-
-        self._isLink: bool=False        # Is this a link?
-        self._URL: str=""               # The URL to be used for a link. (This is ignored if _isLink == False.)
-                                        # It will be displayed using the localfilename as the link text.
-                                        # Note that this is different than the URL method in the other frames
-
-
-    def __str__(self):      # FanzineTableRow(GridDataRowClass)
-        return str(self._cells)
-
-    def __len__(self):     # FanzineTableRow(GridDataRowClass)
-        return len(self._cells)
-
-    def Extend(self, s: list[str]) -> None:
-        self._cells.extend(s)
-
-    # Make a deep copy of a FanzineTableRow
-    def Copy(self) -> FanzineIndexPageTableRow:
-        val=FanzineIndexPageTableRow(self._tableColdefs)
-        val._cells=[x for x in self._cells]     # Make a new list containing the old cell data
-        return val
-
-    # We multiply the cell has by the cell index (+1) so that moves right and left also change the signature
-    def Signature(self) -> int:
-        return sum([x.__hash__()*(i+1) for i, x in enumerate(self._cells)])
-
-
-    @property
-    def CanDeleteColumns(self) -> bool:
-        return True
-
-    # This deletes a single column from the datasource.
-    # It must be implemented here because WxDataGrid doesn't understand the details of the DataSource
-    def DelCol(self, icol: int) -> None:
-        del self._cells[icol]
-
-    @property
-    def Cells(self):
-        return self._cells
-    @Cells.setter
-    def Cells(self, val: [str]):
-        self._cells=val
-
-
-    # Get or set a value by name or column number
-    #def GetVal(self, name: str|int) -> str|int:
-    def __getitem__(self, index: str|int|slice) -> str|list[str]:
-
-        if isinstance(index, int):
-            if index < 0 or  index >= len(self._cells):
-                raise IndexError
-            return self._cells[index]
-
-        assert not isinstance(index, slice)
-
-        assert isinstance(index, str)
-
-        index=CanonicizeColumnHeaders(index)
-        if index not in self._tableColdefs:
-            raise IndexError
-
-        index=self._tableColdefs.index(index)
-        return self._cells[index]
-
-
-    #def SetVal(self, nameOrCol: str|int, val: str|int) -> None:
-    def __setitem__(self, index: str | int | slice, value: str | int) -> None:
-        if isinstance(value, int):
-            value=str(value)    # All data is stored as strings
-
-        if isinstance(index, int):
-            if index < 0 or  index >= len(self._cells):
-                raise IndexError
-            self._cells[index]=value
-            return
-
-        assert not isinstance(index, slice)
-
-        assert isinstance(index, str)
-
-        index=CanonicizeColumnHeaders(index)
-        if index not in self._tableColdefs:
-            raise IndexError
-
-        index=self._tableColdefs.index(index)
-        self._cells[index]=value
-        return
-
-
-    @property
-    def IsLinkRow(self) -> bool:
-        return self._isLink
-    @IsLinkRow.setter
-    def IsLinkRow(self, val: bool) -> None:
-        self._isLink=val
-
-    @property
-    def IsTextRow(self) -> bool:
-        return self._isText
-    @IsTextRow.setter
-    def IsTextRow(self, val: bool) -> None:
-        self._isText=val
-
-    @property
-    def IsNormalRow(self) -> bool:
-        return not self.IsLinkRow and not self.IsTextRow
-
-    @property
-    def IsEmptyRow(self) -> bool:
-        return all([cell.strip() == "" for cell in self._cells])
 
 
 #*******************************************
@@ -2604,7 +2472,7 @@ class FanzineIndexPage(GridDataSource):
 
 
 
-def SetPDFMetadata(pdfPathFilename: str, row: list[str], colNames: ColDefinitionsList, editors: str="", mainName: str="", country: str="") -> str:
+def SetPDFMetadata(pdfPathFilename: str, row: FanzineIndexPageTableRow, colNames: ColDefinitionsList, editors: str="", mainName: str="", country: str="") -> str:
 
     try:
         writer=PdfWriter(clone_from=pdfPathFilename)
@@ -2615,15 +2483,15 @@ def SetPDFMetadata(pdfPathFilename: str, row: list[str], colNames: ColDefinition
 
 
     # Title, issue, date, editors, country code, apa
-    metadata={"/Title": row[colNames.index("Display Text")], "/Author": editors.replace("<br>", ", ")}
+    metadata={"/Title": row.Cells[colNames.index("Display Text")], "/Author": editors.replace("<br>", ", ")}
     if len(editors) > 0:
         metadata["/Author"]=editors
 
     keywords=f"{mainName}, "
     if "Year" in colNames:
-        keywords+=f", {row[colNames.index('Year')]}"
+        keywords+=f", {row.Cells[colNames.index('Year')]}"
     if "Mailing" in colNames:
-        keywords+=f", {row[colNames.index('Mailing')]}"
+        keywords+=f", {row.Cells[colNames.index('Mailing')]}"
     if len(country) > 0:
         keywords+=f", {country}"
     metadata["/Keywords"]=keywords

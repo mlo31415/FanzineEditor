@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 
 from FTP import FTP
+from FanzineIndexPageTableRow import FanzineIndexPageTableRow
 
 
 # These classes track changes to the list of files for a particular Con Instance
@@ -14,7 +15,7 @@ from FTP import FTP
 class Delta:
     def __init__(self, verb: str, serverDirName: str, row: list[str]|None):
         self.Verb: str=verb     # Verb is add, rename, delete, replace
-        self.Row: list[str]|None=row
+        self.Row: FanzineIndexPageTableRow|None=row
         self.ServerDirName: str|None=serverDirName
 
         self.ServerFilename: str|None=None
@@ -26,7 +27,7 @@ class Delta:
 
 
 class DeltaAdd(Delta):
-    def __init__(self, SourcePath: str|None=None, serverDirName: str|None=None, row: list[str]|None=None):
+    def __init__(self, SourcePath: str|None=None, serverDirName: str|None=None, row: FanzineIndexPageTableRow|None=None):
         # The filename to be loaded and the issuename to be used comes from Row to allow for later editing by the user
         Delta.__init__(self, "add", serverDirName, row)
         self.SourcePath=SourcePath
@@ -38,11 +39,11 @@ class DeltaAdd(Delta):
         return s
 
 class DeltaReplace(Delta):
-    def __init__(self, SourcePath: str|None=None, serverDirName: str|None=None, NewSourceFilename: str|None=None, OldFilename: str|None=None, row: list[str]|None=None):
+    def __init__(self, SourcePath: str|None=None, serverDirName: str|None=None, NewSourceFilename: str|None=None, OldFilename: str|None=None, row: FanzineIndexPageTableRow|None=None):
         # This is basically just an Add with some addition information for logging purposes
         # The filename to be loaded and the issuename to be used comes from Row to allow for later editing by the user
         Delta.__init__(self, "replace", serverDirName, row)
-        self.oldServerFilename=row[0]   # The name of the file being replaced
+        self.oldServerFilename=row.Cells[0]   # The name of the file being replaced
         self.SourcePath=SourcePath
         self.NewSourceFilename=NewSourceFilename
         self.OldFilename=OldFilename
@@ -54,9 +55,9 @@ class DeltaReplace(Delta):
         return s
 
 class DeltaDelete(Delta):
-    def __init__(self, serverDirName: str|None=None, row: list[str]|None=None):
+    def __init__(self, serverDirName: str|None=None, row: FanzineIndexPageTableRow|None=None):
         Delta.__init__(self, "delete", serverDirName, row)
-        self.ServerFilename=row[0]
+        self.ServerFilename=row.Cells[0]
 
     def __str__(self) -> str:
         s="Delete: "+self.SourceFilename
@@ -66,14 +67,14 @@ class DeltaDelete(Delta):
 
 
 class DeltaRename(Delta):
-    def __init__(self, OldFilename: str|None=None, serverDirName: str|None=None, row: list[str]|None=None):
+    def __init__(self, OldFilename: str|None=None, serverDirName: str|None=None, row: FanzineIndexPageTableRow|None=None):
         Delta.__init__(self, "rename", serverDirName, row)
         self.OldFilename=OldFilename
 
     def __str__(self) -> str:
         s="Rename: "+self.OldFilename
         if self.NewFilename is not None and len(self.NewFilename) > 0:
-            s+=" NewFilename="+self.Row[1]
+            s+=" NewFilename="+self.Row.Cells[1]
         return s
 
 
@@ -95,16 +96,16 @@ class DeltaTracker:
             s+=">>"+str(d)+"\n"
         return s
 
-    def Add(self, sourceFilepathname: str, row: list[str]|None=None, serverDirName: str="") -> None:
+    def Add(self, sourceFilepathname: str, row: FanzineIndexPageTableRow|None=None, serverDirName: str="") -> None:
         path, _=os.path.split(sourceFilepathname)
         self._deltas.append(DeltaAdd(SourcePath=path, serverDirName=serverDirName, row=row))
 
 
-    def Delete(self, serverDirName: str="", row: list[str]|None=None) -> None:
+    def Delete(self, serverDirName: str="", row: FanzineIndexPageTableRow|None=None) -> None:
         # If the item being deleted was just added, simply remove the add from the deltas list
         for i, item in enumerate(self._deltas):
             if item.Verb == "add":
-                if item.Row[0] == row[0]:
+                if item.Row.Cells[0] == row.Cells[0]:
                     del self._deltas[i]
                     return
 
@@ -113,7 +114,7 @@ class DeltaTracker:
 
 
     # Change the filename of a file. It may be on the server already or yet to be added.
-    def Rename(self, sourceFilename: str, newname: str="", serverDirName: str="", row: list[str]|None=None) -> None:
+    def Rename(self, sourceFilename: str, newname: str="", serverDirName: str="", row:FanzineIndexPageTableRow|None=None) -> None:
         # If the old and new names are the same, we're done.
         if sourceFilename == newname:
             return
@@ -121,14 +122,14 @@ class DeltaTracker:
         # First check to see if this is a rename of a rename.  If it is, merge them by replacing the existing rename.
         for item in self._deltas:
             if item.Verb == "rename":
-                if item.Row[0] == row[0]:        # Is the *old* filename for this rename the same as the *new* filename for a previous one
+                if item.Row.Cells[0] == row.Cells[0]:        # Is the *old* filename for this rename the same as the *new* filename for a previous one
                     return
 
         # Now check to see if this is a rename of a file that is on the delta list to be added.
         # If so, we're done since the new name will be taken from the row
         for item in self._deltas:
             if item.Verb == "add":
-                if item.Row[0] == sourceFilename:
+                if item.Row.Cells[0] == sourceFilename:
                     return
 
         # If it doesn't match anything in the delta list, then it must be a rename of an existing file.
@@ -138,7 +139,7 @@ class DeltaTracker:
 
     # We want to replace one file on the server with another, leaving the rest of the data unchanged
     # This will cause a new upload and may change the name of the pdf on the server
-    def Replace(self, oldSourceFilename: str="", newfilepathname: str="", row: list[str]|None=None, serverDirName: str=""):
+    def Replace(self, oldSourceFilename: str="", newfilepathname: str="", row: FanzineIndexPageTableRow|None=None, serverDirName: str=""):
         newfilepath, newfilename=os.path.split(newfilepathname)
         # Check to see if the replacement is in a row already scheduled to be renamed.
         for i, item in enumerate(self._deltas):
@@ -149,7 +150,7 @@ class DeltaTracker:
                 # Upload the new file
                 self.Add(newfilepathname, row=row)
                 # Delete the old file
-                self.Delete(oldSourceFilename, row[1])
+                self.Delete(oldSourceFilename, row.Cells[1])
                 # Delete the rename request
                 del self._deltas[i]
                 return
