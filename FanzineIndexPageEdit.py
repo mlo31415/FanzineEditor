@@ -75,6 +75,31 @@ def Tagit(tag: str, contents: str) -> str:
         return ""
     return f"<{tag}>{contents}</{tag}>"
 
+def ColSelect(row: list[str], coldefs: ColDefinitionsList, col: str) -> str:
+    if col not in coldefs:
+        return ""
+    return row[coldefs.index(col)]
+
+def Editors(row: list[str], coldefs: ColDefinitionsList, editor: str) -> str:
+    issueed=ColSelect(row, coldefs, "editor")
+    if len(issueed) > 0:
+        return issueed
+    return editor
+
+def IssueNumber(row: list[str], coldefs: ColDefinitionsList) -> str:
+    issue=ColSelect(row, coldefs, "whole")
+    if len(issue) > 0:
+        return issue
+    vol=ColSelect(row, coldefs, "vol")
+    num=ColSelect(row, coldefs, "num")
+    s=num
+    if len(vol) > 0:
+        s=vol+"."+s
+
+    return s
+
+
+
 def SpecialNameFormatToHtmlFancylink(val: str|None) ->str|None:
     if val is None:
         return None
@@ -560,8 +585,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if result != wx.ID_YES:
                     return
 
-        FTPLog().AppendItemVerb("upload FIP starts", f"{Tagit("RootDir", self.RootDir)} {Tagit("ServerDir", self.ServerDir)}", Flush=True)
-
         # Save the fanzine's values to return to the main fanzines page.
         cfl=ClassicFanzinesLine()
         cfl.Issues=self.Datasource.NumRows
@@ -653,6 +676,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
                         if delta.Verb == "add":
                             FTPLog().AppendItemVerb("add", f"{Tagit("IssueName", delta.Row[1])} {Tagit("ServerDir", self.ServerDir)} {Tagit("RootDir", self.RootDir)}"
+                                                           f"{Tagit("issuenum", IssueNumber(delta.Row, self.Datasource.ColDefs))}"
+                                                           f"{Tagit("date", ColSelect(delta.Row, self.Datasource.ColDefs, "month"))} {ColSelect(delta.Row, self.Datasource.ColDefs, "year")}"
+                                                           f"{Tagit("editor", Editors(delta.Row, self.Datasource.ColDefs, self.Editors))}"
                                                            f"{Tagit("SourcePath", delta.SourcePath)} {Tagit("SourceFilename", sourceFilename)} ", Flush=True)
                         else:
                             FTPLog().AppendItemVerb("replace", f"{Tagit("SourceFilename", sourceFilename)} {Tagit("IssueName", delta.Row[1])} "
