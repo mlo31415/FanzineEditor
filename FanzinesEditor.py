@@ -30,16 +30,6 @@ def main():
     # Initialize wx
     app=wx.App(False)
 
-
-    if sys.gettrace() is None:
-        # We are not running under the debugger
-        homedir=os.path.split(sys.executable)[0]
-    else:
-        # We are debugging.
-        homedir=os.getcwd()
-
-    homedir=os.getcwd()     # Awful. This will break a non-debug version
-
     # Set up LogDialog
     # global g_LogDialog
     # g_LogDialog=LogDialog(None)
@@ -50,6 +40,7 @@ def main():
     #     g_LogDialog.Destroy()
     #     g_LogDialog=None
 
+    homedir=os.getcwd()
     LogOpen(os.path.join(homedir, "Log -- FanzinesEditor.txt"), os.path.join(homedir, "Log (Errors) -- FanzinesEditor.txt"))
     Log(f"Open Logfile {os.path.join(homedir, 'Log -- FanzinesEditor.txt')}")
     Log(f"{homedir=}")
