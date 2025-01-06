@@ -27,7 +27,7 @@ from FTP import FTP
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
 from WxHelpers import OnCloseHandling, ProcessChar
 from WxHelpers import ModalDialogManager, ProgressMessage2
-from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, RemoveTopLevelHTMLTags, RegularizeBRTags, Pluralize
+from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, RemoveTopLevelHTMLTags, RegularizeBRTags, Pluralize, CanonicizeColumnHeaders
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
 from HelpersPackage import InsertBetweenHTMLComments, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks
@@ -76,16 +76,39 @@ def Tagit(tag: str, contents: str) -> str:
         return ""
     return f"<{tag}>{contents}</{tag}>"
 
-def ColSelect(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList, col: str) -> str:
-    if col not in coldefs:
-        return ""
-    return row.Cells[coldefs.index(col)]
+def ColSelect(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList, colname: str) -> str:
+    if colname in coldefs:
+        return row.Cells[coldefs.index(colname)]
+
+    colname=CanonicizeColumnHeaders(colname)
+    if colname in coldefs:
+        return row.Cells[coldefs.index(colname)]
+
+    for coldef in coldefs:
+        if CanonicizeColumnHeaders(coldef.Name).lower() == colname.lower():
+            return row.Cells[coldefs.index(colname)]
+
+    return ""
+
 
 def Editors(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList, editor: str) -> str:
     issueed=ColSelect(row, coldefs, "editor")
     if len(issueed) > 0:
         return issueed
     return editor
+
+# Format a Month+Day+Year set of columns into a useable date
+def DateFmt(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList) -> str:
+    s=ColSelect(row, coldefs, "month")
+    if len(s) > 0:
+        d=ColSelect(row, coldefs, "day")
+        if len(d) > 0:
+            s+=", "+d
+    y=ColSelect(row, coldefs, "year")
+    if len(s) > 0 and s[-1] != " ":
+        s+=" "
+    s+=y
+    return s
 
 def IssueNumber(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList) -> str:
     issue=ColSelect(row, coldefs, "whole")
@@ -678,13 +701,17 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
                         if delta.Verb == "add":
                             FTPLog().AppendItemVerb("add", f'{Tagit("IssueName", delta.Row[1])} {Tagit("ServerDir", self.ServerDir)} {Tagit("RootDir", self.RootDir)}'+
-                                                           f'{Tagit("issuenum", IssueNumber(delta.Row, self.Datasource.ColDefs))}'+
-                                                           f'{Tagit("date", ColSelect(delta.Row, self.Datasource.ColDefs, "month")+" "+ColSelect(delta.Row, self.Datasource.ColDefs, "day")+" "+ColSelect(delta.Row, self.Datasource.ColDefs, "year"))}'+
-                                                           f'{Tagit("editor", Editors(delta.Row, self.Datasource.ColDefs, self.Editors))}'+
-                                                           f'{Tagit("SourcePath", delta.SourcePath)} {Tagit("SourceFilename", sourceFilename)} ', Flush=True)
+                                                            f'{Tagit("issuenum", IssueNumber(delta.Row, self.Datasource.ColDefs))}'+
+                                                            f'{Tagit("date", DateFmt(delta.Row, self.Datasource.ColDefs))}'+
+                                                            f'{Tagit("fanzinename", self.Datasource.Name.MainName)}'+
+                                                            f'{Tagit("editor", Editors(delta.Row, self.Datasource.ColDefs, self.Editors))}'+
+                                                            f'{Tagit("fanzinetype", self.Datasource.FanzineType)}'+
+                                                            f'{Tagit("clubname", self.Datasource.Clubname)}'+
+                                                            f'{Tagit("SourcePath", delta.SourcePath)} {Tagit("SourceFilename", sourceFilename)} ', Flush=True)
                         else:
-                            FTPLog().AppendItemVerb("replace", f'{Tagit("SourceFilename", sourceFilename)} {Tagit("IssueName", delta.Row[1])} '
-                                                               f'{Tagit("SourcePath", delta.SourcePath)} {Tagit("Oldame", delta.OldFilename)} {Tagit("RootDir", self.RootDir)}', Flush=True)
+                            FTPLog().AppendItemVerb("replace", f'{Tagit("SourceFilename", sourceFilename)} {Tagit("IssueName", delta.Row[1])} '+
+                                                                f'{Tagit("fanzinename", self.Datasource.Name.MainName)}'+
+                                                                f'{Tagit("SourcePath", delta.SourcePath)} {Tagit("Oldame", delta.OldFilename)} {Tagit("RootDir", self.RootDir)}', Flush=True)
 
                     case "delete":
                         # Delete a file on the server
@@ -699,8 +726,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             if result != wx.ID_YES:
                                 break
                         if delta.Uploaded:
-                            FTPLog().AppendItemVerb("delete", f'{Tagit("ServerDirName", delta.ServerDirName)} {Tagit("ServerFilename", delta.ServerFilename)}  '
-                                                      f"{Tagit("IssueName", delta.Row[1])}  {Tagit("RootDir", self.RootDir)}", Flush=True)
+                            FTPLog().AppendItemVerb("delete", f'{Tagit("ServerDirName", delta.ServerDirName)} {Tagit("ServerFilename", delta.ServerFilename)}  '+
+                                                        f'{Tagit("fanzinename", self.Datasource.Name.MainName)}'+
+                                                        f'{Tagit("fanzinetype", self.Datasource.FanzineType)}'+
+                                                        f'{Tagit("clubname", self.Datasource.Clubname)}'+
+                                                        f"{Tagit("IssueName", delta.Row[1])}  {Tagit("RootDir", self.RootDir)}", Flush=True)
 
                     case "rename":
                         # Rename file on the server
@@ -717,8 +747,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             if result != wx.ID_YES:
                                 break
                         if delta.Uploaded:
-                            FTPLog().AppendItemVerb("rename", f'{Tagit("Oldname", delta.OldFilename)} {Tagit("IssueName", delta.Row[1])} '
-                                                      f'{Tagit("Newname", delta.Row[0])} {Tagit("ServerDirName", delta.ServerDirName)} {Tagit("RootDir", self.RootDir)}', Flush=True)
+                            FTPLog().AppendItemVerb("rename", f'{Tagit("Oldname", delta.OldFilename)} {Tagit("IssueName", delta.Row[1])} '+
+                                                        f'{Tagit("fanzinename", self.Datasource.Name.MainName)}'+
+                                                        f'{Tagit("fanzinetype", self.Datasource.FanzineType)}'+
+                                                        f'{Tagit("clubname", self.Datasource.Clubname)}'+
+                                                        f'{Tagit("Newname", delta.Row[0])} {Tagit("ServerDirName", delta.ServerDirName)} {Tagit("RootDir", self.RootDir)}', Flush=True)
 
             c=sum([1 for x in self.deltaTracker.Deltas if not x.Uploaded])
             if c > 0:
