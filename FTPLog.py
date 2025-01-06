@@ -15,7 +15,7 @@ class FTPLog:
 
     @staticmethod
     def Timestamp() -> str:
-        return f"<datetime>{datetime.now().strftime("%A %B %d, %Y  %I:%M:%S %p")} EST</datetime>"
+        return f"<itemdatetime>{datetime.now().strftime("%A %B %d, %Y  %I:%M:%S %p")} EST</itemdatetime>"
 
     @staticmethod
     def Tagstring() -> str:
@@ -27,13 +27,6 @@ class FTPLog:
         if items != "":
             FTP().AppendString(FTPLog.g_Logfilename, items)
         FTPLog.g_pendinglist=[]
-    #
-    # @staticmethod
-    # def AppendRawTextStringImmediate(lines: str) -> None:
-    #     FTP().AppendString(FTPLog.g_Logfilename, f"<item><rawtext>{lines}</rawtext>{FTPLog.Tagstring()}</item>\n")
-    # @staticmethod
-    # def AppendRawTextString(lines: str) -> None:
-    #     FTPLog.g_pendinglist.append(f"<item><rawtext>{lines}</rawtext>{FTPLog.Tagstring()}</item>\n")
 
     @staticmethod
     def AppendItem(txt: str, Flush: bool=False) -> None:
@@ -41,6 +34,7 @@ class FTPLog:
         FTPLog.g_pendinglist.append(f"<item>{txt.strip()}{FTPLog.Tagstring()}/item>\n")
         if Flush:
             FTPLog.Flush()
+
     @staticmethod
     def AppendItemVerb(verb: str, txt: str, Flush: bool=False) -> None:
         Log(f"AppendItem: {verb=} {txt=}")
