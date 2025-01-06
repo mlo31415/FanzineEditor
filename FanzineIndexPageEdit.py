@@ -1006,23 +1006,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     def OnFanzineNameText(self, event):
 
-        if self.IsNewDirectory and self._existingFanzinesServerDirs is not None and self.ServerDir in self._existingFanzinesServerDirs:
-            self.tServerDirectory.SetBackgroundColour(Color.Pink)
-            self.tFanzineName.SetBackgroundColour(Color.Pink)
-        else:
-            self.tServerDirectory.SetBackgroundColour(Color.White)
-            self.tFanzineName.SetBackgroundColour(Color.White)
-
+        self.ColorFanzineAndServerDirBoxes()
 
         self.Datasource.Name.MainName=self.tFanzineName.GetValue()
         Log(f"OnFanzineNameText: Fanzine name updated to '{self.Datasource.Name.MainName}'")
         self.UpdateServerAndLocalDirNames(self.Datasource.Name.MainName)
         self.RefreshWindow(DontRefreshGrid=True)
         # Note that we don;t call self.Skip() so we don't use default processing for this event
-
-
-    def OnOthernamesText(self, event):
-        self.Datasource.Name.Othernames=self.tOthernames.GetValue().split("\n")
 
 
     def OnServerDirectoryChar(self, event):
@@ -1035,6 +1025,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tServerDirectory.SetInsertionPoint(cursorloc)
 
         self._manualEditOfServerDirectoryNameBegun=True
+
+        self.ColorFanzineAndServerDirBoxes()
+
         Log(f"OnServerDirectoryChar: updated to '{fname}'")
         return
 
@@ -1059,6 +1052,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         Log(f"OnLocalDirectoryChar: updated to '{fname}'")
         return
 
+
+    def ColorFanzineAndServerDirBoxes(self):
+        if self.IsNewDirectory and self._existingFanzinesServerDirs is not None and self.ServerDir in self._existingFanzinesServerDirs:
+            self.tServerDirectory.SetBackgroundColour(Color.Pink)
+            #self.tFanzineName.SetBackgroundColour(Color.Pink)
+        else:
+            self.tServerDirectory.SetBackgroundColour(Color.White)
+            #self.tFanzineName.SetBackgroundColour(Color.White)
+
+
     # Color the field pink if this newly-entered name is an existing directory
     def ColortLocalDirectory(self, fname):
 
@@ -1075,6 +1078,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.tLocalDirectory.SetBackgroundColour(Color.Pink)
         else:
             self.tLocalDirectory.SetBackgroundColour(Color.White)
+
+
+    def OnOthernamesText(self, event):
+        self.Datasource.Name.Othernames=self.tOthernames.GetValue().split("\n")
+
 
     def OnEditorsText(self, event):
         self.Datasource.Editors=self.tEditors.GetValue()
