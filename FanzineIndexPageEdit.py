@@ -1163,7 +1163,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     if self.Datasource.Rows[irow][1].strip() == "":
                         self._dataGrid.SetCellBackgroundColor(irow, 1, Color.Pink)
 
-        # The year, oif filled in, must be within the range of dates specified by the FIP
+        # The year, if filled in, must be within the range of dates specified by the FIP
         if self.Datasource.ColDefs[icol].Name == "Year":
             d1, d2=self.DateRange
             year=self.Datasource.Rows[irow][icol]
@@ -2010,7 +2010,7 @@ class FanzineIndexPage(GridDataSource):
 
         return True
 
-    # Dunno why this keeps croppying up in some of the html...
+    # Dunno why this keeps croping up in some of the html...
     def RemoveA0C2Crap(self, s: str) -> str:
         x=s.replace("\xc2\xa0", " ").replace(u"\u00A0", " ")
         x=x.replace("0xa0", " ").replace("0xc2", " ")
@@ -2521,7 +2521,6 @@ def SetPDFMetadata(pdfPathFilename: str, row: FanzineIndexPageTableRow, colNames
         wx.MessageBox(f"Unable to open file {pdfPathFilename}")
         LogError((f"SetPDFMetadata: Unable to open file {pdfPathFilename}"))
         return ""
-
 
     # Title, issue, date, editors, country code, apa
     metadata={"/Title": row.Cells[colNames.index("Display Text")], "/Author": editors.replace("<br>", ", ")}
