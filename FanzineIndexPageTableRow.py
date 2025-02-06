@@ -19,7 +19,8 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         else:
             self._cells=row
 
-        if self._cells[0] == "" and len(self._cells[1]) > 0:
+        # Is this a text row?  (Note that rows with issue info, but no issue, look a lot like text rows and must be detected.
+        if self._cells[0] == "" and len(self._cells[1]) > 0 and not any([x != "" for x in self._cells[2:]]):
             self._isText: bool=True
             self._cells[0]=self._cells[1]   # In a text row, the text now is stored in cell 0
             self._cells[1]=""
