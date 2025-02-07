@@ -2315,7 +2315,7 @@ class FanzineIndexPage(GridDataSource):
 
             # We treat the web page's column 0 specially, extracting its hyperref and display name and showing them as two column in FanzinesEditor
             # The first col is complicated, because it needs to have URLs which match the actual filename on the server. This is only an issue the first time we write a V2.1 or later FIP.
-            # Expand the first col in the FIP into two columens for display
+            # Expand the first col in the FIP into two columns for display
             cols0=str(cols[0])
             _, url, text, _=FindLinkInString(cols0)
             if self._version == "2":
@@ -2471,8 +2471,16 @@ class FanzineIndexPage(GridDataSource):
                 continue
 
             # OK, it's an ordinary row
+            # Unfortunately, some legacy ordinary rows don't have a file to point to -- they're just place holders.
+            # We must handle them specially.
+            # Format cols 0 and 1 into a single column for the website
             insert+=f"\n<TR>"
-            insert+=f'\n<TD><a href="{row.Cells[0].replace("#", "%23").replace("&", "%26")}">{row.Cells[1]}</A></TD>\n'
+            href=row.Cells[0].replace("#", "%23").replace("&", "%26").strip()
+            if href != "":
+                insert+=f'\n<TD><a href="{href}">{row.Cells[1]}</A></TD>\n'
+            else:
+                insert+=f'\n<TD>{row.Cells[1]}</TD>\n'
+            # And now the rest
             for i, cell in enumerate(row.Cells[2:]):
                 if self.ColHeaders[i+2].lower() == "mailing":
                     insert+=f"<TD CLASS='left'>{self.ProcessAPALinks(cell)}</TD>\n"
