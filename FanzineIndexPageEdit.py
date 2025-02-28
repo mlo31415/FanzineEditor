@@ -1318,6 +1318,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     Enable("Extract Scanner")
                     break
 
+        if self.Datasource.ColDefs[self._dataGrid.clickedColumn].Preferred == "Date" or \
+                self.Datasource.ColDefs[self._dataGrid.clickedColumn].Preferred == "Dates" or \
+                self.Datasource.ColDefs[self._dataGrid.clickedColumn].Preferred == "(Date)" or \
+                self.Datasource.ColDefs[self._dataGrid.clickedColumn].Preferred == "(Dates)":
+            if self._dataGrid.clickedRow == -1:
+                Enable("Parse Date into separate columns")
+
         # We only enable Extract Editor when we're in the Notes column and there's something to extract.
         if self.Datasource.ColDefs[self._dataGrid.clickedColumn].Preferred == "Notes":
             # We only want to enable the "Extract Editor" item if the Notes column contains edited by information
@@ -1806,6 +1813,48 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     if row[edcol]:
                         row[edcol]+=" & "
                     row[edcol]+=editors[i]
+
+        self.RefreshWindow()
+
+
+    def OnPopupParseDates( self, event ):
+        self.wxGrid.SaveEditControlValue()
+
+        dateCol=self._dataGrid.clickedColumn
+        if "date" not in self.Datasource.ColDefs[dateCol].Preferred.lower():
+            return
+
+        yearcol=self.Datasource.ColHeaderIndex("Year")
+        if yearcol == -1:
+            self.Datasource.InsertColumn2(dateCol+1, "Year")
+        daycol=self.Datasource.ColHeaderIndex("Day")
+        if daycol == -1:
+            self.Datasource.InsertColumn2(dateCol+1, "Day")
+        monthcol=self.Datasource.ColHeaderIndex("Month")
+        if monthcol == -1:
+            self.Datasource.InsertColumn2(dateCol+1, "Month")
+        # The columns to the left of Date might have been shuffled, so get them again
+        yearcol=self.Datasource.ColHeaderIndex("Year")
+        daycol=self.Datasource.ColHeaderIndex("Day")
+        monthcol=self.Datasource.ColHeaderIndex("Month")
+        
+        # Now extract the date
+        for i, row in enumerate(self._Datasource.Rows):
+            date=row[dateCol]
+            if len(date) == 0:
+                continue  # Skip empty dates
+
+            dt=FanzineDate().Match(date)
+            if dt.IsEmpty():
+                continue
+
+            # Don't overwrite existing m/d/y data
+            if len(row[daycol]) == 0:
+                row[daycol]=str(dt.Day)
+            if len(row[monthcol]) == 0:
+                row[monthcol]=dt.MonthName
+            if len(row[yearcol]) == 0:
+                row[yearcol]=str(dt.Year)
 
         self.RefreshWindow()
 

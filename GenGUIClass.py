@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ###########################################################################
-## Python code generated with wxFormBuilder (version 3.10.1-0-g8feb16b3)
+## Python code generated with wxFormBuilder (version 4.2.1-0-g80c4cb6)
 ## http://www.wxformbuilder.org/
 ##
 ## PLEASE DO *NOT* EDIT THIS FILE!
@@ -374,6 +374,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_menuItemPopupExtractEditor = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Extract Editor", u"If ther Notes column contains information on the issue's editor, extract that information and add it to an Editors column, creating it if needed.", wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupExtractEditor )
 
+		self.m_menuItemPopupParseDate = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Parse Date into separate columns", u"Parse dates like 3/22/59 into Month+Day+Year columns, adding the columns if necessary", wx.ITEM_NORMAL )
+		self.m_GridPopup.Append( self.m_menuItemPopupParseDate )
+
 		self.m_menuItemPopupPropagateEditor = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Propagate Editor", u"If there is an editors column and if editors have been specific for the whole run, replace all blank cells in the editors column with the series editors.", wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupPropagateEditor )
 
@@ -444,6 +447,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.Bind( wx.EVT_MENU, self.OnPopupExtractScanner, id = self.m_menuItemPopupExtractScanner.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupTidyUpColumns, id = self.m_menuItemPopupTidyUpColumns.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupExtractEditor, id = self.m_menuItemPopupExtractEditor.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnPopupParseDates, id = self.m_menuItemPopupParseDate.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupPropagateEditor, id = self.m_menuItemPopupPropagateEditor.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupMergeRows, id = self.m_menuItemPopupMergeRows.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupReplace, id = self.m_menuItemPopupReplace.GetId() )
@@ -598,6 +602,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnPopupExtractEditor( self, event ):
+		event.Skip()
+
+	def OnPopupParseDates( self, event ):
 		event.Skip()
 
 	def OnPopupPropagateEditor( self, event ):
