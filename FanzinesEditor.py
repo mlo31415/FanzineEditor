@@ -221,6 +221,9 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
         # Column 2: Editor
         if row[2] != "":
             cfl.Editors=ConvertHTMLishCharacters(row[2].strip())
+            # Strip trailing semicolon which otherwise looks like a second, blank editor
+            if len(cfl.Editors) > 0 and cfl.Editors[-1] == ";":
+                cfl.Editors=cfl.Editors[:-1]
 
         # Column 3: Dates
         if row[3] != "":

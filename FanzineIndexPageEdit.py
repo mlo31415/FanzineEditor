@@ -1086,6 +1086,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     def OnEditorsText(self, event):
         self.Datasource.Editors=self.tEditors.GetValue()
+        # Remove trailing newline
+        if len(self.Datasource.Editors) > 0 and self.Datasource.Editors[-1] == "\n":
+            self.Datasource.Editors=self.Datasource.Editors[:-1]
         self.RefreshWindow(DontRefreshGrid=True)
 
 
