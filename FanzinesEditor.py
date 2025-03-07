@@ -164,7 +164,7 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
         table=re.sub(r"<tr.*?>(.*?)</tr>", "?", table, count=1, flags=re.DOTALL|re.IGNORECASE)
 
     rowtable: list[list[str]]=[]
-    for i, row in enumerate(rows[1:]):    # row[0] is the column headers, and for this file the columns are hard-coded, so they can be ignored.
+    for row in rows[1:]:    # row[0] is the column headers, and for this file the columns are hard-coded, so they can be ignored.
         srow=str(row)
         if "<form action=" in srow[:30]:  # I don't know where this line is coming from (it shows up as the last row, but does not appear on the website!)>
             continue
