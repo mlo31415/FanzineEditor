@@ -7,7 +7,6 @@ import sys
 import re
 
 from FTP import FTP, Lock
-#from bs4 import BeautifulSoup
 
 from FTPLog import FTPLog
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
@@ -17,6 +16,7 @@ from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, UnicodeToHtm
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
+from FanacFanzinesHelpers import ReadClassicFanzinesTable
 
 from FanzineIndexPageEdit import FanzineIndexPageWindow, ClassicFanzinesDate, Tagit
 from FanzineNames import FanzineNames
@@ -141,27 +141,8 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
         html=html.replace("amp;amp;", "amp;")
         Log(f"redundant 'amp;'s removed from Classic_Fanzines.html")
 
-    # Log("About to call BeautifulSoup on Classic_Fanzines.html")
-    # soup=BeautifulSoup(html, 'html.parser')
-    # Log("Done calling BeautifulSoup")
-    # table=soup.find_all("table", class_="sortable")[0]
-    # rows=table.find_all_next("tr")
-
-    # Parse the HTML looking for the classic fanzines table
-    # (Note that this used to be done using BeautifulSoup, but it was very slow.
-    m=re.search(r"<table[^>]*sortable\">(.*)$", html, flags=re.DOTALL|re.IGNORECASE)
-    if m is None:
-        Log("Could not find sortable table in Classic_Fanzines.html")
-        return None
-    table=m.groups()[0]
-    # Go through the table finding, extracting and then deleting the rows one-by-one
-    rows=[]
-    while True:
-        m=re.search(r"<tr.*?>(.*?)</tr>", table, flags=re.DOTALL|re.IGNORECASE)
-        if m is None:
-            break
-        rows.append(m.groups()[0])
-        table=re.sub(r"<tr.*?>(.*?)</tr>", "?", table, count=1, flags=re.DOTALL|re.IGNORECASE)
+    rows=ReadClassicFanzinesTable(html)
+    assert rows is not None
 
     rowtable: list[list[str]]=[]
     for row in rows[1:]:    # row[0] is the column headers, and for this file the columns are hard-coded, so they can be ignored.
