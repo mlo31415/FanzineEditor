@@ -1510,9 +1510,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         irow=self._dataGrid.clickedRow
         oldfile=self.Datasource.Rows[irow][0]
         newfilepath, newfilename=os.path.split(filepath[0])
-        oldfilename=self.Datasource.Rows[irow][0]
         self.Datasource.Rows[irow][0]=newfilename
-        self.deltaTracker.Replace(oldSourceFilename=oldfile, newfilepathname=filepath[0], row=self.Datasource.Rows[irow])
+        self.deltaTracker.Replace(oldSourceFilename=oldfile, newfilepathname=filepath[0], serverDirName=self.ServerDir, row=self.Datasource.Rows[irow])
         self.FillInPDFColumn()
         self.RefreshWindow()
 
