@@ -543,10 +543,11 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self.RefreshWindow()
 
 
-    def OnAddNewFanzine(self, event):       
+    def OnAddNewFanzine(self, event):
 
         with FanzineIndexPageWindow(None, ExistingFanzinesServerDirs=self.Datasource.FanzineList) as fsw:
             fsw.ShowModal()
+        FTPLog().AppendItemVerb("New Fanzine", f"{Tagit("FanzineName", fsw.CFL.Name.MainName)}", Flush=True)
 
         if not fsw._uploaded:
             return
