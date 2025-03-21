@@ -212,11 +212,11 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
                 continue
 
             url=m.group(1).strip()
-            cfl.Name=FanzineNames(StripSpecificTag(m.group(2), "strong", CaseSensitive=True), m.group(3))
+            cfl.Name=FanzineNames(StripSpecificTag(m.group(2), "strong", Number=5), m.group(3))
             m=re.match(r"https://fanac.org/fanzines([a-zA-Z 0-9\-]*?)/(.*)$", url, flags=re.IGNORECASE)
             if m is not None:
                 url=m.group(2)
-            cfl.ServerDir=StripSpecificTag(url, "strong", CaseSensitive=True)
+            cfl.ServerDir=StripSpecificTag(url, "strong")
 
         # Column 2: Editor
         if row[2] != "":
