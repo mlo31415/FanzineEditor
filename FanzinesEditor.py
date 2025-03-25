@@ -75,12 +75,12 @@ def main():
         msg=f"Unable to find file 'FTP Credentials.json' file.  Expected to find it in {os.getcwd()}"
         MessageBox(msg, ignoredebugger=True)
         Log(msg)
-        exit(0)
+        sys.exit(0)
 
     if not FTP().OpenConnection("FTP Credentials.json"):
         MessageBox("Unable to open connection to FTP server fanac.org", ignoredebugger=True)
         Log("Main: OpenConnection('FTP Credentials.json' failed")
-        exit(0)
+        sys.exit(0)
 
     # Attempt to establish a lock on the Fanzines directories
     lockEstablished=False
