@@ -11,7 +11,7 @@ from FTP import FTP, Lock
 from FTPLog import FTPLog
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
 from WxHelpers import OnCloseHandling, ProgressMessage2, ModalDialogManager
-from HelpersPackage import MessageBox, ExtractInvisibleTextInsideFanacComment, ConvertHTMLishCharacters
+from HelpersPackage import ExtractInvisibleTextInsideFanacComment, ConvertHTMLishCharacters
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, UnicodeToHtml, StripSpecificTag, Int0, TimestampFilename
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
@@ -72,15 +72,14 @@ def main():
     FTPLog().Init(id, f"{rootDir}/FanzinesEditor Log.txt")
 
     if not os.path.exists("FTP Credentials.json"):
-        msg=f"Unable to find file 'FTP Credentials.json' file.  Expected to find it in {os.getcwd()}"
-        MessageBox(msg, ignoredebugger=True)
-        Log(msg)
-        sys.exit(0)
+        msg=f"Unable to find file 'FTP Credentials.json' file.\nExpected to find it in {os.getcwd()}"
+        Log(msg, isCritical=True)
+
 
     if not FTP().OpenConnection("FTP Credentials.json"):
-        MessageBox("Unable to open connection to FTP server fanac.org", ignoredebugger=True)
         Log("Main: OpenConnection('FTP Credentials.json' failed")
-        sys.exit(0)
+        Log("Unable to open connection to FTP server fanac.org", isCritical=True)
+
 
     # Attempt to establish a lock on the Fanzines directories
     lockEstablished=False
@@ -110,8 +109,8 @@ def main():
 
 #------------------------------------------------------------------------------
 g_LogDialog: LogDialog|None=None
-def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear=False, Flush=False, timestamp=False) -> None:
-    RealLog(text, isError=isError, noNewLine=noNewLine, Print=Print, Clear=Clear, Flush=Flush, timestamp=timestamp)
+def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear=False, Flush=False, timestamp=False, isWarning=False, isCritical=False) -> None:
+    RealLog(text, isError=isError, noNewLine=noNewLine, Print=Print, Clear=Clear, Flush=Flush, timestamp=timestamp, isWarning=isWarning, isCritical=isCritical)
     if g_LogDialog is not None:
         if not text.endswith("\n"):
             text=text+"\n"
