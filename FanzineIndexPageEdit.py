@@ -314,7 +314,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.cbAlphabetizeIndividually.Enabled=True
         self.wxGrid.Enabled=True
 
-        # A few are enabled only when creating a new one (which lasts onbly until it is uploaded -- then it's an old one)
+        # A few are enabled only when creating a new one (which lasts only until it is uploaded -- then it's an old one)
         if self.IsNewDirectory:
             self.tServerDirectory.SetEditable(True)
             self.tServerDirectory.SetEditable(True)
