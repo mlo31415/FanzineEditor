@@ -450,9 +450,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # We need to add a Pages column
             iNotes=self.Datasource.ColHeaderIndex("notes")
             if iNotes == -1:
-                LogError("We need to add a Pages column right before tghe Npotes column, but can't find a Notes colum, either. Will ignore, but you really ought to add a Pages column!")
+                LogError("We need to add a Pages column right before the Npotes column, but can't find a Notes column, either. Will ignore, but you really ought to add a Pages column!")
                 return
-            self.Datasource.InsertColumn(self.Datasource.NumCols, ColDefinition("Pages"))
+            self.Datasource.InsertColumn2(self.Datasource.NumCols, ColDefinition("Pages"))
             iPages=self.Datasource.ColHeaderIndex("pages")
         # Look through the rows and for each PDF which does not have a page count, add the page count
         for i, row in enumerate(self.Datasource.Rows):
@@ -699,19 +699,20 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             if moveFilesAfterUploading:
                                 MoveToLocalDirectory(delta.SourcePath, localDirectoryPath, sourceFilename)
 
-                        if delta.Verb == "add":
-                            FTPLog().AppendItemVerb("add", f'{Tagit("IssueName", delta.Row[1])} {Tagit("ServerDir", self.ServerDir)} {Tagit("RootDir", self.RootDir)}'+
-                                                            f'{Tagit("issuenum", IssueNumber(delta.Row, self.Datasource.ColDefs))}'+
-                                                            f'{Tagit("date", DateFmt(delta.Row, self.Datasource.ColDefs))}'+
-                                                            f'{Tagit("fanzinename", self.Datasource.Name.MainName)}'+
-                                                            f'{Tagit("editor", Editors(delta.Row, self.Datasource.ColDefs, self.Editors))}'+
-                                                            f'{Tagit("fanzinetype", self.Datasource.FanzineType)}'+
-                                                            f'{Tagit("clubname", self.Datasource.Clubname)}'+
-                                                            f'{Tagit("SourcePath", delta.SourcePath)} {Tagit("SourceFilename", sourceFilename)} ', Flush=True)
-                        else:
-                            FTPLog().AppendItemVerb("replace", f'{Tagit("SourceFilename", sourceFilename)} {Tagit("IssueName", delta.Row[1])} '+
-                                                                f'{Tagit("fanzinename", self.Datasource.Name.MainName)}'+
-                                                                f'{Tagit("SourcePath", delta.SourcePath)} {Tagit("Oldame", delta.OldFilename)} {Tagit("RootDir", self.RootDir)}', Flush=True)
+                        text=f'{Tagit("IssueName", delta.Row[1])} ' + \
+                                        f'{Tagit("ServerDir", self.ServerDir)} ' +\
+                                        f'{Tagit("RootDir", self.RootDir)} ' +\
+                                        f'{Tagit("issuenum", IssueNumber(delta.Row, self.Datasource.ColDefs))} '+\
+                                        f'{Tagit("date", DateFmt(delta.Row, self.Datasource.ColDefs))} '+\
+                                        f'{Tagit("fanzinename", self.Datasource.Name.MainName)} '+\
+                                        f'{Tagit("editor", Editors(delta.Row, self.Datasource.ColDefs, self.Editors))} '+\
+                                        f'{Tagit("fanzinetype", self.Datasource.FanzineType)} '+\
+                                        f'{Tagit("clubname", self.Datasource.Clubname)} '+\
+                                        f'{Tagit("SourcePath", delta.SourcePath)} '+\
+                                        f'{Tagit("SourceFilename", sourceFilename)} '
+                        if delta.Verb == "replace":
+                            text+=f"{Tagit("Oldame", delta.OldFilename)}"
+                        FTPLog().AppendItemVerb(delta.Verb, text, Flush=True)
 
                     case "delete":
                         # Delete a file on the server
