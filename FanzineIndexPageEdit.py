@@ -806,7 +806,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if "Editor" in self.Datasource.ColDefs:  # Editor in the row overrides editors for the whole zine series
                 editors=row[self.Datasource.ColDefs.index("Editor")]
             copyfilepath=SetPDFMetadata(sourcepath+"/"+sourcefilename, row, self.Datasource.ColDefs, editors=editors, mainName=mainName, country=country)
-            Log(f"{copyfilepath=}")  # TODO delete these logging messages once sure that this code is working
             assert copyfilepath != ""
         else:
             copyfilepath=os.path.join(sourcepath, sourcefilename)
@@ -2090,10 +2089,10 @@ class FanzineIndexPage(GridDataSource):
             _, localeStuff=SearchAndReplace(r"(</?fanac-type>)", localeStuff, "")
             _, locale=SearchAndReplace(r"(</?h2/?>)", localeStuff, "")
 
-        # Check for the alphabetize individually flag
+        # Check for the Alphabetize Individually flag
         m=re.search(r"<!-- Fanac-keywords: (.*?) -->", str(body[0]), flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
         if m is not None:
-            if len(m.groups()[0]) > 10:     # Arbitrary, since the keyword should be "Alphabetize individually", but has been added by hand so might be mosta nyhting
+            if len(m.groups()[0]) > 10:     # Arbitrary, since the keyword should be "Alphabetize Individually", but has been added by hand so might be mosta nyhting
                 self.AlphabetizeIndividually=True
 
         name=FanzineNames()
@@ -2290,7 +2289,7 @@ class FanzineIndexPage(GridDataSource):
         # Remove the <h2>s that tend to decorate it
 
         keywords=[x.strip() for x in ExtractInvisibleTextInsideFanacComment(html, "keywords").split("; ")]
-        if "Alphabetize individually" in keywords:
+        if "Alphabetize Individually" in keywords:
             self.AlphabetizeIndividually=True
 
         comments=ExtractHTMLUsingFanacStartEndCommentPair(html, "topcomments")
@@ -2477,7 +2476,7 @@ class FanzineIndexPage(GridDataSource):
         if self.AlphabetizeIndividually:
             if len(keywords) > 0:
                 keywords+="; "
-            keywords+="Alphabetize individually"
+            keywords+="Alphabetize Individually"
         temp=InsertInvisibleTextInsideFanacComment(output, "keywords", keywords)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertInvisibleTextUsingFanacComments('fanac-keywords')")
