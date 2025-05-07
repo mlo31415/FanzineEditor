@@ -222,7 +222,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		bSizer7.Add( fgSizer6, 0, 0, 5 )
 
-		fgSizer15 = wx.FlexGridSizer( 0, 2, 0, 0 )
+		fgSizer15 = wx.FlexGridSizer( 0, 3, 0, 0 )
 		fgSizer15.SetFlexibleDirection( wx.BOTH )
 		fgSizer15.SetNonFlexibleGrowMode( wx.FLEX_GROWMODE_SPECIFIED )
 
@@ -235,6 +235,13 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.cbAlphabetizeIndividually.SetToolTip( u"Do we want to treat the issues in this page as independent fanzines rather than issues of this page?" )
 
 		fgSizer15.Add( self.cbAlphabetizeIndividually, 0, wx.ALL, 5 )
+
+		self.m_TestMode = wx.StaticText( self, wx.ID_ANY, u"Test Mode: ", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_TestMode.Wrap( -1 )
+
+		self.m_TestMode.SetFont( wx.Font( 12, wx.FONTFAMILY_ROMAN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, "Arial" ) )
+
+		fgSizer15.Add( self.m_TestMode, 0, wx.ALL, 5 )
 
 
 		bSizer7.Add( fgSizer15, 1, wx.EXPAND, 5 )
@@ -669,6 +676,13 @@ class FanzinesGridGen ( wx.Frame ):
 		self.bClearSearch.SetMaxSize( wx.Size( 20,20 ) )
 
 		fgSizer71.Add( self.bClearSearch, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+
+		self.m_TestMode = wx.StaticText( self, wx.ID_ANY, u"Test Mode: ", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_TestMode.Wrap( -1 )
+
+		self.m_TestMode.SetFont( wx.Font( 12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, "Arial" ) )
+
+		fgSizer71.Add( self.m_TestMode, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
 
 		fgSizer7.Add( fgSizer71, 0, wx.EXPAND, 5 )

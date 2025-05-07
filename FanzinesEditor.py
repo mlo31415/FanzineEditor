@@ -429,6 +429,12 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self._dataGrid.HideRowLabels()
         self._dataGrid.HideColLabels()
 
+        # Add a visble flag if we're in test mode
+        self.m_TestMode.SetLabelText("")
+        if Settings().IsTrue("Test mode"):
+            self.m_TestMode.SetLabelText(f"Test Mode: {self.RootDir}")
+
+
         self._signature=0   # We need this member. ClearMainWindow() will initialize it
         self._fanzinesCount=0   # Also used to prevent exist with loss of data
 

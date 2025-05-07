@@ -164,6 +164,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if Settings().IsTrue("Test mode"):
             self.RootDir=Settings().Get("Test Root Directory", self.RootDir)
 
+        # Add a visble flag if we're in test mode
+        self.m_TestMode.SetLabelText("")
+        if Settings().IsTrue("Test mode"):
+            self.m_TestMode.SetLabelText(f"Test Mode: {self.RootDir}")
+
         # A list of changes to the file stored on the website which will need to be made upon upload.
         self.deltaTracker=DeltaTracker()
 
