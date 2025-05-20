@@ -62,6 +62,7 @@ def main():
     FTP.g_dologging=Settings().Get("FTP Logging", False)
 
     FTP().LoggingOff()
+    #FTP().LoggingOn()
 
     id=Settings().Get("ID")
     rootDir="/fanzines"
