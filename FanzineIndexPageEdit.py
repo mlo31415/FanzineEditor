@@ -723,14 +723,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         # Delete a file on the server
                         filenameOnServer=delta.ServerFilename
                         serverpathfile=f"/{self.RootDir}/{self.ServerDir}/{filenameOnServer}"
-                        pm.Update(f"Deleting {serverpathfile} from server")
-                        delta.Uploaded= FTP().DeleteFile(serverpathfile)
-                        if not delta.Uploaded:
-                            dlg=wx.MessageDialog(self, f"Unable to delete {serverpathfile} because {FTP().LastMessage}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
-                            result=dlg.ShowModal()
-                            dlg.Destroy()
-                            if result != wx.ID_YES:
-                                break
+                        if filenameOnServer.strip() != "":
+                            pm.Update(f"Deleting {serverpathfile} from server")
+                            delta.Uploaded= FTP().DeleteFile(serverpathfile)
+                            if not delta.Uploaded:
+                                dlg=wx.MessageDialog(self, f"Unable to delete {serverpathfile} because {FTP().LastMessage}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+                                result=dlg.ShowModal()
+                                dlg.Destroy()
+                                if result != wx.ID_YES:
+                                    break
                         if delta.Uploaded:
                             FTPLog().AppendItemVerb("delete", f'{Tagit("ServerDirName", delta.ServerDirName)} {Tagit("ServerFilename", delta.ServerFilename)}  '+
                                                         f'{Tagit("fanzinename", self.Datasource.Name.MainName)}'+
@@ -759,7 +760,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                                         f'{Tagit("clubname", self.Datasource.Clubname)}'+
                                                         f'{Tagit("Newname", delta.Row[0])} {Tagit("ServerDirName", delta.ServerDirName)} {Tagit("RootDir", self.RootDir)}', Flush=True)
 
-            c=sum([1 for x in self.deltaTracker.Deltas if not x.Uploaded])
+            c=sum([1 for x in self.deltaTracker.Deltas if not x.Uploaded and not x.ServerFilename.strip() == ""])
             if c > 0:
                 dlg=wx.MessageDialog(self, f"{Pluralize(c, "upload")} failed")
                 dlg.ShowModal()
