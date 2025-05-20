@@ -2375,6 +2375,12 @@ class FanzineIndexPage(GridDataSource):
             # Expand the first col in the FIP into two columns for display
             cols0=str(cols[0])
             _, url, text, _=FindLinkInString(cols0)
+
+            # UGLY! Kludge!
+            # Edie requests that links to gostak.org.uk be treated specially and have a hard-wored http:
+            if "gostak.org.uk" in url:
+                url="http:"+url
+
             # There are at least a few pages which have "&amp;nbsp;" in text -- this should be displayed as "&nbsp;"
             text=text.replace("&amp;nbsp;", "&nbsp;")
             if self._version == "2":
