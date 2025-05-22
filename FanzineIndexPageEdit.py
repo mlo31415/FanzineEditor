@@ -2003,7 +2003,7 @@ class FanzineIndexPage(GridDataSource):
     @property
     def Clubname(self) -> str:
         if self.FanzineType.lower() == "clubzine":
-            return self._clubname
+            return self._clubname.strip()
         return ""
     @Clubname.setter
     def Clubname(self, val: str) -> None:
@@ -2457,7 +2457,7 @@ class FanzineIndexPage(GridDataSource):
         names=[self.Name.MainName]
         names.extend(self.Name.Othernames)
         namelist=", ".join(names)
-        content=f'{namelist}, {edlist}, {self.Dates}, {self.FanzineType}'
+        content=f'{namelist}, {edlist}, {self.Dates.strip()}, {self.FanzineType.strip()}'
         if self.Clubname != "":
             content+=f", {self.Clubname}"
         meta=f'meta name="description" content="{content}"'
@@ -2468,9 +2468,9 @@ class FanzineIndexPage(GridDataSource):
         output=InsertBetweenHTMLComments(output, "name", UnicodeToHtmlEscapes(self.Name.MainName))
         output=InsertBetweenHTMLComments(output, "other", self.Name.OthernamesAsHTML)
         output=InsertBetweenHTMLComments(output, "eds", "<br>".join([SpecialNameFormatToHtmlFancylink(UnicodeToHtmlEscapes(x.strip())) for x in self.Editors.split("\n")]))
-        output=InsertBetweenHTMLComments(output, "dates", UnicodeToHtmlEscapes(self.Dates))
+        output=InsertBetweenHTMLComments(output, "dates", UnicodeToHtmlEscapes(self.Dates.strip()))
         output=InsertBetweenHTMLComments(output, "complete", "(Complete)" if self.Complete else "")
-        output=InsertBetweenHTMLComments(output, "type", self.FanzineType)
+        output=InsertBetweenHTMLComments(output, "type", self.FanzineType.strip())
         output=InsertBetweenHTMLComments(output, "club", f" - {UnicodeToHtmlEscapes(self.Clubname)}" if self.Clubname != "" else "")
         output=InsertBetweenHTMLComments(output, "loc", TurnPythonListIntoWordList(self.Locale))
 
@@ -2478,7 +2478,7 @@ class FanzineIndexPage(GridDataSource):
 
         insert=UnicodeToHtmlEscapes(self.TopComments).replace("\n", "<br>")
         insert=self.TopComments.replace("\n", "<br>")
-        temp=InsertHTMLUsingFanacStartEndCommentPair(output, "topcomments", insert)
+        temp=InsertHTMLUsingFanacStartEndCommentPair(output, "topcomments", insert.strip())
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('topcomments')")
             return False

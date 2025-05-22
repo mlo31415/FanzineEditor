@@ -46,21 +46,21 @@ class FanzineNames:
 
     @property
     def MainName(self) -> str:
-        return self._mainname
+        return self._mainname.strip()
     @MainName.setter
     def MainName(self, val: str):
         self._mainname = ArticleToFront(RemoveLinebreaks(val))
 
     @property
     def Othernames(self) -> list[str]:
-        return self._othernames
+        return [x.strip() for x in self._othernames]
     @Othernames.setter
     def Othernames(self, val: list[str]):
         self._othernames=[y for y in [ArticleToFront(RemoveLinebreaks(x).strip()) for x in val] if len(y) > 0]
 
     @property
     def OthernamesAsHTML(self) -> str:
-        return "<br>".join([UnicodeToHtmlEscapes(x) for x in self._othernames])
+        return "<br>".join([UnicodeToHtmlEscapes(x.strip()) for x in self._othernames])
     @OthernamesAsHTML.setter
     def OthernamesAsHTML(self, val: str):
         fanzinename=SplitOnSpansOfLineBreaks(val)
