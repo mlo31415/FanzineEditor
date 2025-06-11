@@ -2295,8 +2295,7 @@ class FanzineIndexPage(GridDataSource):
         # Remove the <h2>s that tend to decorate it
 
         keywords=[x.strip() for x in ExtractInvisibleTextInsideFanacComment(html, "keywords").split("; ")]
-        if "Alphabetize Individually" in keywords:
-            self.AlphabetizeIndividually=True
+        self.AlphabetizeIndividually=any([True for x in keywords if x.lower() == "alphabetize individually"])
 
         comments=ExtractHTMLUsingFanacStartEndCommentPair(html, "topcomments")
         if comments is not None:
