@@ -2116,7 +2116,7 @@ class FanzineIndexPage(GridDataSource):
 
             for i, stuff in enumerate(topmattersplit):
                 stuff=re.sub(r"</?br/?>", "\n", stuff)
-                _, stuff=SearchAndReplace(r"(<.*?>)", stuff, "")
+                _, stuff=SearchAndReplace(r"(<.*?>)", stuff, "")        # Replace all HTML <xxxx> with empty string
                 topmattersplit[i]=stuff
             topmattersplit=[x.replace("\n\n", "\n").removesuffix("\n") for x in topmattersplit if x != ""]
             if len(topmattersplit) == 0:
