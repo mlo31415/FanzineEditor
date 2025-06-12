@@ -37,6 +37,16 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_toolBarTop.AddControl( self.bUpload )
 		self.bClose = wx.Button( self.m_toolBarTop, wx.ID_ANY, u"Close", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_toolBarTop.AddControl( self.bClose )
+		self.m_staticText22Spacer = wx.StaticText( self.m_toolBarTop, wx.ID_ANY, u"           ", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText22Spacer.Wrap( -1 )
+
+		self.m_toolBarTop.AddControl( self.m_staticText22Spacer )
+		self.m_TestMode = wx.StaticText( self.m_toolBarTop, wx.ID_ANY, u"      Test Mode: ", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_TestMode.Wrap( -1 )
+
+		self.m_TestMode.SetFont( wx.Font( 12, wx.FONTFAMILY_ROMAN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, "Arial" ) )
+
+		self.m_toolBarTop.AddControl( self.m_TestMode )
 		self.m_toolBarTop.Realize()
 
 		bSizer5.Add( self.m_toolBarTop, 0, wx.EXPAND, 5 )
@@ -235,13 +245,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.cbAlphabetizeIndividually.SetToolTip( u"Do we want to treat the issues in this page as independent fanzines rather than issues of this page?" )
 
 		fgSizer15.Add( self.cbAlphabetizeIndividually, 0, wx.ALL, 5 )
-
-		self.m_TestMode = wx.StaticText( self, wx.ID_ANY, u"Test Mode: ", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.m_TestMode.Wrap( -1 )
-
-		self.m_TestMode.SetFont( wx.Font( 12, wx.FONTFAMILY_ROMAN, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, False, "Arial" ) )
-
-		fgSizer15.Add( self.m_TestMode, 0, wx.ALL, 5 )
 
 
 		bSizer7.Add( fgSizer15, 1, wx.EXPAND, 5 )
