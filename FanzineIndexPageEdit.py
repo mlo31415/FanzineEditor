@@ -248,7 +248,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.tTopComments.SetValue(self.Datasource.TopComments)
 
             self.cbComplete.SetValue(self.Datasource.Complete)
-            self.cbAlphabetizeIndividually.SetValue(self.Datasource.AlphabetizeIndividually)
 
             self.tServerDirectory.SetValue(serverDir)
             self.tServerDirectory.Disable()
@@ -316,7 +315,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tTopComments.SetEditable(True)
         self.tLocaleText.SetEditable(True)
         self.cbComplete.Enabled=True
-        self.cbAlphabetizeIndividually.Enabled=True
         self.wxGrid.Enabled=True
 
         # A few are enabled only when creating a new one (which lasts only until it is uploaded -- then it's an old one)
@@ -574,7 +572,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tLocaleText.SetValue("")
         self.tCredits.SetValue("")
         self.cbComplete.SetValue(False)
-        self.cbAlphabetizeIndividually.SetValue(False)
 
         self.Datasource.Credits=Settings().Get("Scanning credits default", default="")
 
@@ -1132,16 +1129,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # ------------------
     def OnCheckComplete(self, event):      
         self.Datasource.Complete=self.cbComplete.GetValue()
-        Log(f"OnCheckComplete(): {self.Datasource.Complete=} and {self.Datasource.AlphabetizeIndividually=}")
+        Log(f"OnCheckComplete(): {self.Datasource.Complete=}")
         self.RefreshWindow(DontRefreshGrid=True)
-
-    # ------------------
-    def OnCheckAlphabetizeIndividually(self, event):       
-        self.Datasource.AlphabetizeIndividually=self.cbAlphabetizeIndividually.GetValue()
-        Log(f"OnCheckAlphabetizeIndividually(): {self.Datasource.Complete=} and {self.Datasource.AlphabetizeIndividually=}")
-        self.RefreshWindow(DontRefreshGrid=True)
-        # Don't need to refresh because nothing changed
-
 
     #------------------
     def OnLocaleText(self, event):       
@@ -1933,7 +1922,6 @@ class FanzineIndexPage(GridDataSource):
         self.Significance: str="Unclassified"
         self.FanzineType: str=""
         self.Complete=False     # Is this fanzine series complete?
-        self.AlphabetizeIndividually=False      # Treat all issues as part of main series
         self.Credits=""         # Who is to be credited for this affair?
         self.Updated: ClassicFanzinesDate=ClassicFanzinesDate("Long, long ago")
 
@@ -1944,7 +1932,7 @@ class FanzineIndexPage(GridDataSource):
             s+=self._colDefs.Signature()
         s+=hash(f"{self._name};{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{self.TopComments.strip()};{' '.join(self.Locale).strip()};{self.Significance}")
-        s+=hash(f"{self.Name.MainName};{self.Editors};{self.Dates};{self.FanzineType};{self.Clubname};{self.Credits};{self.Complete}{self.AlphabetizeIndividually}")
+        s+=hash(f"{self.Name.MainName};{self.Editors};{self.Dates};{self.FanzineType};{self.Clubname};{self.Credits}")
         s+=sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
         s+=hash(self._specialTextColor)
         return s
@@ -2095,11 +2083,12 @@ class FanzineIndexPage(GridDataSource):
             _, localeStuff=SearchAndReplace(r"(</?fanac-type>)", localeStuff, "")
             _, locale=SearchAndReplace(r"(</?h2/?>)", localeStuff, "")
 
-        # Check for the Alphabetize Individually flag
+        # Check for the (now obsolete) Alphabetize Individually flag
+        # If we find it set, we set the type choice to "Collection".  We never write out an FIP with the Alphabetize Individually flag set
         m=re.search(r"<!-- Fanac-keywords: (.*?) -->", str(body[0]), flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
         if m is not None:
             if len(m.groups()[0]) > 10:     # Arbitrary, since the keyword should be "Alphabetize Individually", but has been added by hand so might be mosta nyhting
-                self.AlphabetizeIndividually=True
+                self.chFanzineType.SetSelection(self.chFanzineType.Items.index("Collection"))
 
         name=FanzineNames()
         editors=""
@@ -2294,9 +2283,6 @@ class FanzineIndexPage(GridDataSource):
             Log(f"GetFanzineIndexPageNew(): ExtractHTMLUsingFanacComments('Locale') -- No locale found")
         # Remove the <h2>s that tend to decorate it
 
-        keywords=[x.strip() for x in ExtractInvisibleTextInsideFanacComment(html, "keywords").split("; ")]
-        self.AlphabetizeIndividually=any([True for x in keywords if x.lower() == "alphabetize individually"])
-
         comments=ExtractHTMLUsingFanacStartEndCommentPair(html, "topcomments")
         if comments is not None:
             self.TopComments=comments.replace("<br>", "\n")
@@ -2483,11 +2469,7 @@ class FanzineIndexPage(GridDataSource):
             return False
         output=temp
 
-        keywords=""
-        if self.AlphabetizeIndividually:
-            if len(keywords) > 0:
-                keywords+="; "
-            keywords+="Alphabetize Individually"
+        keywords=""     # Not currently being used
         temp=InsertInvisibleTextInsideFanacComment(output, "keywords", keywords)
         if temp == "":
             LogError(f"PutFanzineIndexPage({url}) failed: InsertInvisibleTextUsingFanacComments('fanac-keywords')")
