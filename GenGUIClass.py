@@ -37,7 +37,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_toolBarTop.AddControl( self.bUpload )
 		self.bClose = wx.Button( self.m_toolBarTop, wx.ID_ANY, u"Close", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_toolBarTop.AddControl( self.bClose )
-		self.m_staticText22Spacer = wx.StaticText( self.m_toolBarTop, wx.ID_ANY, u"           ", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticText22Spacer = wx.StaticText( self.m_toolBarTop, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText22Spacer.Wrap( -1 )
 
 		self.m_toolBarTop.AddControl( self.m_staticText22Spacer )
@@ -241,11 +241,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		fgSizer15.Add( self.cbComplete, 0, wx.ALL, 5 )
 
-		self.cbAlphabetizeIndividually = wx.CheckBox( self, wx.ID_ANY, u"Alphabetize Individually", wx.DefaultPosition, wx.DefaultSize, 0 )
-		self.cbAlphabetizeIndividually.SetToolTip( u"Do we want to treat the issues in this page as independent fanzines rather than issues of this page?" )
-
-		fgSizer15.Add( self.cbAlphabetizeIndividually, 0, wx.ALL, 5 )
-
 
 		bSizer7.Add( fgSizer15, 1, wx.EXPAND, 5 )
 
@@ -427,7 +422,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.tLocalDirectory.Bind( wx.EVT_TEXT, self.OnLocalDirectoryText )
 		self.chSignificance.Bind( wx.EVT_CHOICE, self.OnSignificanceSelect )
 		self.cbComplete.Bind( wx.EVT_CHECKBOX, self.OnCheckComplete )
-		self.cbAlphabetizeIndividually.Bind( wx.EVT_CHECKBOX, self.OnCheckAlphabetizeIndividually )
 		self.tTopComments.Bind( wx.EVT_TEXT, self.OnTopCommentsText )
 		self.tLocaleText.Bind( wx.EVT_TEXT, self.OnLocaleText )
 		self.tCredits.Bind( wx.EVT_TEXT, self.OnCreditsText )
@@ -522,9 +516,6 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnCheckComplete( self, event ):
-		event.Skip()
-
-	def OnCheckAlphabetizeIndividually( self, event ):
 		event.Skip()
 
 	def OnTopCommentsText( self, event ):
