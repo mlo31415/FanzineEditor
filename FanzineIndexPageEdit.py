@@ -2088,7 +2088,7 @@ class FanzineIndexPage(GridDataSource):
         m=re.search(r"<!-- Fanac-keywords: (.*?) -->", str(body[0]), flags=re.DOTALL|re.MULTILINE|re.IGNORECASE)
         if m is not None:
             if len(m.groups()[0]) > 10:     # Arbitrary, since the keyword should be "Alphabetize Individually", but has been added by hand so might be mosta nyhting
-                self.chFanzineType.SetSelection(self.chFanzineType.Items.index("Collection"))
+                self.FanzineType="Collection"
 
         name=FanzineNames()
         editors=""
