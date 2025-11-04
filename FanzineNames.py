@@ -105,5 +105,5 @@ class FanzineNames:
         mainname=self._mainname
         othername=self._othernames[index]
         self.MainName=othername
-        self.Othernames[index]=mainname
+        self._othernames[index]=ArticleToFront(RemoveLinebreaks(mainname).strip())
         return True
