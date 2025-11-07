@@ -242,7 +242,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.tOthernames.SetValue((self.Datasource.Name.OthernamesAsStr("\n")))
             if self.Datasource.FanzineType in self.chFanzineType.Items:
                 self.chFanzineType.SetSelection(self.chFanzineType.Items.index(self.Datasource.FanzineType))
-            self.chSignificance.SetSelection(self.chSignificance.Items.index(self.Datasource.Significance))
+            if self.Datasource.Significance in self.chSignificance.Items:
+                self.chSignificance.SetSelection(self.chSignificance.Items.index(self.Datasource.Significance))
             self.tClubname.SetValue(self.Datasource.Clubname)
             self.tLocaleText.SetValue(self.Datasource.Locale)
             self.tTopComments.SetValue(self.Datasource.TopComments)
