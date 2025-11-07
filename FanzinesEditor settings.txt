@@ -17,7 +17,7 @@ Root directory=fanzines
 
 # When in test mode, set this to True and fill in the directory path
 # For normal operation, set test mode to False
-Test mode=True
+Test mode=False
 Test Root directory=Fanzines-test2
 
 # This is the ID which will be used for server locks and for logging.  It should be unique to the user
@@ -36,6 +36,6 @@ FTP Logging=False
 #Show log window=0
 
 # Debug/test controls
-Debug Mode=False
+Debug Mode=True
 
 
