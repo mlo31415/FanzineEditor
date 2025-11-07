@@ -2146,6 +2146,7 @@ class FanzineIndexPage(GridDataSource):
 
         if len(theRows) > 1:
             for thisrow in theRows[1:]:
+                Log(f"Row: {thisrow}")
 
                 cols=thisrow.findAll("td")
 
