@@ -1490,7 +1490,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def OnPopupReplace(self, event):
         # Call the File Open dialog to select a single PDF file
         with wx.FileDialog(self,
-                           message="Select one PDF file to replace existing target",
+                           message="Select one PDF file to replace target's existing PDF",
                            defaultDir=self.PDFSourcePath,
                            wildcard="PDF files (*.pdf)|*.pdf",
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST | wx.STAY_ON_TOP) as dlg:
