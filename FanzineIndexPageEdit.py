@@ -318,13 +318,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.cbComplete.Enabled=True
         self.wxGrid.Enabled=True
 
-        # A few are enabled only when creating a new one (which lasts only until it is uploaded -- then it's an old one)
-        if self.IsNewDirectory:
-            self.tServerDirectory.SetEditable(True)
-            self.tServerDirectory.SetEditable(True)
-        else:
-            self.tServerDirectory.SetEditable(False)
-            self.tServerDirectory.SetEditable(False)
+        # tServerDirectory is only enabled when creating a new one (which lasts only until it is uploaded -- then it's an old one)
+        self.tServerDirectory.SetEditable(self.IsNewDirectory)
 
         # The Upload button is enabled only if sufficient information is present
         self.bUpload.Enabled=False
