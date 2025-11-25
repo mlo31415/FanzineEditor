@@ -92,9 +92,9 @@ def ColSelect(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList, colnam
 
 
 def Editors(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList, editor: str) -> str:
-    issueed=ColSelect(row, coldefs, "editor")
-    if len(issueed) > 0:
-        return issueed
+    issueEd=ColSelect(row, coldefs, "editor")
+    if len(issueEd) > 0:
+        return issueEd
     return editor
 
 # Format a Month+Day+Year set of columns into a useable date
