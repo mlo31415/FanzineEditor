@@ -9,6 +9,7 @@ from HelpersPackage import SortPersonsName, Int0, FindNextBracketedText, Article
 from FanzineIssueSpecPackage import FanzineDate
 from FanzineNames import FanzineNames
 
+
 ########################################################################
 # A class to hold the updated date in standard ConEditor format
 class ClassicFanzinesDate:
@@ -104,6 +105,7 @@ class ClassicFanzinesLine:
         self._created: ClassicFanzinesDate|None=None
         self._updated: ClassicFanzinesDate|None=None
         self.DuplicateCopy=False
+        self._flag=""
 
         # Initialize from another CFL by deep copying
         if isinstance(cfl, ClassicFanzinesLine):
