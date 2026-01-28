@@ -109,20 +109,7 @@ class ClassicFanzinesLine:
 
         # Initialize from another CFL by deep copying
         if isinstance(cfl, ClassicFanzinesLine):
-            self._url=cfl._url
-            self._name=cfl._name.DeepCopy()
-            self._editors=cfl._editors
-            self._dates=cfl._dates
-            self._type=cfl._type
-            self._clubname=cfl._clubname
-            self._issues=cfl._issues
-            self._topcomments=cfl._topcomments
-            self._country=cfl._country
-            self._complete=cfl._complete
-            self._betterScanNeeded=cfl._betterScanNeeded
-            self._created=cfl._created
-            self._updated=cfl._updated
-            self.DuplicateCopy=cfl.DuplicateCopy
+            self.Deepcopy(self, cfl)
             return
 
 
@@ -167,24 +154,27 @@ class ClassicFanzinesLine:
             hash(self._updated)
 
 
-    def Deepcopy(self) -> ClassicFanzinesLine:
-        cfl=ClassicFanzinesLine()
-        cfl._url=self._url
-        cfl._name=self._name.DeepCopy()
-        cfl._editors=self._editors
-        cfl._dates=self._dates
-        cfl._type=self._type
-        cfl._clubname=self._clubname
-        cfl._issues=self._issues
-        cfl._topcomments=self._topcomments
-        cfl._country=self._country
-        cfl._complete=self._complete
-        cfl._betterScanNeeded=self._betterScanNeeded
-        cfl._created=self._created
-        cfl._updated=self._updated
-        return cfl
     # Do a deep copy from old to new
     # Note that x=self.Deepcopy() will copy self to x as expected
+    def Deepcopy(self, new: ClassicFanzinesLine=None, old: ClassicFanzinesLine=None) -> ClassicFanzinesLine:
+        if new is None:
+            new=ClassicFanzinesLine()
+        if old is None:
+            old=self
+        new._url=old._url
+        new._name=old._name.DeepCopy()
+        new._editors=old._editors
+        new._dates=old._dates
+        new._type=old._type
+        new._clubname=old._clubname
+        new._issues=old._issues
+        new._topcomments=old._topcomments
+        new._country=old._country
+        new._complete=old._complete
+        new._betterScanNeeded=old._betterScanNeeded
+        new._created=old._created
+        new._updated=old._updated
+        return new
 
 
     @property
