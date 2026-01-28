@@ -449,7 +449,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # We need to add a Pages column
             iNotes=self.Datasource.ColHeaderIndex("notes")
             if iNotes == -1:
-                LogError("We need to add a Pages column right before the Npotes column, but can't find a Notes column, either. Will ignore, but you really ought to add a Pages column!")
+                LogError("We need to add a Pages column right before the Notes column, but can't find a Notes column, either. Will ignore, but you really ought to add a Pages column!")
                 return
             self.Datasource.InsertColumn2(self.Datasource.NumCols, ColDefinition("Pages"))
             iPages=self.Datasource.ColHeaderIndex("pages")
