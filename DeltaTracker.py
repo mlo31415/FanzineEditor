@@ -119,6 +119,9 @@ class DeltaTracker:
         if sourceFilename == newname:
             return
 
+        if row is None:
+            return
+
         # First check to see if this is a rename of a rename.  If it is, merge them by replacing the existing rename.
         for item in self._deltas:
             if item.Verb == "rename":
