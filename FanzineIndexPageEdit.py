@@ -882,6 +882,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         #       present is interpreted as, well, now.
         #       something like 1950s is interpreted as the start or end of the decade depending on which side of the hyphen it's on
         d1=YearToInt(date1)
+        d2=YearToInt(date2)
+
         if date2.lower() == "present":
             d2=datetime.now().year+1
         if len(date1) > 0 and date1[-1] == "s":
@@ -891,7 +893,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 d1=10*floor(d1/10)
 
         # Now check date 2
-        d2=YearToInt(date2)
         if len(date2) > 0 and date2[-1] == "s":
             # This ends in "s", it must either be something like 1950s or garbage.  1940s-1950s Is interpreted as 1940-1959
             d2=YearToInt(date2[:-1])
