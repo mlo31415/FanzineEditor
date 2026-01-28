@@ -153,7 +153,7 @@ class DeltaTracker:
                 # Upload the new file
                 self.Add(newfilepathname, row=row)
                 # Delete the old file
-                self.Delete(oldSourceFilename, row.Cells[1])
+                self.Delete(oldSourceFilename, row=row)
                 # Delete the rename request
                 del self._deltas[i]
                 return
