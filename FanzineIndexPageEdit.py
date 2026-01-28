@@ -2587,7 +2587,7 @@ def SetPDFMetadata(pdfPathFilename: str, row: FanzineIndexPageTableRow, colNames
         writer=PdfWriter(clone_from=pdfPathFilename)
     except FileNotFoundError:
         wx.MessageBox(f"Unable to open file {pdfPathFilename}")
-        LogError((f"SetPDFMetadata: Unable to open file {pdfPathFilename}"))
+        LogError(f"SetPDFMetadata: Unable to open file {pdfPathFilename}")
         return ""
 
     # Title, issue, date, editors, country code, apa
