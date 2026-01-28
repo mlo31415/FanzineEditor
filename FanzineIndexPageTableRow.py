@@ -53,7 +53,6 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         val._cells=[x for x in self._cells]     # Make a new list containing the old cell data
         return val
 
-    # We multiply the cell has by the cell index (+1) so that moves right and left also change the signature
     def Signature(self) -> int:
         return sum([x.__hash__()*(i+1) for i, x in enumerate(self._cells)])
 
