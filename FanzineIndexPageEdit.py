@@ -1325,11 +1325,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if self.Datasource.ColDefs[self._dataGrid.clickedColumn].Preferred == "Notes":
             # We only want to enable the "Extract Editor" item if the Notes column contains edited by information
             for row in self.Datasource.Rows:
-                note=row[self._dataGrid.clickedColumn].lower()
-                if "edited by" in note or \
-                        "editor " in note:
-                    Enable("Extract Editor")
-                    break
+                if self._dataGrid.clickedColumn is not None:
+                    note=row[self._dataGrid.clickedColumn].lower()
+                    if "edited by" in note or \
+                            "editor " in note:
+                        Enable("Extract Editor")
+                        break
 
         # If this is a cell in a column tagged as IsEditable=Maybe, enable the "allow editing" popup menu item
         if self.Datasource.ColDefs[self._dataGrid.clickedColumn].IsEditable == IsEditable.Maybe:
@@ -1338,8 +1339,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         Enable("Tidy Up Columns")
         Enable("Insert a Text Line")
 
-        if (self.Datasource.ColHeaders[self._dataGrid.clickedColumn] == "Editor" or self.Datasource.ColHeaders[self._dataGrid.clickedColumn] == "Editors") and len(self.Editors) > 0:
-            Enable("Propagate Editor")
+        if self._dataGrid.clickedColumn is not None:
+            if (self.Datasource.ColHeaders[self._dataGrid.clickedColumn] == "Editor" or self.Datasource.ColHeaders[self._dataGrid.clickedColumn] == "Editors") and len(self.Editors) > 0:
+                Enable("Propagate Editor")
 
         # Pop the menu up.
         self.PopupMenu(self.m_GridPopup)
