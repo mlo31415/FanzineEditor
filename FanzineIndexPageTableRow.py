@@ -100,8 +100,8 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         return self._cells[index]
 
 
-    #def SetVal(self, nameOrCol: str|int, val: str|int) -> None:
-    def __setitem__(self, index: str | int | slice, value: str | int) -> None:
+
+    def __setitem__(self, index: str|int|slice, value: str|int) -> None:
         if isinstance(value, int):
             value=str(value)    # All data is stored as strings
 
