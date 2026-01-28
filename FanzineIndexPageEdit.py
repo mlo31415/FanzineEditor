@@ -1443,7 +1443,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def OnPopupInsertRow(self, event):       
         irow=self._dataGrid.clickedRow
         # Insert an empty row just before the clicked row
-        rows :[FanzineIndexPageTableRow]=[]
+        rows: list[FanzineIndexPageTableRow]=[]
         if irow > 0:
             rows=self.Datasource.Rows[:irow]
         rows.append(FanzineIndexPageTableRow(self.Datasource.ColDefs))
