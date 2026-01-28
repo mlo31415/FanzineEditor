@@ -54,8 +54,6 @@ def main():
     Log(Settings("FanzinesEditor positions.json").Dump())
 
     # Set the debug/production mode
-    global g_debug
-    g_debug=Settings().Get("Debug Mode", False)
     g_testServer=Settings().Get("Test Root Directory", "")
 
     # Allow turning off of routine FTP logging
