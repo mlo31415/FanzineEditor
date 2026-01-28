@@ -8,7 +8,7 @@ from HelpersPackage import CanonicizeColumnHeaders
 # This is a single row
 class FanzineIndexPageTableRow(GridDataRowClass):
 
-    def __init__(self, coldefs: ColDefinitionsList, row: None | list[str]=None):
+    def __init__(self, coldefs: ColDefinitionsList, row: None | list[str]=None) -> None:
         GridDataRowClass.__init__(self)
         self.FileSourcePath: str=""
         self._tableColdefs=coldefs
@@ -33,10 +33,10 @@ class FanzineIndexPageTableRow(GridDataRowClass):
                                         # Note that this is different than the URL method in the other frames
 
 
-    def __str__(self):      # FanzineTableRow(GridDataRowClass)
+    def __str__(self) -> str:      # FanzineTableRow(GridDataRowClass)
         return str(self._cells)
 
-    def __len__(self):     # FanzineTableRow(GridDataRowClass)
+    def __len__(self) -> int:     # FanzineTableRow(GridDataRowClass)
         return len(self._cells)
 
     def Extend(self, s: list[str]) -> None:
@@ -63,16 +63,16 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         del self._cells[icol]
 
     @property
-    def Cells(self):
+    def Cells(self) -> list[str]:
         return self._cells
     @Cells.setter
-    def Cells(self, val: [str]):
+    def Cells(self, val: list[str]) -> None:
         self._cells=val
 
 
     # Get or set a value by name or column number
     #def GetVal(self, name: str|int) -> str|int:
-    def __getitem__(self, index: str|int|slice) -> str|list[str]:
+    def __getitem__(self, index: str|int|slice) -> str|list[str]|slice:
 
         if isinstance(index, int):
             if index < 0 or  index >= len(self._cells):

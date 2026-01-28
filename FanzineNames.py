@@ -1,3 +1,4 @@
+from typing import Self
 import re
 
 from HelpersPackage import SplitOnSpansOfLineBreaks, RemoveLinebreaks, ArticleToFront
@@ -6,7 +7,7 @@ from HtmlHelpersPackage import UnicodeToHtmlEscapes
 from Log import Log
 
 class FanzineNames:
-    def __init__(self, name: str="", othernames: list[str]|None=None):
+    def __init__(self, name: str="", othernames: list[str]|None=None) -> None:
         self._mainname: str=""
         self._othernames: list[str]=[]
 
@@ -25,13 +26,13 @@ class FanzineNames:
             else:
                 self.Othernames=othernames.split(",")
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self._mainname)+sum([hash(x) for x in self._othernames])
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Self) -> bool:
         return self._mainname == other._mainname and all([x == y for x, y in zip(self._othernames, other._othernames)])
 
-    def __str__(self):
+    def __str__(self) -> str:
         otherstuff=""
         if len(self._othernames) > 0:
             otherstuff=" / "+self.OthernamesAsStr(", ")
@@ -48,21 +49,21 @@ class FanzineNames:
     def MainName(self) -> str:
         return self._mainname.strip()
     @MainName.setter
-    def MainName(self, val: str):
+    def MainName(self, val: str) -> None:
         self._mainname = ArticleToFront(RemoveLinebreaks(val))
 
     @property
     def Othernames(self) -> list[str]:
         return [x.strip() for x in self._othernames]
     @Othernames.setter
-    def Othernames(self, val: list[str]):
+    def Othernames(self, val: list[str]) -> None:
         self._othernames=[y for y in [ArticleToFront(RemoveLinebreaks(x).strip()) for x in val] if len(y) > 0]
 
     @property
     def OthernamesAsHTML(self) -> str:
         return "<br>".join([UnicodeToHtmlEscapes(x.strip()) for x in self._othernames])
     @OthernamesAsHTML.setter
-    def OthernamesAsHTML(self, val: str):
+    def OthernamesAsHTML(self, val: str) -> None:
         fanzinename=SplitOnSpansOfLineBreaks(val)
         if len(fanzinename) > 1:
             self._othernames=fanzinename[1:]

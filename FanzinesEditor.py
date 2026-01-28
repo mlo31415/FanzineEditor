@@ -770,7 +770,7 @@ class FanzinesPage(GridDataSource):
         return numcells//self._numCols+1
 
     @property
-    def FanzineList(self):
+    def FanzineList(self) -> list[str]:
         serverdirs=[]
         for row in self._rows:
             for cell in row:
@@ -778,7 +778,7 @@ class FanzinesPage(GridDataSource):
                     serverdirs.append(cell)
         return serverdirs
     @FanzineList.setter
-    def FanzineList(self, val: list[ClassicFanzinesLine]):
+    def FanzineList(self, val: list[ClassicFanzinesLine]) -> None:
         self._fanzineList=val
 
         # Update the number of rows and columns
@@ -800,7 +800,7 @@ class FanzinesPage(GridDataSource):
     def __getitem__(self, index: int) -> FanzinesPageRow:        
         return self.Rows[index]
 
-    def __setitem__(self, index: int, val: FanzinesPageRow) -> None:        
+    def __setitem__(self, index: int, val: ClassicFanzinesLine) -> None:
         self._fanzineList[index]=val
     def CanAddColumns(self) -> bool:        
         return False

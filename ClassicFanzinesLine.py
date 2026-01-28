@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Self
 import re
 from datetime import datetime
 
@@ -11,12 +12,12 @@ from FanzineNames import FanzineNames
 ########################################################################
 # A class to hold the updated date in standard ConEditor format
 class ClassicFanzinesDate:
-    def __init__(self, val: datetime|str|ClassicFanzinesDate|None=None):
+    def __init__(self, val: datetime|str|ClassicFanzinesDate|None=None) -> None:
         self._date: datetime|str|ClassicFanzinesDate|None=None
         self.Set(val)       # The date is stored as a datetime
 
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Self) -> bool:
         if not isinstance(other, ClassicFanzinesDate):
             other=ClassicFanzinesDate(other)
         return self._date == other._date
@@ -30,7 +31,7 @@ class ClassicFanzinesDate:
             return datetime(1900, 1, 1)
         return self._date
     @Date.setter
-    def Date(self, val: datetime|str|None):
+    def Date(self, val: datetime|str|None) -> None:
         self.Set(val)
 
     # Turn any input value into the proper internal format
@@ -129,7 +130,7 @@ class ClassicFanzinesLine:
         s+=f"{self._issues} issues    Type={self.Type}     \nFlags: {'(Complete)' if self._complete else ''}      Created={self.Created}       Updated={self.Updated} "
         return s
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Self) -> bool:
         if not isinstance(other, ClassicFanzinesLine):
             return False
 

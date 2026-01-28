@@ -6,7 +6,7 @@ from Log import Log
 class FTPLog:
     g_ID: str|None =None
     g_Logfilename: str|None=None
-    g_pendinglist: [str]=[]
+    g_pendinglist: list[str]=[]
 
     @staticmethod
     def Init(id: str, logfilename: str) -> None:
@@ -22,8 +22,8 @@ class FTPLog:
         return f"<id>{FTPLog.g_ID}</id> {FTPLog.Timestamp()}"
 
     @staticmethod
-    def Flush():
-        items="".join(FTPLog.g_pendinglist).strip(" ")
+    def Flush() -> None:
+        items="".join(FTPLog.g_pendinglist).strip()
         if items != "":
             FTP().AppendString(FTPLog.g_Logfilename, items)
         FTPLog.g_pendinglist=[]

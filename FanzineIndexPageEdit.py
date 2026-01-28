@@ -145,7 +145,7 @@ def HtmlFancylinkToSpecialNameFormat(val: str) -> str:
 
 
 class FanzineIndexPageWindow(FanzineIndexPageEditGen):
-    def __init__(self, parent, serverDir: str= "", ExistingFanzinesServerDirs: list[str]|None=None):
+    def __init__(self, parent, serverDir: str= "", ExistingFanzinesServerDirs: list[str]|None=None) -> None:
         FanzineIndexPageEditGen.__init__(self, parent)
 
         self.failure=True
@@ -1999,7 +1999,7 @@ class FanzineIndexPage(GridDataSource):
 
 
     @property
-    def TextAndHrefCols(self) -> (int, int):
+    def TextAndHrefCols(self) -> tuple[int, int]:
         return self._colDefs.index("Display Text"), self._colDefs.index("Link")
 
 
