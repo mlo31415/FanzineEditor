@@ -681,7 +681,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 Log(f"shutil.move({sourcepath+"/"+filename}, {localdirpath+"/"+filename})")
 
             # Now execute the delta list on the files.
-            failure=False
+            self.failure=False
             Log("Begin delta processing.")
             # Due to a very reasonable (but as it turns out unhelpful) decision, rows
             for delta in self.deltaTracker.Deltas:
