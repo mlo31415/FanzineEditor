@@ -82,7 +82,10 @@ class FanzineIndexPageTableRow(GridDataRowClass):
                 raise IndexError(f"FanzineIndexPageTableRow.__getitem__({index}) index out of range.")
             return self._cells[index]
 
-        assert not isinstance(index, slice)
+        if isinstance(index, slice):
+            if index.start < 0 or index.stop >= len(self._cells) or index.start >= index.stop:
+                raise IndexError(f"FanzineIndexPageTableRow.__getitem__({index}) invalid slice.")
+            return self._cells[index]
 
         assert isinstance(index, str)
         # The only valid possibility left is a str (the name of a column).
