@@ -2397,7 +2397,7 @@ class FanzineIndexPage(GridDataSource):
                 fipr=FanzineIndexPageTableRow(self._colDefs)
                 fipr.IsTextRow=True
 
-            fipr._UpdatedComment=updated
+            fipr.UpdatedComment=updated
             self.Rows.append(fipr)
 
         self.Credits=ExtractHTMLUsingFanacStartEndCommentPair(html, "scan").strip()
