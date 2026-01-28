@@ -31,7 +31,7 @@ class FTPLog:
     @staticmethod
     def AppendItem(txt: str, Flush: bool=False) -> None:
         Log(f"AppendItem: {txt=}")
-        FTPLog.g_pendinglist.append(f"<item>{txt.strip()}{FTPLog.Tagstring()}/item>\n")
+        FTPLog.g_pendinglist.append(f"<item>{txt.strip()}{FTPLog.Tagstring()}</item>\n")
         if Flush:
             FTPLog.Flush()
 
