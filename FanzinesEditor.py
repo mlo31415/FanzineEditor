@@ -670,6 +670,7 @@ class FanzinesPageRow(GridDataRowClass):
     def __init__(self, cells: list[str]):
         GridDataRowClass.__init__(self)
         self._cells: list[str]=cells
+        self._isText=False
 
     def __str__(self):
         return str(self._cells)
@@ -728,6 +729,12 @@ class FanzinesPageRow(GridDataRowClass):
     def IsEmptyRow(self) -> bool:
         return all([cell.strip() == "" for cell in self._cells])
 
+    @property
+    def IsTextRow(self) -> bool:
+        return self._isText
+    @IsTextRow.setter
+    def IsTextRow(self, val: bool) -> None:
+        self._isText=val
 
 #####################################################################################################
 #####################################################################################################
