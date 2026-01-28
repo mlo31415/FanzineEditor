@@ -1933,7 +1933,7 @@ class FanzineIndexPage(GridDataSource):
         if self._colDefs is not None:
             s+=self._colDefs.Signature()
         s+=hash(f"{self._name};{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
-        s+=hash(f"{self.TopComments.strip()};{' '.join(self.Locale).strip()};{self.Significance}")
+        s+=hash(f"{self.TopComments.strip()};{self.Significance}")
         s+=hash(f"{self.Name.MainName};{self.Editors};{self.Dates};{self.FanzineType};{self.Clubname};{self.Credits}")
         s+=sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
         s+=hash(self._specialTextColor)
