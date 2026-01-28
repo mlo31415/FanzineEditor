@@ -434,7 +434,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
             self.m_TestMode.SetLabelText(f"Test Mode: {self.RootDir}")
 
 
-        self._signature=0   # We need this member. ClearMainWindow() will initialize it
+        self._savedSignature=0   # We need this member. ClearMainWindow() will initialize it
         self._fanzinesCount=0   # Also used to prevent exist with loss of data
 
         self.MarkAsSaved()
@@ -505,13 +505,13 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
 
     def MarkAsSaved(self):       
-        self._signature=self.Signature()
+        self._savedSignature=self.Signature()
         self._fanzinesCount=len(self._fanzinesList)
         self.UpdateNeedsSavingFlag()
 
 
     def NeedsSaving(self):       
-        return self._signature != self.Signature() or self._fanzinesCount != len(self._fanzinesList)
+        return self._savedSignature != self.Signature() or self._fanzinesCount != len(self._fanzinesList)
 
 
     def OnSearchText(self, event):       
