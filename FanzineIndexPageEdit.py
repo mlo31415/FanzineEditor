@@ -387,7 +387,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if len(files) == 0:     # Should never happen as there's no way to return from dlg w/o selecting pdfs or hitting cancel.  But just in case...
             return
 
-        # Thwe files come back with '//' as the separator which gives troubel downstream. Fix it.
+        # The files come back with '//' as the separator which gives troubel downstream. Fix it.
         files=[file.replace("\\", "/") for file in files]
 
         # We have a list of file names and need to add them to the fanzine index page
@@ -863,7 +863,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if d1 is not None:
                 # It's a single numbers, so apparently, we have just a single year which defines that year as the range
                 return d1, d1
-            # It's somwething that's not a number.  Try interpreting it.
+            # It's something that's not a number.  Try interpreting it.
             if dates[-1] == "s":
                 # This ends in "s", it must either be something like 1950s or garbage
                 d1=YearToInt(dates[:-1])
@@ -1011,7 +1011,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         Log(f"OnFanzineNameText: Fanzine name updated to '{self.Datasource.Name.MainName}'")
         self.UpdateServerAndLocalDirNames(self.Datasource.Name.MainName)
         self.RefreshWindow(DontRefreshGrid=True)
-        # Note that we don;t call self.Skip() so we don't use default processing for this event
+        # Note that we don't call self.Skip() so we don't use default processing for this event
 
 
     def OnServerDirectoryChar(self, event):
@@ -1615,7 +1615,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.wxGrid.SaveEditControlValue()
         # We already know that only a single column is selected because that's the only time this menu item is enabled and can be called
         col=self._dataGrid.clickedColumn
-        # If the column consists on thong but empty cells and numbers, we do a special numerical sort.
+        # If the column consists nothing but empty cells and numbers, we do a special numerical sort.
         testIsInt=all([(x[col] == "" or IsInt(x[col])) for x in self.Datasource.Rows])
         if testIsInt:
             self.Datasource.Rows.sort(key=lambda x: Int0(x[col]))

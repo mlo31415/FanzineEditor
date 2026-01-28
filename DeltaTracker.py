@@ -133,7 +133,7 @@ class DeltaTracker:
                     return
 
         # If it doesn't match anything in the delta list, then it must be a rename of an existing file.
-        # The currewnt name of the existing file will be pulled from the row
+        # The current name of the existing file will be pulled from the row
         self._deltas.append(DeltaRename(OldFilename=sourceFilename, serverDirName=serverDirName, row=row))
 
 

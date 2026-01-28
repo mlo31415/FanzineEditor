@@ -181,6 +181,8 @@ class ClassicFanzinesLine:
         cfl._created=self._created
         cfl._updated=self._updated
         return cfl
+    # Do a deep copy from old to new
+    # Note that x=self.Deepcopy() will copy self to x as expected
 
 
     @property

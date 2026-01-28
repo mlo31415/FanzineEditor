@@ -19,8 +19,11 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         else:
             self._cells=row
 
-        # Is this a text row?  (Note that rows with issue info, but no issue, look a lot like text rows and must be detected.
+        # Is this a text row, i.e., a row that is just a single line of text?
+        # (Note that rows with issue info, but no issue, look a lot like text rows and must be detected by checking for stuff in other cells.)
         if self._cells[0] == "" and len(self._cells[1]) > 0 and not any([x != "" for x in self._cells[2:]]):
+            # There is text only in cell 1 and nowhere else
+            # In a text row, the text now is stored in cell 0, so swap them
             self._isText: bool=True
             self._cells[0]=self._cells[1]   # In a text row, the text now is stored in cell 0
             self._cells[1]=""
@@ -113,7 +116,6 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         index=self._tableColdefs.index(index)
         self._cells[index]=value
         return
-
 
     @property
     def IsLinkRow(self) -> bool:
