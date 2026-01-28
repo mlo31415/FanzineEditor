@@ -1304,14 +1304,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if self.Datasource.ColDefs[self._dataGrid.clickedColumn].Preferred == "Notes":
             # We only want to enable the "Extract Scanner" item if the Notes column contains scanned by information
             for row in self.Datasource.Rows:
-                note=row[self._dataGrid.clickedColumn].lower()
-                if "scan by" in note or \
-                        "scans by" in note or \
-                        "scanned by" in note or \
-                        "scanning by" in note or \
-                        "scanned at" in note:
-                    Enable("Extract Scanner")
-                    break
+                if self._dataGrid.clickedColumn is not None:
+                    note=row[self._dataGrid.clickedColumn].lower()
+                    if "scan by" in note or \
+                            "scans by" in note or \
+                            "scanned by" in note or \
+                            "scanning by" in note or \
+                            "scanned at" in note:
+                        Enable("Extract Scanner")
+                        break
 
         if self.Datasource.ColDefs[self._dataGrid.clickedColumn].Preferred == "Date" or \
                 self.Datasource.ColDefs[self._dataGrid.clickedColumn].Preferred == "Dates" or \
