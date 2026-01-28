@@ -750,7 +750,7 @@ class FanzinesPage(GridDataSource):
         self._gridDataRowClass=FanzinesPageRow
         #self._daysForUpdatedFlag=Settings().Get("How old is old", 90)
 
-        self._fanzineList:list[FanzinesPageRow]=[]
+            self._fanzineList:list[ClassicFanzinesLine]=[]
 
     def __hash__(self):
         return sum([hash(x)*(i+1) for i, x in enumerate(self._fanzineList)])
@@ -816,7 +816,7 @@ class FanzinesPage(GridDataSource):
 
     def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        
         for i in range(num):
-            ftr=FanzinesPageRow([""]*self.NumCols)
+            ftr=ClassicFanzinesLine([""]*self.NumCols)
             self._fanzineList.insert(insertat+i, ftr)
 
 
