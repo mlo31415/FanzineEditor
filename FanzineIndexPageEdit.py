@@ -1562,7 +1562,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self._dataGrid.ExpandDataSourceToInclude(irow, 0)   # If we're inserting past the end of the datasource, insert empty rows as necessary to fill in between
         self._dataGrid.InsertEmptyRows(irow, 1)     # Insert the new empty row
         row=self.Datasource.Rows[irow]
-        val=row[icol]
+
         # Create text input
         dlg=wx.TextEntryDialog(self, 'Enter the URL to be used (just the URL, no HTML): ', 'Turn cell text into a hyperlink')
         #dlg.SetValue("Turn a cell into a link")
