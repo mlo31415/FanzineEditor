@@ -17,6 +17,8 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         if row is None:
             self._cells=[""]*len(self._tableColdefs)
         else:
+            if len(self._tableColdefs) != len(row):
+                raise Exception("FanzineIndexPageTableRow.__init__() row length must match column definitions length.")
             self._cells=row
 
         # Is this a text row, i.e., a row that is just a single line of text?
@@ -78,8 +80,8 @@ class FanzineIndexPageTableRow(GridDataRowClass):
     def __getitem__(self, index: str|int|slice) -> str|list[str]|slice:
 
         if isinstance(index, int):
-            if index < 0 or  index >= len(self._cells):
-                raise IndexError
+            if index < 0 or index >= len(self._cells):
+                raise IndexError(f"FanzineIndexPageTableRow.__getitem__({index}) index out of range.")
             return self._cells[index]
 
         assert not isinstance(index, slice)
