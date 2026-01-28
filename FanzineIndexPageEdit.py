@@ -2548,10 +2548,10 @@ class FanzineIndexPage(GridDataSource):
                     insert+=f"<TD CLASS='left'>{cell}</TD>\n"
 
             # Record the update date of this line
-            if row._Signature != row.Signature():
+            if row.Signature != row.Signature():        #TODO: There's something wrong here
                 # We have to update the updated comment before appending it
-                row._UpdatedComment=f"<!-- Up: {datetime.now():%Y-%m-%d}-->"
-            insert+=row._UpdatedComment+"\n"
+                row.UpdatedComment=f"<!-- Up: {datetime.now():%Y-%m-%d}-->"
+            insert+=row.UpdatedComment+"\n"
             insert+=f"</TR>\n"
 
         # Insert the accumulated table lines into the template
