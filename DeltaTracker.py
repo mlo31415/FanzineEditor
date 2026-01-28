@@ -125,7 +125,7 @@ class DeltaTracker:
         # First check to see if this is a rename of a rename.  If it is, merge them by replacing the existing rename.
         for item in self._deltas:
             if item.Verb == "rename":
-                if item.Row.Cells[0] == row.Cells[0]:        # Is the *old* filename for this rename the same as the *new* filename for a previous one
+                if item.Row.Cells[0] == row.Cells[0]:        # Is the *old* filename for this rename the same as the *new* filename for a previous one?
                     return
 
         # Now check to see if this is a rename of a file that is on the delta list to be added.
