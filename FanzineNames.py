@@ -21,7 +21,7 @@ class FanzineNames:
             return
         if isinstance(othernames, str):
             othernames=RemoveLinebreaks(othernames, replacement="<br>")
-            if ("<br>" in othernames):
+            if "<br>" in othernames:
                 self.Othernames=SplitOnSpansOfLineBreaks(othernames)
             else:
                 self.Othernames=othernames.split(",")
