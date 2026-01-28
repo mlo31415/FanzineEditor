@@ -264,7 +264,7 @@ class ClassicFanzinesLine:
 
     @property
     def IssuesSort(self) -> str:
-        return f"{Int0(self.Issues.replace(',', '')):0{5}}"     # Need to handle page counts like 1,404
+        return f"{Int0(self.Issues.replace(',', '')):05d}"     # Need to handle page counts like 1,404
     @IssuesSort.setter
     def IssuesSort(self, val: str):
         raise Exception(f"ClassicFanzinesLine.IssuesSort({val}): setter should never be called.")
