@@ -2265,7 +2265,7 @@ class FanzineIndexPage(GridDataSource):
         def CleanUnicodeText(s: str) -> str:
             return HtmlEscapesToUnicode(RemoveFancyLink(s)).strip()
 
-        html2=CleanUnicodeText(html)        #TODO: What's this all about?
+        #html2=CleanUnicodeText(html)        #TODO: What's this all about?
 
         html=self.RemoveA0C2Crap(html)
 
