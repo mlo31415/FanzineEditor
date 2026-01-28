@@ -4,7 +4,7 @@ from FTP import FTP
 from Log import Log
 
 class FTPLog:
-    g_ID: str|None =None
+    g_ID: str|None=None
     g_Logfilename: str|None=None
     g_pendinglist: list[str]=[]
 
