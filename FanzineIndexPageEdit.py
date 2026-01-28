@@ -1518,7 +1518,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # Rename the PDF on the server. This does not change its name locally
     def OnPopupRenamePDF(self, event):
         oldname=self.Datasource.Rows[self._dataGrid.clickedRow][0]
-        dlg=wx.TextEntryDialog(self, 'Enter the newname of the pdf: ', 'Rename a PS+DF on the server', value=oldname)
+        dlg=wx.TextEntryDialog(self, 'Enter the newname of the pdf: ', 'Rename a PDF on the server', value=oldname)
         #dlg.SetValue("Turn a cell into a link")
         if dlg.ShowModal() != wx.ID_OK:
             event.Skip()
@@ -1561,7 +1561,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if irow > self.Datasource.NumRows:
             self._dataGrid.ExpandDataSourceToInclude(irow, 0)   # If we're inserting past the end of the datasource, insert empty rows as necessary to fill in between
         self._dataGrid.InsertEmptyRows(irow, 1)     # Insert the new empty row
-
         row=self.Datasource.Rows[irow]
         val=row[icol]
         # Create text input
