@@ -197,7 +197,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if tlws:
             self.SetSize(tlws)
 
-        self._signature=0   # We need this member. ClearMainWindow() will initialize it
+        self._savedSignature=0   # We need this member. ClearMainWindow() will initialize it
 
         if self.IsNewDirectory:
             # New directory: Do basic setup.
@@ -950,12 +950,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     def MarkAsSaved(self):       
-        self._signature=self.Signature()
+        self._savedSignature=self.Signature()
         self.UpdateNeedsSavingFlag()
 
 
     def NeedsSaving(self):       
-        return self._signature != self.Signature()
+        return self._savedSignature != self.Signature()
 
 
     # This method updates the local directory name by computing it from the fanzine name.  It only applies when creating a new fanzine index page
@@ -2047,7 +2047,7 @@ class FanzineIndexPage(GridDataSource):
 
         # Get the signatures of each line to later use to see if the line has been updated.
         for row in self.Rows:
-            row._Signature=row.Signature()
+            row.SavedSignature=row.Signature()
 
         return True
 
