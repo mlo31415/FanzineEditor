@@ -24,10 +24,10 @@ from FanzineIndexPageTableRow import FanzineIndexPageTableRow
 
 from FTP import FTP
 
-from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, GridDataRowClass, IsEditable
+from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, IsEditable
 from WxHelpers import OnCloseHandling, ProcessChar
 from WxHelpers import ModalDialogManager, ProgressMessage2
-from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, RemoveTopLevelHTMLTags, RegularizeBRTags, Pluralize, CanonicizeColumnHeaders
+from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, RemoveTopLevelHTMLTags, RegularizeBRTags, Pluralize
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
 from HelpersPackage import InsertBetweenHTMLComments, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks
