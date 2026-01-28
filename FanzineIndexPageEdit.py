@@ -823,7 +823,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         if isPdf:
             # If this is a PDF, then we created a temporary file when adding the metadata. Delete it now.
-            del copyfilepath
+            os.remove(copyfilepath)
         return True
 
     # Take the date range (if any) on the Fanzine Index Page and return a years start, end tuple
