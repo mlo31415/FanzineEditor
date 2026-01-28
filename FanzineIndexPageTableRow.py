@@ -87,7 +87,6 @@ class FanzineIndexPageTableRow(GridDataRowClass):
                 raise IndexError(f"FanzineIndexPageTableRow.__getitem__({index}) invalid slice.")
             return self._cells[index]
 
-        assert isinstance(index, str)
         # The only valid possibility left is a str (the name of a column).
         if not isinstance(index, str):
             raise Exception(f"FanzineIndexPageTableRow.__getitem__({index}) index must be a string or int.")
