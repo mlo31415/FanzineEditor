@@ -245,7 +245,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if self.Datasource.Significance in self.chSignificance.Items:
                 self.chSignificance.SetSelection(self.chSignificance.Items.index(self.Datasource.Significance))
             self.tClubname.SetValue(self.Datasource.Clubname)
-            self.tLocaleText.SetValue(self.Datasource.Locale)
+            self.tLocaleText.SetValue(self.Datasource.LocaleAsText)
             self.tTopComments.SetValue(self.Datasource.TopComments)
 
             self.cbComplete.SetValue(self.Datasource.Complete)
@@ -1908,7 +1908,7 @@ class FanzineIndexPage(GridDataSource):
         self._gridDataRowClass=FanzineIndexPageTableRow
         self._specialTextColor: Color|None=None
         self.TopComments: str=""
-        self.Locale: list[str]=[]
+        self._locale: list[str]=[]
         self._name: FanzineNames=FanzineNames()
         self._clubname: str=""
         self._betterScanNeeded: bool=False
@@ -1983,6 +1983,19 @@ class FanzineIndexPage(GridDataSource):
     def Name(self, val: FanzineNames) -> None:
         assert isinstance(val, FanzineNames)
         self._name=val
+
+
+    @property
+    def Locale(self) -> list[str]:
+        return self._locale
+    @Locale.setter
+    def Locale(self, val: list[str]|str) -> None:
+        if isinstance(val, str):
+            val=[val]
+        self._locale=val
+    @property
+    def LocaleAsText(self) -> str:
+        return "\n".join(self._locale)
 
     @property
     def Clubname(self) -> str:
