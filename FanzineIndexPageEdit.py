@@ -2221,8 +2221,6 @@ class FanzineIndexPage(GridDataSource):
                     row[daycol]=d
                     row[monthcol]=date.MonthText
                     row[yearcol]=date.YearText
-                    i=0
-
 
 
 
