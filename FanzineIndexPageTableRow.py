@@ -27,12 +27,12 @@ class FanzineIndexPageTableRow(GridDataRowClass):
             # There is text only in cell 1 and nowhere else
             # In a text row, the text now is stored in cell 0, so swap them
             self._isText: bool=True
-            self._cells[0]=self._cells[1]   # In a text row, the text now is stored in cell 0
+            self._cells[0]=self._cells[1]
             self._cells[1]=""
         else:
-            self._isText: bool=False        # Is this a piece of text rather than a convention?
+            self._isText=False
 
-        self._isLink: bool=False        # Is this a link?
+        self._isLink: bool=False        # Is this a link? (I.e., a row that has a link in cell 0/1 and nothing else?)
         self._URL: str=""               # The URL to be used for a link. (This is ignored if _isLink == False.)
                                         # It will be displayed using the localfilename as the link text.
                                         # Note that this is different than the URL method in the other frames
