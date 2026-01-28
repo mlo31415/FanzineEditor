@@ -54,8 +54,7 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         return val
 
     def Signature(self) -> int:
-        return sum([x.__hash__()*(i+1) for i, x in enumerate(self._cells)])
-
+        return "".join(self._cells).__hash__()
 
     @property
     def CanDeleteColumns(self) -> bool:
