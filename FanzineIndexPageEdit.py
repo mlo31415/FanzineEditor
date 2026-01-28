@@ -226,7 +226,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             # Now load the fanzine issue data
             #self._dataGrid.HideRowLabels()
-            self._dataGrid._grid.SetRowLabelSize(40)
+            self._dataGrid.Grid.SetRowLabelSize(40)
 
             self._dataGrid.NumCols=self.Datasource.NumCols
             if self._dataGrid.NumRows > self.Datasource.NumRows:
