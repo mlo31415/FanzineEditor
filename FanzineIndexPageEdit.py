@@ -1925,6 +1925,7 @@ class FanzineIndexPage(GridDataSource):
         self.Complete=False     # Is this fanzine series complete?
         self.Credits=""         # Who is to be credited for this affair?
         self.Updated: ClassicFanzinesDate=ClassicFanzinesDate("Long, long ago")
+        self.Created: ClassicFanzinesDate=ClassicFanzinesDate("Long, long ago")
 
 
     def Signature(self) -> int:        
