@@ -2391,7 +2391,8 @@ class FanzineIndexPage(GridDataSource):
                 cols=[url, text]+cols[1:]
 
             if cols is not None:
-                row=[RemoveAllHTMLLikeTags(str(x)) for x in cols]
+                # Remove HTML tags from the columns
+                row=cols[:2]+[RemoveAllHTMLLikeTags(str(x)) for x in cols[2:]]
                 fipr=FanzineIndexPageTableRow(self._colDefs, row)
             else:
                 fipr=FanzineIndexPageTableRow(self._colDefs)
@@ -2526,7 +2527,7 @@ class FanzineIndexPage(GridDataSource):
                 continue
 
             if row.IsLinkRow:
-                insert+=(fr'\n<TR><TD colspan="{self.NumCols}"><a href="{row.Cells[0]}">{UnicodeToHtmlEscapes(row.Cells[1])}</a></TD></TR>')
+                insert+=fr'\n<TR><TD colspan="{self.NumCols}"><a href="{row.Cells[0]}">{UnicodeToHtmlEscapes(row.Cells[1])}</a></TD></TR>'
                 continue
 
             # OK, it's an ordinary row
