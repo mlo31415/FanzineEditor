@@ -65,7 +65,7 @@ class ClassicFanzinesDate:
                     # In desperation, try FanzineDate's general date matcher
                     self._date=FanzineDate().Match(val).DateTime
             return
-        assert False
+        raise Exception(f"ClassicFanzinesDate.Set({val}): Unknown type.")
 
 
     def __str__(self) -> str:
@@ -199,7 +199,7 @@ class ClassicFanzinesLine:
         return ArticleToEnd(dns)
     @DisplayNameSort.setter
     def DisplayNameSort(self, val: str):
-        assert False
+        raise Exception(f"ClassicFanzinesLine.DisplayNameSort({val}): setter should never be called.")
 
     @property
     def ServerDir(self) -> str:
@@ -223,7 +223,7 @@ class ClassicFanzinesLine:
         return SortPersonsName(ed).casefold()
     @EditorsSort.setter
     def EditorsSort(self, val: str):
-        assert False
+        raise Exception(f"ClassicFanzinesLine.EditorsSort({val}): setter should never be called.")
 
     @property
     def Dates(self) -> str:
@@ -245,7 +245,7 @@ class ClassicFanzinesLine:
         return (m.groups()[0]+"0000")[0:4]
     @DatesSort.setter
     def DatesSort(self, val: str):
-        assert False
+        raise Exception(f"ClassicFanzinesLine.DatesSort({val}): setter should never be called.")
 
     @property
     def Type(self) -> str:
@@ -275,7 +275,7 @@ class ClassicFanzinesLine:
         return f"{Int0(self.Issues.replace(',', '')):0{5}}"     # Need to handle page counts like 1,404
     @IssuesSort.setter
     def IssuesSort(self, val: str):
-        assert False
+        raise Exception(f"ClassicFanzinesLine.IssuesSort({val}): setter should never be called.")
 
     @property
     def TopComments(self) -> str:

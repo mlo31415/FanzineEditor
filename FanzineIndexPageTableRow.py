@@ -85,10 +85,13 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         assert not isinstance(index, slice)
 
         assert isinstance(index, str)
+        # The only valid possibility left is a str (the name of a column).
+        if not isinstance(index, str):
+            raise Exception(f"FanzineIndexPageTableRow.__getitem__({index}) index must be a string or int.")
 
         index=CanonicizeColumnHeaders(index)
         if index not in self._tableColdefs:
-            raise IndexError
+            raise IndexError(f"FanzineIndexPageTableRow.__getitem__({index}) column not found.")
 
         index=self._tableColdefs.index(index)
         return self._cells[index]
@@ -101,17 +104,21 @@ class FanzineIndexPageTableRow(GridDataRowClass):
 
         if isinstance(index, int):
             if index < 0 or  index >= len(self._cells):
-                raise IndexError
+                raise IndexError(f"FanzineIndexPageTableRow.__setitem__({index}) index out of range.")
             self._cells[index]=value
             return
 
         assert not isinstance(index, slice)
 
         assert isinstance(index, str)
+        if isinstance(index, slice):
+            raise Exception(f"FanzineIndexPageTableRow.__setitem__({index}) may not be a slice.")
+        if not isinstance(index, str):
+            raise Exception(f"FanzineIndexPageTableRow.__setitem__({index}) value must be a string or int.")
 
         index=CanonicizeColumnHeaders(index)
         if index not in self._tableColdefs:
-            raise IndexError
+            raise IndexError(f"FanzineIndexPageTableRow.__setitem__({index}) column not found.")
 
         index=self._tableColdefs.index(index)
         self._cells[index]=value
