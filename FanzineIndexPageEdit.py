@@ -709,7 +709,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                         f'{Tagit("SourcePath", delta.SourcePath)} '+\
                                         f'{Tagit("SourceFilename", sourceFilename)} '
                         if delta.Verb == "replace":
-                            text+=f"{Tagit("Oldame", delta.OldFilename)}"
+                            text+=f"{Tagit("Oldname", delta.OldFilename)}"
                         FTPLog().AppendItemVerb(delta.Verb, text, Flush=True)
 
                     case "delete":
