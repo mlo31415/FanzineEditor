@@ -110,9 +110,6 @@ class FanzineIndexPageTableRow(GridDataRowClass):
             self._cells[index]=value
             return
 
-        assert not isinstance(index, slice)
-
-        assert isinstance(index, str)
         if isinstance(index, slice):
             raise Exception(f"FanzineIndexPageTableRow.__setitem__({index}) may not be a slice.")
         if not isinstance(index, str):
