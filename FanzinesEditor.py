@@ -53,9 +53,6 @@ def main():
     Settings("FanzinesEditor positions.json").Load(os.path.join(homedir, "FanzinesEditor positions.json"), MustExist=True, SuppressMessageBox=True)
     Log(Settings("FanzinesEditor positions.json").Dump())
 
-    # Set the debug/production mode
-    g_testServer=Settings().Get("Test Root Directory", "")
-
     # Allow turning off of routine FTP logging
     FTP.g_dologging=Settings().Get("FTP Logging", False)
 
