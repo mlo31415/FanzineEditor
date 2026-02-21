@@ -150,7 +150,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         self.failure=True
 
-        self._existingFanzinesServerDirs=ExistingFanzinesServerDirs
+        # We save the existing list of server directories in lowercase for case-insensitive comparison -- Windows dirr names are not case sensitive.
+        self._existingFanzinesServerDirsLowerCase=[x.lower() for x in ExistingFanzinesServerDirs]
 
         # IsNewDirectory True means this FIP is newly created and has not yet been uploaded.
         # We can tell because an existing fanzine must be opened by supplying a server directory, while for a new fanzine, the server directory must be the empty string
@@ -579,7 +580,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # Upload the current FanzineIndexPage (including any added fanzines) to the server
     def OnUpload(self, event):
         Log("OnUpload pressed")
-        if self.tServerDirectory.GetBackgroundColour() == Color.Pink:
+        if self.IsNewDirectory:
             wx.MessageBox(f"There is already a directory named {self.tServerDirectory.GetValue()} on the server. Please select another name.", parent=self)
             return
 
@@ -1054,7 +1055,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     def ColorFanzineAndServerDirBoxes(self):
-        if self.IsNewDirectory and self._existingFanzinesServerDirs is not None and self.ServerDir in self._existingFanzinesServerDirs:
+        if self.IsNewDirectory and self._existingFanzinesServerDirsLowerCase is not None and self.ServerDir.lower() in self._existingFanzinesServerDirsLowerCase:
             self.tServerDirectory.SetBackgroundColour(Color.Pink)
             #self.tFanzineName.SetBackgroundColour(Color.Pink)
         else:
