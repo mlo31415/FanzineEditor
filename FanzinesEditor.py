@@ -546,7 +546,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
     def OnAddNewFanzine(self, event):
 
-        with FanzineIndexPageWindow(None, ExistingFanzinesServerDirs=self.Datasource.FanzineList) as fsw:
+        with FanzineIndexPageWindow(None, ExistingFanzinesServerDirs=self.Datasource.ServerDirs) as fsw:
             fsw.ShowModal()
             if not fsw._uploaded:
                 return
@@ -772,13 +772,8 @@ class FanzinesPage(GridDataSource):
         return numcells//self._numCols+1
 
     @property
-    def FanzineList(self) -> list[str]:
-        serverdirs=[]
-        for row in self._rows:
-            for cell in row:
-                if len(cell) > 0:
-                    serverdirs.append(cell)
-        return serverdirs
+    def FanzineList(self) -> list[ClassicFanzinesLine]:
+        return self._fanzineList
     @FanzineList.setter
     def FanzineList(self, val: list[ClassicFanzinesLine]) -> None:
         self._fanzineList=val
@@ -793,8 +788,18 @@ class FanzinesPage(GridDataSource):
             self._rows[row][col]=val[i].ServerDir
 
 
+    # The flat list of server-directory names currently shown in the grid (derived from the displayed rows)
+    @property
+    def ServerDirs(self) -> list[str]:
+        serverdirs=[]
+        for row in self._rows:
+            for cell in row:
+                if len(cell) > 0:
+                    serverdirs.append(cell)
+        return serverdirs
 
-    def __getitem__(self, index: int) -> FanzinesPageRow:        
+
+    def __getitem__(self, index: int) -> FanzinesPageRow:
         return self.Rows[index]
 
     def __setitem__(self, index: int, val: ClassicFanzinesLine) -> None:
