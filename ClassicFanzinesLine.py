@@ -227,11 +227,11 @@ class ClassicFanzinesLine:
     @property
     def DatesSort(self) -> str:
         # Sort based on 1st 4-digit year.  We need to find the year, as sometimes odd stuff gets entered!
-        m=re.search(r"((?:19|20)[0-9][0-9])", self.Dates, 1)
+        m=re.search(r"((?:19|20)[0-9][0-9])", self.Dates)
         if m is None:
             # Can't find a fulll year.  Try replacing "?" with "0"
             d=self.Dates.replace("?", "0")
-            m=re.search(r"((?:19|20)[0-9][0-9])", d, 1)
+            m=re.search(r"((?:19|20)[0-9][0-9])", d)
             if m is None:
                 return "zzzz"
         return (m.groups()[0]+"0000")[0:4]
