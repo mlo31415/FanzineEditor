@@ -1907,6 +1907,40 @@ def ColNamesToColDefs(headers: list[str]) -> ColDefinitionsList:
 
 #####################################################################################################
 #####################################################################################################
+# FanzineIndexPage -- the data model for a single fanzine's index page (one fanzine series).
+#
+# PAGE FORMAT VERSIONS
+# --------------------
+# A fanzine index page on the server is an HTML file (index.html) whose format has evolved.
+# The version is recorded in an invisible HTML comment: <!-- fanac fanzine index page V<x> -->
+# and is read back by GetFanzineIndexPage() via ExtractInvisibleTextInsideFanacComment(..., "fanzine index page V").
+#
+#   Version ""   -- Legacy "Jack" pages. No version tag. Free-form HTML: the data lives in
+#                   <h1>/<h2> topmatter, a <fanac-type> locale block, and the 3rd <table>.
+#                   Parsed by GetFanzineIndexPageOld() (BeautifulSoup-based, tolerant of messiness).
+#                   May carry a single "Date" column (split into Month/Day/Year on load) and the
+#                   obsolete "Alphabetize Individually" keyword (mapped to FanzineType "Collection").
+#   Version "2"  -- First generation of FanzinesEditor-written pages. Structured: all fields are
+#                   delimited by fanac HTML comment pairs (header/name/eds/dates/type/club/loc/
+#                   topcomments/table-headers/table-rows/scan/created/updated). Parsed by
+#                   GetFanzineIndexPageNew().
+#   Version "2.1"-- Same structure as V2, but (starting mid-December 2024) guarantees that
+#                   ampersands in issue URLs are encoded correctly. This is the version we WRITE.
+#
+# READ vs WRITE
+# -------------
+# Reads may encounter any of the three versions; GetFanzineIndexPage() dispatches on the tag.
+# Writes are always emitted as V2.1 (see PutFanzineIndexPage(), which sets the tag to "2.1" and
+# percent-encodes '#' and '&' in hrefs). So opening any older page and re-uploading migrates it forward.
+#
+# THE V2 AMPERSAND FIXUP (load-bearing -- do not remove casually)
+# --------------------------------------------------------------
+# V2 pages mis-encoded the '&' in URLs (e.g. a file like "Laurel & Hardy.pdf"). When a page is
+# read as V2 (self._version == "2"), GetFanzineIndexPageNew() normalizes "&amp;" back to "&" in
+# each row's URL so the link matches the real filename on the server. V2.1+ pages skip this.
+# Because every save rewrites the page as V2.1 with correct encoding, this branch only matters the
+# first time a genuine V2 page is opened; getting it wrong corrupts issue links, so leave it intact.
+#####################################################################################################
 
 class FanzineIndexPage(GridDataSource):
     def __init__(self):
