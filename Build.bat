@@ -1,0 +1,1 @@
+.\venv12\Scripts\pyinstaller.exe --onefile --windowed  FanzinesEditor.py
