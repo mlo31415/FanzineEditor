@@ -1,0 +1,50 @@
+# Secrets -- never commit
+FTP Credentials.json
+S2L/
+
+# Python virtual environment
+venv12/
+venv/
+.venv/
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+
+# PyInstaller build artifacts
+build/
+dist/
+*.exe
+*.spec
+
+# IDE
+.idea/
+
+# Runtime logs
+Log -- *.txt
+Log (Errors) -- *.txt
+*.log
+
+# Runtime / per-user state
+FanzinesEditor positions.json
+
+# Local working data and large test fixtures (kept locally, not committed)
+Local Directories/
+Files.zip
+Not_a_pdf.txt
+
+# Symlinks to shared packages -- machine-specific, regenerated locally by the mklinks*.bat scripts.
+# Do NOT commit these: they point to absolute paths on the dev's machine and would check out as
+# broken stubs elsewhere. The mklinks*.bat scripts (which ARE committed) recreate them.
+FanacFanzinesHelpers.py
+FanzineDateTime.py
+FanzineIssueSpecPackage.py
+FTP.py
+HelpersPackage.py
+HtmlHelpersPackage.py
+Locale.py
+Log.py
+PDFHelpers.py
+Settings.py
+WxDataGrid.py
+WxHelpers.py
