@@ -332,7 +332,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
             case "uc":
                 row+=f'<TD sorttable_customkey="complete+updated"><br><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X><br>\n'
             case "nc":
-                row+=f'<TD sorttable_customkey="complete+new"><br><X CLASS="complete">New+Complete</X><X CLASS="new">New</X><X CLASS="complete">Complete</X><br>\n'
+                row+=f'<TD sorttable_customkey="complete+new"><br><X CLASS="complete">Complete</X><X CLASS="new">New</X><br>\n'
             case "nu":
                 row+=f'<TD sorttable_customkey="new+updated"><br><X CLASS="updated">Updated</X><X CLASS="new">New</X><br>\n'
             case "nuc":
