@@ -808,7 +808,7 @@ class FanzinesPage(GridDataSource):
 
     def InsertEmptyRows(self, insertat: int, num: int=1) -> None:        
         for i in range(num):
-            ftr=ClassicFanzinesLine([""]*self.NumCols)
+            ftr=ClassicFanzinesLine()
             self._fanzineList.insert(insertat+i, ftr)
 
 
