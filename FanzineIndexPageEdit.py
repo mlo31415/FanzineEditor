@@ -618,7 +618,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.Name=FanzineNames(self.tFanzineName.GetValue(), self.tOthernames.GetValue())
         cfl.Dates=self.tDates.GetValue()
         cfl.Type=self.chFanzineType.Items[self.chFanzineType.GetSelection()]
-        cfl.Significance=self.chSignificance.Items[self.chSignificance.GetSelection()]
         cfl.Clubname=self.tClubname.GetValue()
         cfl.Complete=self.cbComplete.GetValue()
         cfl.Updated=datetime.now()
@@ -2096,7 +2095,7 @@ class FanzineIndexPage(GridDataSource):
         if self._version == "":
             success=self.GetFanzineIndexPageOld(html)
         else:
-            success=self.GetFanzineIndexPageNew(html, fanzineServerDir)
+            success=self.GetFanzineIndexPageNew(html)
 
         if not success:
             return False
@@ -2297,7 +2296,7 @@ class FanzineIndexPage(GridDataSource):
 
 
 
-    def GetFanzineIndexPageNew(self, html: str, fanzineServerDir: str) -> bool:
+    def GetFanzineIndexPageNew(self, html: str) -> bool:
 
         def CleanUnicodeText(s: str) -> str:
             return HtmlEscapesToUnicode(RemoveFancyLink(s)).strip()
@@ -2353,12 +2352,6 @@ class FanzineIndexPage(GridDataSource):
 
         self.Created=ClassicFanzinesDate(ExtractInvisibleTextInsideFanacComment(html, "created"))
         self.Updated=ClassicFanzinesDate(ExtractHTMLUsingFanacTagCommentPair(html, "updated"))
-
-        # There is an issue with V2 pages in which the code for the '&' in "Laurel & Hardy" in a URL was mis-handled.
-        # If this page began as a V2 page, we'll need to look carefully at the filenames on the site and adjust the URLs in the rows to match.
-        urlsOnServer: list[str]=[]
-        if self._version == "2":
-            urlsOnServer=FTP().Nlst(fanzineServerDir)
 
         # Now the rows
         rows=ExtractHTMLUsingFanacStartEndCommentPair(html, "table-rows")
