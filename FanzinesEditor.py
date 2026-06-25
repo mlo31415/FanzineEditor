@@ -783,11 +783,6 @@ class FanzinesPage(GridDataSource):
     def FanzineList(self, val: list[ClassicFanzinesLine]) -> None:
         self._fanzineList=val
 
-        # Update the number of rows and columns
-        numrows=len(val)/self._numCols
-        if len(val)%self._numCols != 0:
-            numrows+=1
-
         # Now distribute the 1-D fanzine list into the 2-D grid
         self._rows=[]
         for i in range(len(val)):
