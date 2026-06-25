@@ -335,7 +335,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
                 row+=f'<TD sorttable_customkey="complete+new"><br><X CLASS="complete">New+Complete</X><X CLASS="new">New</X><X CLASS="complete">Complete</X><br>\n'
             case "nu":
                 row+=f'<TD sorttable_customkey="new+updated"><br><X CLASS="updated">Updated</X><X CLASS="new">New</X><br>\n'
-            case "ncu":
+            case "nuc":
                 row+=f'<TD sorttable_customkey="complete+updated+new"><br><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X><X CLASS="new">New</X><br>\n'
 
         flu=""
@@ -569,7 +569,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
         if col > self.Datasource.NumCols-1:
             return
         loc=row*self.Datasource.NumCols+col
-        if loc > len(self.Datasource._fanzineList):
+        if loc >= len(self.Datasource._fanzineList):
             return
         cfl=self.Datasource._fanzineList[loc]
         self.CFLText.Label=f"{cfl}"

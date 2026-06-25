@@ -150,14 +150,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         self.failure=True
 
-        # We save the existing list of server directories in lowercase for case-insensitive comparison -- Windows dirr names are not case sensitive.
-        self._existingFanzinesServerDirsLowerCase=[x.lower() for x in ExistingFanzinesServerDirs]
+        # We save the existing list of server directories in lowercase for case-insensitive comparison -- Windows dir names are not case-sensitive.
+        self._existingFanzinesServerDirsLowerCase=set()
+        if ExistingFanzinesServerDirs is not None:
+            self._existingFanzinesServerDirsLowerCase={x.lower() for x in ExistingFanzinesServerDirs}   # Create a set since all we do is membership tests
 
-        # IsNewDirectory True means this FIP is newly created and has not yet been uploaded.
+        # CreatingNewFanzineSeries == True means this FIP is newly created and has not yet been uploaded.
         # We can tell because an existing fanzine must be opened by supplying a server directory, while for a new fanzine, the server directory must be the empty string
         # Some fields are editable only for new fanzines (which will be in new server directories, allowing some things to be set for the first time.).
         serverDir=serverDir.strip()
-        self.IsNewDirectory=serverDir == ""
+        self.CreatingNewFanzineSeries=serverDir == ""
         self.tServerDirectory.SetValue(serverDir)
 
         # Figure out the root directory which depends on whether we are in test mode or not
@@ -174,9 +176,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.deltaTracker=DeltaTracker()
 
         self._AllowFanzineNameEdit=False
-        self._allowManualEditOfServerDirectoryName=self.IsNewDirectory        # Is the user allowed to edit the fanzine name? On pressing the edit button, can be true even when not a new fanzine.
+        self._allowManualEditOfServerDirectoryName=self.CreatingNewFanzineSeries        # Is the user allowed to edit the fanzine name? On pressing the edit button, can be true even when not a new fanzine.
         self._manualEditOfServerDirectoryNameBegun=False
-        self._allowManualEntryOfLocalDirectoryName=self.IsNewDirectory
+        self._allowManualEntryOfLocalDirectoryName=self.CreatingNewFanzineSeries
         self._manualEditOfLocalDirectoryNameBegun=False
         self._uploaded=False
 
@@ -200,7 +202,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         self._savedSignature=0   # We need this member. ClearMainWindow() will initialize it
 
-        if self.IsNewDirectory:
+        if self.CreatingNewFanzineSeries:
             # New directory: Do basic setup.
             # Create default column headers
             self._Datasource.ColDefs=ColDefinitionsList([
@@ -320,7 +322,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.wxGrid.Enabled=True
 
         # tServerDirectory is only enabled when creating a new one (which lasts only until it is uploaded -- then it's an old one)
-        self.tServerDirectory.SetEditable(self.IsNewDirectory)
+        self.tServerDirectory.SetEditable(self.CreatingNewFanzineSeries)
 
         # The Upload button is enabled only if sufficient information is present
         self.bUpload.Enabled=False
@@ -328,7 +330,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # This is definitely not enough!!
             self.bUpload.Enabled=True
 
-        self.tFanzineName.Enabled=self.IsNewDirectory or self._AllowFanzineNameEdit
+        self.tFanzineName.Enabled=self.CreatingNewFanzineSeries or self._AllowFanzineNameEdit
         self.tFanzineName.SetEditable(True)
 
         # On an old directory, we always have a target defined, so we can always add new issues
@@ -580,9 +582,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # Upload the current FanzineIndexPage (including any added fanzines) to the server
     def OnUpload(self, event):
         Log("OnUpload pressed")
-        if self.IsNewDirectory:
-            wx.MessageBox(f"There is already a directory named {self.tServerDirectory.GetValue()} on the server. Please select another name.", parent=self)
-            return
+        # if self.CreatingNewFanzineSeries:
+        #     wx.MessageBox(f"There is already a directory named {self.tServerDirectory.GetValue()} on the server. Please select another name.", parent=self)
+        #     return
 
         # Check the dates to make sure that the dated issues all fall into the date range given for the fanzine
         # Date range should be of the form yyyy-yyyy with question marks abounding
@@ -620,7 +622,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.Clubname=self.tClubname.GetValue()
         cfl.Complete=self.cbComplete.GetValue()
         cfl.Updated=datetime.now()
-        if self.IsNewDirectory:
+        if self.CreatingNewFanzineSeries:
             cfl.Created=datetime.now()      # We only update the created time when were actually creating something...
         cfl.TopComments=self.tTopComments.GetValue()
         cfl.Country=self.tLocaleText.GetValue()
@@ -640,7 +642,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             localDirectoryPath=localDirectoryRootPath+"/"+localDirectoryName
 
             # If this is a new fanzine, create the local directory if necessary
-            if self.IsNewDirectory:
+            if self.CreatingNewFanzineSeries:
                 if not os.path.exists(localDirectoryPath):
                     Log(f"mkdir({localDirectoryPath})")
                     os.mkdir(localDirectoryPath)
@@ -786,7 +788,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.MarkAsSaved()
 
             # Once a new fanzine has been uploaded, the server and local directories are no longer changeable
-            self.IsNewDirectory=False
+            self.CreatingNewFanzineSeries=False
             self._allowManualEditOfServerDirectoryName=False
             self._manualEditOfServerDirectoryNameBegun=False
             self._allowManualEntryOfLocalDirectoryName=False
@@ -916,7 +918,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     def UpdateDialogComponentEnabledStatus(self):       # (See also EnableDialogFields)
         # The server directory can be edited iff this is a new directory
-        self.tServerDirectory.Enabled=self.IsNewDirectory
+        self.tServerDirectory.Enabled=self.CreatingNewFanzineSeries
 
         def IsEmpty(s: str) -> bool:
             return s.strip() == ""
@@ -930,7 +932,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.bUpload.Enabled=enable
 
         # The local directory text box is editable in a new directory, but not in an existing one
-        self.tLocalDirectory.Enabled=len(self.tLocalDirectory.GetValue()) == 0 or self.IsNewDirectory
+        self.tLocalDirectory.Enabled=len(self.tLocalDirectory.GetValue()) == 0 or self.CreatingNewFanzineSeries
 
         # The Clubname field is editable iff the fanzine type is "Clubzine"
         self.tClubname.Enabled="Clubzine" == self.chFanzineType.Items[self.chFanzineType.GetSelection()]
@@ -1018,7 +1020,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     def OnServerDirectoryChar(self, event):
         Log(f"OnServerDirectoryChar: triggered")
-        if not self.IsNewDirectory:
+        if not self.CreatingNewFanzineSeries:       # Don't allow editing unless we are creating a new fanzine series
             return
 
         fname, cursorloc=ProcessChar(self.tServerDirectory.GetValue(), event.GetKeyCode(), self.tServerDirectory.GetInsertionPoint())
@@ -1040,7 +1042,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     def OnLocalDirectoryChar( self, event ):
         Log(f"OnLocalDirectoryChar: triggered")
-        if not self.IsNewDirectory:     # Only for new fanzines can the local directory name be updated
+        if not self.CreatingNewFanzineSeries:     # Only for new fanzines can the local directory name be updated
             return
 
         fname, cursorloc=ProcessChar(self.tLocalDirectory.GetValue(), event.GetKeyCode(), self.tLocalDirectory.GetInsertionPoint())
@@ -1055,7 +1057,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     def ColorFanzineAndServerDirBoxes(self):
-        if self.IsNewDirectory and self._existingFanzinesServerDirsLowerCase is not None and self.ServerDir.lower() in self._existingFanzinesServerDirsLowerCase:
+        if self.CreatingNewFanzineSeries and self.ServerDir.lower() in self._existingFanzinesServerDirsLowerCase:
             self.tServerDirectory.SetBackgroundColour(Color.Pink)
             #self.tFanzineName.SetBackgroundColour(Color.Pink)
         else:
@@ -2549,7 +2551,7 @@ class FanzineIndexPage(GridDataSource):
                     insert+=f"<TD CLASS='left'>{cell}</TD>\n"
 
             # Record the update date of this line
-            if row.Signature != row.Signature():        #TODO: There's something wrong here
+            if row.SavedSignature != row.Signature():
                 # We have to update the updated comment before appending it
                 row.UpdatedComment=f"<!-- Up: {datetime.now():%Y-%m-%d}-->"
             insert+=row.UpdatedComment+"\n"

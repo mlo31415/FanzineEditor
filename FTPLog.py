@@ -15,7 +15,7 @@ class FTPLog:
 
     @staticmethod
     def Timestamp() -> str:
-        return f"<itemdatetime>{datetime.now().strftime("%A %B %d, %Y  %I:%M:%S %p")} EST</itemdatetime>"
+        return f"<itemdatetime>{datetime.now().strftime('%A %B %d, %Y  %I:%M:%S %p')} EST</itemdatetime>"
 
     @staticmethod
     def Tagstring() -> str:

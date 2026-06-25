@@ -12,8 +12,8 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         GridDataRowClass.__init__(self)
         self.FileSourcePath: str=""
         self._tableColdefs=coldefs
-        self._Signature: int=0
-        self._UpdatedComment: str=""
+        self.SavedSignature: int=0
+        self.UpdatedComment: str=""
         if row is None:
             self._cells=[""]*len(self._tableColdefs)
         else:
