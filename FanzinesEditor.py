@@ -461,8 +461,8 @@ class FanzinesEditorWindow(FanzinesGridGen):
     def OnClose(self, event):
 
         if self._fanzinesCount != len(self._fanzinesList):
-            resp=wx.MessageBox("You have added or deleted a fanzine from this list and have not saved the list. If you exist without saving, "
-                               "those changes will be lost. \n\nDo you want to exist without saving?", 'Warning', wx.OK|wx.CANCEL|wx.ICON_WARNING)
+            resp=wx.MessageBox("You have added or deleted a fanzine from this list and have not saved the list. If you exit without saving, "
+                               "those changes will be lost. \n\nDo you want to exit without saving?", 'Warning', wx.OK|wx.CANCEL|wx.ICON_WARNING)
             if resp == wx.CANCEL:
                 return
         else:
