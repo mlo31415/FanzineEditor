@@ -100,7 +100,7 @@ def main():
     Lock().ReleaseLock(rootDir, id)
 
     LogClose()
-    sys.exit(1)
+    sys.exit(0)
 
 
 #------------------------------------------------------------------------------
