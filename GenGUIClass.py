@@ -211,6 +211,11 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		fgSizer6.Add( self.tLocalDirectory, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT, 5 )
 
+		rbOrderingChoices = [ u"Normal", u"Collection", u"Other" ]
+		self.rbOrdering = wx.RadioBox( self, wx.ID_ANY, u"Ordering", wx.DefaultPosition, wx.DefaultSize, rbOrderingChoices, 1, wx.RA_SPECIFY_ROWS )
+		self.rbOrdering.SetSelection( 0 )
+		fgSizer6.Add( self.rbOrdering, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+
 		bSizer71 = wx.BoxSizer( wx.HORIZONTAL )
 
 
@@ -420,6 +425,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_bpButton1.Bind( wx.EVT_BUTTON, self.OnButtonClickCopyServerDir )
 		self.tLocalDirectory.Bind( wx.EVT_CHAR, self.OnLocalDirectoryChar )
 		self.tLocalDirectory.Bind( wx.EVT_TEXT, self.OnLocalDirectoryText )
+		self.rbOrdering.Bind( wx.EVT_RADIOBOX, self.OnOrdering )
 		self.chSignificance.Bind( wx.EVT_CHOICE, self.OnSignificanceSelect )
 		self.cbComplete.Bind( wx.EVT_CHECKBOX, self.OnCheckComplete )
 		self.tTopComments.Bind( wx.EVT_TEXT, self.OnTopCommentsText )
@@ -510,6 +516,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnLocalDirectoryText( self, event ):
+		event.Skip()
+
+	def OnOrdering( self, event ):
 		event.Skip()
 
 	def OnSignificanceSelect( self, event ):

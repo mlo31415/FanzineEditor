@@ -21,6 +21,7 @@ from DeltaTracker import DeltaTracker
 from FanzineNames import FanzineNames
 from FanzineDateTime import FanzineDate, InterpretRelativeWords
 from FanzineIndexPageTableRow import FanzineIndexPageTableRow
+from FanzineIndexPageOrdering import AnalyzeOrdering as AnalyzeFIPOrdering
 
 from FTP import FTP
 
@@ -39,6 +40,9 @@ from HtmlHelpersPackage import HtmlEscapesToUnicode, UnicodeToHtmlEscapes, Conve
 from Log import Log, LogError
 from Settings import Settings
 from FanzineDateTime import MonthNameToInt
+
+# Background color for rows that are out of order (a valid ordering exists, but the rows aren't in it)
+gColorMisordered=wx.Colour(255, 255, 200)   # Light yellow
 
 # Create default column headers
 gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
@@ -185,8 +189,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Used to communicate with the fanzine list editor.  It is set to None, but is filled in with a CFL when something is uploaded.
         self.CFL: ClassicFanzinesLine|None=None
 
+        # The most recent ordering analysis (pink/yellow verdicts). Recomputed by RefreshWindow; consulted by the cell colorer.
+        self._orderingAnalysis=None
+
         self._dataGrid: DataGrid=DataGrid(self.wxGrid, ColorSingleCellByValue=self.ColorSingleCellByValueOverride)
         self.Datasource=FanzineIndexPage()
+
+        # Dynamic per-cell tooltips: when the mouse hovers a colored (problem) cell, explain the problem.
+        # This is runtime-only (wxFormBuilder can't do dynamic cell tooltips), so it lives here in the subclass.
+        self._tooltipCell=None      # The (row, col) the tooltip currently describes, to avoid flicker
+        self.wxGrid.GetGridWindow().Bind(wx.EVT_MOTION, self.OnGridMotion)
 
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
@@ -240,13 +252,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # Add the various values into the dialog
             self.tCredits.SetValue(self.Datasource.Credits)
             self.tDates.SetValue(self.Datasource.Dates)
-            self.tEditors.SetValue("\n".join(self.Datasource.Editors))
+            self.tEditors.SetValue(self.Datasource.Editors)
             self.tFanzineName.SetValue(self.Datasource.Name.MainName)
             self.tOthernames.SetValue((self.Datasource.Name.OthernamesAsStr("\n")))
             if self.Datasource.FanzineType in self.chFanzineType.Items:
                 self.chFanzineType.SetSelection(self.chFanzineType.Items.index(self.Datasource.FanzineType))
             if self.Datasource.Significance in self.chSignificance.Items:
                 self.chSignificance.SetSelection(self.chSignificance.Items.index(self.Datasource.Significance))
+            iOrder=self.rbOrdering.FindString(self.Datasource.Ordering)
+            if iOrder != wx.NOT_FOUND:
+                self.rbOrdering.SetSelection(iOrder)
             self.tClubname.SetValue(self.Datasource.Clubname)
             self.tLocaleText.SetValue(self.Datasource.LocaleAsText)
             self.tTopComments.SetValue(self.Datasource.TopComments)
@@ -933,13 +948,24 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # The local directory text box is editable in a new directory, but not in an existing one
         self.tLocalDirectory.Enabled=len(self.tLocalDirectory.GetValue()) == 0 or self.CreatingNewFanzineSeries
 
-        # The Clubname field is editable iff the fanzine type is "Clubzine"
-        self.tClubname.Enabled="Clubzine" == self.chFanzineType.Items[self.chFanzineType.GetSelection()]
+        # The Clubname label and field are shown only when the fanzine type is "Clubzine"
+        showClub="Clubzine" == self.chFanzineType.Items[self.chFanzineType.GetSelection()]
+        if self.tClubname.IsShown() != showClub:
+            self.tClubname.Show(showClub)
+            self.m_staticText1Clubname.Show(showClub)
+            self.Layout()      # Reflow so the hidden controls don't leave a gap
 
 
-    def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       
+    def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:
         self.UpdateNeedsSavingFlag()
         self.UpdateDialogComponentEnabledStatus()
+
+        # Re-analyze the row ordering so the cell colorer can flag contradictions (pink) and mis-ordered rows (yellow).
+        # The ordering checks only make sense for a normally-ordered fanzine; skip them for Collection/Other.
+        if self.Datasource.Ordering == "Normal":
+            self._orderingAnalysis=AnalyzeFIPOrdering(self.Datasource.Rows, self.Datasource.ColDefs)
+        else:
+            self._orderingAnalysis=None
 
         if not DontRefreshGrid:
             self._dataGrid.RefreshWxGridFromDatasource()
@@ -1111,6 +1137,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow(DontRefreshGrid=True)
 
 
+    def OnOrdering(self, event):
+        self.Datasource.Ordering=self.rbOrdering.GetStringSelection()
+        # Ordering mode gates the line-ordering checks, so refresh the grid coloring (not DontRefreshGrid)
+        self.RefreshWindow()
+
+
     def OnClubname(self, event):
         self.Datasource.Clubname=self.tClubname.GetValue()
         self.RefreshWindow(DontRefreshGrid=True)
@@ -1142,9 +1174,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow(DontRefreshGrid=True)
 
     #-------------------
-    def OnKeyDown(self, event):       
-        self._dataGrid.OnKeyDown(event) # Pass event to WxDataGrid to handle
+    def OnKeyDown(self, event):
+        sigBefore=self.Signature()
+        self._dataGrid.OnKeyDown(event) # Pass event to WxDataGrid to handle (may move/paste rows)
         self.UpdateNeedsSavingFlag()
+        # If a key action changed the data (e.g. a row move or paste), re-analyze the ordering and recolor.
+        # The grid only does a partial recolor against the stale analysis, so a full RefreshWindow is needed.
+        if self.Signature() != sigBefore:
+            self.RefreshWindow()
 
     #-------------------
     def OnKeyUp(self, event):       
@@ -1170,6 +1207,102 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if year > 0:        # Ignore missing years
                 if year < d1 or year > d2:
                     self._dataGrid.SetCellBackgroundColor(irow, icol, Color.Pink)
+
+        # Ordering analysis coloring (see FanzineIndexPageOrdering)
+        analysis=self._orderingAnalysis
+        if analysis is not None:
+            # Option A: a messy-but-valid Whole/Vol/Num (e.g. "102A", "XIV") is not an error, so undo the
+            # grid's default int-type pink for it.
+            if (irow, icol) in analysis.ValidMessyCells:
+                self._dataGrid.SetCellBackgroundColor(irow, icol, Color.White)
+            # An ordering contradiction or an unparseable ordering value pinks the cell (takes precedence).
+            if (irow, icol) in analysis.PinkCells:
+                self._dataGrid.SetCellBackgroundColor(irow, icol, Color.Pink)
+            # A row that is out of order is colored light yellow -- but never paint over a pink cell.
+            elif irow in analysis.YellowRows:
+                if self._dataGrid.Grid.GetCellBackgroundColour(irow, icol) != Color.Pink:
+                    self._dataGrid.SetCellBackgroundColor(irow, icol, gColorMisordered)
+
+
+    #------------------
+    # As the mouse moves over the grid, show a tooltip on any colored (problem) cell explaining the problem.
+    def OnGridMotion(self, event):
+        event.Skip()
+        grid=self.wxGrid
+        x, y=grid.CalcUnscrolledPosition(event.GetX(), event.GetY())
+        row=grid.YToRow(y)
+        col=grid.XToCol(x)
+        gw=grid.GetGridWindow()
+        if row < 0 or col < 0:
+            self._tooltipCell=None
+            gw.UnsetToolTip()
+            return
+        if (row, col) == self._tooltipCell:
+            return      # Still on the same cell -- leave the tooltip alone (avoids flicker)
+        self._tooltipCell=(row, col)
+
+        bg=grid.GetCellBackgroundColour(row, col)
+        if bg == Color.Pink or bg == gColorMisordered:
+            gw.SetToolTip(self.WhyIsCellColored(row, col) or "This cell has a problem that should be corrected.")
+        else:
+            gw.UnsetToolTip()
+
+
+    #------------------
+    # Return a human-readable explanation of why cell (irow, icol) is colored, or "" if there's nothing to say.
+    # We branch on the cell's actual color: a light-yellow cell means its ROW is out of order (the cell's own
+    # value is fine), while a pink cell means a problem with this specific value. Getting this wrong would, e.g.,
+    # claim a valid "August" is "not a recognized month" just because its row happens to be out of order.
+    def WhyIsCellColored(self, irow: int, icol: int) -> str:
+        ds=self.Datasource
+        if irow >= ds.NumRows or icol >= ds.NumCols:
+            return ""
+        analysis=self._orderingAnalysis
+        bg=self.wxGrid.GetCellBackgroundColour(irow, icol)
+
+        # A light-yellow cell only means the row is out of order -- the cell's own value is not the problem.
+        if bg == gColorMisordered:
+            if analysis is not None and irow in analysis.RowReasons:
+                return analysis.RowReasons[irow]
+            return "This row appears to be out of order relative to the others."
+
+        # Otherwise the cell is pink: a problem with this specific value.
+        row=ds.Rows[irow]
+        val=row[icol].strip() if icol < len(row.Cells) else ""
+        name=ds.ColDefs[icol].Name
+        ctype=ds.ColDefs[icol].Type
+
+        # 1) The ordering analyzer's own pinks (contradiction / unparseable number) carry the most specific reason
+        if analysis is not None and (irow, icol) in analysis.PinkCells:
+            return analysis.CellReasons.get((irow, icol), "This value is inconsistent with the others.")
+
+        # 2) A real link with no display text
+        if icol == 1 and (row.IsNormalRow or row.IsLinkRow) and row[0].strip() != "" and val == "":
+            return "This issue has a link but no display text to show for it."
+
+        # 3) Value-based problems (the cell is pink, so the value really is bad)
+        if val != "":
+            if name == "Month":
+                return f'"{val}" is not a recognized month.'
+            if name == "Year":
+                if not IsInt(val):
+                    return f'"{val}" is not a valid year.'
+                y=int(val)
+                if y < 1926 or y > 2050:
+                    return f'"{val}" is not a plausible year.'
+                d1, d2=self.DateRange
+                if y < d1 or y > d2:
+                    return f"The year {val} is outside this fanzine's stated date range ({self.tDates.GetValue().strip()})."
+            if name == "Day":
+                return f'"{val}" is not a valid day of the month (1-31).'
+            if ctype in ("date", "date range"):
+                return "This date cannot be interpreted."
+            if ctype == "int":
+                return f'"{val}" is not a number.'
+            if ctype == "required str":
+                return "This field is required."
+
+        return ""
 
     #------------------
     # Handle a change to a cell.  This is not done for each character entered, but only at the end.
@@ -1957,6 +2090,7 @@ class FanzineIndexPage(GridDataSource):
         self._version: str=""
         self.Dates: str=""
         self.Significance: str="Unclassified"
+        self.Ordering: str="Normal"     # Row-ordering mode: "Normal", "Collection", or "Other". Ordering checks run only for "Normal".
         self.FanzineType: str=""
         self.Complete=False     # Is this fanzine series complete?
         self.Credits=""         # Who is to be credited for this affair?
@@ -1970,7 +2104,7 @@ class FanzineIndexPage(GridDataSource):
             s+=self._colDefs.Signature()
         s+=hash(f"{self._name};{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{self.TopComments.strip()};{self.Significance}")
-        s+=hash(f"{self.Name.MainName};{self.Editors};{self.Dates};{self.FanzineType};{self.Clubname};{self.Credits}")
+        s+=hash(f"{self.Name.MainName};{self.Editors};{self.Dates};{self.FanzineType};{self.Clubname};{self.Credits};{self.Ordering}")
         s+=sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
         s+=hash(self._specialTextColor)
         return s
@@ -2282,17 +2416,12 @@ class FanzineIndexPage(GridDataSource):
         return self._Editors
     @Editors.setter
     def Editors(self, val: str|list):
+        # Editors are stored canonically as a single newline-separated string (one editor per line).
+        # Some callers (the old/new page loaders) hand us a list, so normalize it here -- this lets
+        # consumers like PutFanzineIndexPage rely on self.Editors being a string (it does .split("\n")).
+        if isinstance(val, list):
+            val="\n".join(val)
         self._Editors=val
-        # v=val
-        # if isinstance(val, list):
-        #     if len(val) == 1:
-        #         v=val[0]
-        #     else:
-        #         v=", ".join(val)
-        # elif "<br>" in val:
-        #     v="\n".join([x.strip() for x in val.split(", ")])
-        #
-        # self._Editors=v
 
 
 
@@ -2325,6 +2454,7 @@ class FanzineIndexPage(GridDataSource):
         self.Clubname=CleanUnicodeText(ExtractHTMLUsingFanacTagCommentPair(topstuff, "club"))
 
         self.Significance=ExtractInvisibleTextInsideFanacComment(html, "sig")
+        self.Ordering=ExtractInvisibleTextInsideFanacComment(html, "ordering") or "Normal"      # Absent on pre-feature pages -> Normal
 
         # f"<H2>{TurnPythonListIntoWordList(self.Locale)}</H2>"
         self.Locale=CleanUnicodeText(ExtractHTMLUsingFanacTagCommentPair(html, "loc"))
@@ -2504,6 +2634,7 @@ class FanzineIndexPage(GridDataSource):
         output=InsertBetweenHTMLComments(output, "loc", TurnPythonListIntoWordList(self.Locale))
 
         output=InsertInvisibleTextInsideFanacComment(output, "sig", self.Significance)
+        output=InsertInvisibleTextInsideFanacComment(output, "ordering", self.Ordering)
 
         #insert=UnicodeToHtmlEscapes(self.TopComments).replace("\n", "<br>")
         insert=self.TopComments.replace("\n", "<br>")
