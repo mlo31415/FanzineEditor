@@ -10,7 +10,7 @@ from FTP import FTP, Lock
 
 from FTPLog import FTPLog
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
-from WxHelpers import OnCloseHandling, ProgressMessage2, ModalDialogManager
+from WxHelpers import OnCloseHandling3, ProgressMessage2, ModalDialogManager
 from HelpersPackage import ExtractInvisibleTextInsideFanacComment, ConvertHTMLishCharacters
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, UnicodeToHtml, StripSpecificTag, Int0, TimestampFilename
 from Log import LogOpen, LogClose, LogError
@@ -459,17 +459,16 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self.OnClose(event)
 
     def OnClose(self, event):
-
-        if self._fanzinesCount != len(self._fanzinesList):
-            resp=wx.MessageBox("You have added or deleted a fanzine from this list and have not saved the list. If you exit without saving, "
-                               "those changes will be lost. \n\nDo you want to exit without saving?", 'Warning', wx.OK|wx.CANCEL|wx.ICON_WARNING)
-            if resp == wx.CANCEL:
+        # Offer Exit Anyway / Upload and Exit / Cancel when the list has unsaved changes (added/deleted fanzines).
+        choice=OnCloseHandling3(event, self.NeedsSaving(), "The list of fanzines has been changed but not yet uploaded.")
+        if choice == "cancel":
+            return
+        if choice == "upload":
+            self.OnUploadPressed(event)
+            if self.NeedsSaving():      # Upload failed -- keep the window open so the changes aren't lost
                 return
-        else:
-            if OnCloseHandling(event, self.NeedsSaving(), "The list of fanzines has been updated and not yet saved. Exit anyway?"):
-                return
 
-        self.MarkAsSaved()  # The contents have been declared doomed
+        self.MarkAsSaved()  # Uploaded, or the user chose to discard the changes
 
         # Save the window's position
         pos=self.GetPosition()

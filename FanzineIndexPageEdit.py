@@ -26,7 +26,7 @@ from FanzineIndexPageOrdering import AnalyzeOrdering as AnalyzeFIPOrdering
 from FTP import FTP
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, IsEditable
-from WxHelpers import OnCloseHandling, ProcessChar
+from WxHelpers import OnCloseHandling3, ProcessChar
 from WxHelpers import ModalDialogManager, ProgressMessage2
 from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, RemoveTopLevelHTMLTags, RegularizeBRTags, Pluralize
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
@@ -353,9 +353,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
 
-    def OnClose(self, event):       
-        if not self.OKToClose(event):
+    def OnClose(self, event):
+        # Offer Exit Anyway / Upload and Exit / Cancel when there are unsaved changes.
+        choice=OnCloseHandling3(event, self.NeedsSaving(), "This fanzine index page has been changed but not yet uploaded.")
+        if choice == "cancel":
             return
+        if choice == "upload":
+            self.OnUpload(event)
+            if self.NeedsSaving():      # Upload failed or was cancelled -- keep the window open so the changes aren't lost
+                return
+        self.MarkAsSaved()      # Uploaded, or the user chose to discard the changes
 
         # Save the local directory name/server dir name correspondences table
         s2LDirFilename=Settings().Get("Server To Local Table Name")
@@ -371,21 +378,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         Settings("FanzinesEditor positions.json").Put("Index Page Window Size", (size.width, size.height))
 
         self.EndModal(wx.OK)
-
-
-
-    # The user has requested that the dialog be closed or wiped and reloaded.
-    # Check to see if it has unsaved information.
-    # If it does, ask the user if he wants to save it first.
-    def OKToClose(self, event) -> bool:             
-        if not self.NeedsSaving():
-            return True
-
-        if not OnCloseHandling(event, self.NeedsSaving(), "The changes have not been uploaded and will be lost if you exit. Quit anyway?"):
-            self.MarkAsSaved()  # The contents have been declared doomed, so mark it as saved so as not to trigger any more queries.
-            return True
-
-        return False
 
 
     def OnAddNewIssues(self, event):       
