@@ -1643,8 +1643,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         oldfile=self.Datasource.Rows[irow][0]
         newfilepath, newfilename=os.path.split(filepath[0])
         self.Datasource.Rows[irow][0]=newfilename
+        self.Datasource.Rows[irow].FileSourcePath=filepath[0]      # Point at the replacement so its page count can be read
         self.deltaTracker.Replace(oldSourceFilename=oldfile, newfilepathname=filepath[0], serverDirName=self.ServerDir, row=self.Datasource.Rows[irow])
         self.FillInPDFColumn()
+        # The replacement may have a different number of pages, so clear this row's Pages cell and recompute it
+        iPages=self.Datasource.ColHeaderIndex("pages")
+        if iPages != -1:
+            self.Datasource.Rows[irow][iPages]=""
+        self.FillInPagesColumn()
         self.RefreshWindow()
 
         event.Skip()
