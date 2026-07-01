@@ -35,6 +35,7 @@ from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPage
 from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonListIntoWordList, StripSpecificTag, RemoveHyperlink
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, ExtractHTMLUsingFanacStartEndCommentPair, SplitListOfNamesOnPattern
 from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename, InsertInvisibleTextInsideFanacComment, ExtractHTMLUsingFanacTagCommentPair
+from HelpersPackage import RemoveAccents, ExtractTrailingSequenceNumber
 from PDFHelpers import GetPdfPageCount
 from HtmlHelpersPackage import HtmlEscapesToUnicode, UnicodeToHtmlEscapes, ConvertHTMLEscapes
 from Log import Log, LogError
@@ -43,6 +44,85 @@ from FanzineDateTime import MonthNameToInt
 
 # Background color for rows that are out of order (a valid ordering exists, but the rows aren't in it)
 gColorMisordered=wx.Colour(255, 255, 200)   # Light yellow
+
+# Background color for a Display Text that may be a mis-spelled fanzine name (see _AnalyzeSpelling)
+gColorMisspelling=wx.Colour(230, 220, 245)   # Light purple
+
+
+# Optimal string alignment distance (Damerau-Levenshtein where an adjacent transposition costs one edit).
+def _SpellEditDistance(a: str, b: str) -> int:
+    la, lb=len(a), len(b)
+    if la == 0: return lb
+    if lb == 0: return la
+    prev2=None
+    prev=list(range(lb+1))
+    for i in range(1, la+1):
+        cur=[i]+[0]*lb
+        for j in range(1, lb+1):
+            cost=0 if a[i-1] == b[j-1] else 1
+            cur[j]=min(prev[j]+1, cur[j-1]+1, prev[j-1]+cost)
+            if i > 1 and j > 1 and a[i-1] == b[j-2] and a[i-2] == b[j-1]:
+                cur[j]=min(cur[j], prev2[j-2]+1)   # transposition
+        prev2, prev=prev, cur
+    return prev[lb]
+
+
+_SpellMonths=(r"jan(uary)?|feb(ruary)?|mar(ch)?|apr(il)?|may|jun(e)?|jul(y)?|aug(ust)?|"
+              r"sep(t(ember)?)?|oct(ober)?|nov(ember)?|dec(ember)?|spring|summer|fall|autumn|winter")
+
+# Reduce a Display Text to the bare fanzine name by stripping a trailing sequence number and/or a trailing
+# date (month/season + year, or a bare year), then normalizing. Deliberately fuzzy: consistency across the
+# list matters more than perfection, because the names are then compared by frequency and edit distance.
+def _SpellBaseName(s: str) -> str:
+    s=(s or "").strip()
+    for _ in range(3):
+        before=s
+        s=re.sub(r"[\s,(\-–]*((19|20)\d\d)\)?\s*$", "", s).strip()                             # trailing 4-digit year
+        s=re.sub(r"[\s,(\-–]*(" + _SpellMonths + r")\.?\)?\s*$", "", s, flags=re.IGNORECASE).strip()  # trailing month/season
+        pre, _v, _n, _suf=ExtractTrailingSequenceNumber(s)                                     # trailing #/Vn#n/roman/number
+        if pre.strip() and pre.strip() != s:
+            s=pre.strip()
+        if s == before:
+            break
+    return re.sub(r"\s+", " ", RemoveAccents(s)).strip().lower()
+
+
+# Flag rows whose Display Text fanzine name looks mis-spelled: a base name that occurs exactly once and is a
+# small edit away from a name that is either repeated in the list or is one of the page's declared names.
+# Returns the set of flagged row indices. Conservative: 1-2 edits and no more than ~1/3 of the name's length.
+def _AnalyzeSpelling(rows, nameCol: int, declaredNames: list[str],
+                     minCount: int=2, maxEdits: int=2, minLen: int=4) -> set[int]:
+    baseByRow: dict[int, str]={}
+    freq: dict[str, int]={}
+    for i, r in enumerate(rows):
+        if not r.IsNormalRow:
+            continue
+        dt=r[nameCol] if nameCol < len(r.Cells) else ""
+        base=_SpellBaseName(dt)
+        if len(base) < minLen:
+            continue
+        baseByRow[i]=base
+        freq[base]=freq.get(base, 0)+1
+
+    # Canonical (known-correct) names: those repeated in the list, plus the page's declared name(s).
+    canon={b for b, c in freq.items() if c >= minCount}
+    for dn in declaredNames:
+        nd=re.sub(r"\s+", " ", RemoveAccents(dn or "")).strip().lower()
+        if len(nd) >= minLen:
+            canon.add(nd)
+    if not canon:
+        return set()
+
+    flagged: set[int]=set()
+    for i, base in baseByRow.items():
+        if base in canon or freq[base] >= minCount:
+            continue                    # a known name, or one that repeats -> treat as correct
+        for c in canon:
+            d=_SpellEditDistance(base, c)
+            if 1 <= d <= maxEdits and d <= max(1, round(len(c)/3)):
+                flagged.add(i)
+                break
+    return flagged
 
 # Create default column headers
 gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
@@ -191,6 +271,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # The most recent ordering analysis (pink/yellow verdicts). Recomputed by RefreshWindow; consulted by the cell colorer.
         self._orderingAnalysis=None
+        # Rows whose Display Text may be a mis-spelled fanzine name (light purple). Recomputed by RefreshWindow.
+        self._spellingFlaggedRows: set[int]=set()
+        self._spellNameCol: int=1
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid, ColorSingleCellByValue=self.ColorSingleCellByValueOverride)
         self.Datasource=FanzineIndexPage()
@@ -959,6 +1042,18 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         else:
             self._orderingAnalysis=None
 
+        # Flag Display Text cells that look like mis-spelled fanzine names (light purple). A Collection page
+        # holds unrelated titles, so the name-frequency heuristic doesn't apply there -- skip it.
+        if self.Datasource.Ordering != "Collection":
+            try:
+                self._spellNameCol=self.Datasource.ColDefs.index("Display Text")
+            except Exception:
+                self._spellNameCol=1
+            declared=[self.Datasource.Name.MainName]+list(self.Datasource.Name.Othernames or [])
+            self._spellingFlaggedRows=_AnalyzeSpelling(self.Datasource.Rows, self._spellNameCol, declared)
+        else:
+            self._spellingFlaggedRows=set()
+
         if not DontRefreshGrid:
             self._dataGrid.RefreshWxGridFromDatasource()
         self.EnableDialogFields()
@@ -1215,6 +1310,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if self._dataGrid.Grid.GetCellBackgroundColour(irow, icol) != Color.Pink:
                     self._dataGrid.SetCellBackgroundColor(irow, icol, gColorMisordered)
 
+        # A Display Text that may be a mis-spelled fanzine name is tinted light purple (but never over a pink cell).
+        if icol == self._spellNameCol and irow in self._spellingFlaggedRows:
+            if self._dataGrid.Grid.GetCellBackgroundColour(irow, icol) != Color.Pink:
+                self._dataGrid.SetCellBackgroundColor(irow, icol, gColorMisspelling)
+
 
     #------------------
     # As the mouse moves over the grid, show a tooltip on any colored (problem) cell explaining the problem.
@@ -1234,7 +1334,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._tooltipCell=(row, col)
 
         bg=grid.GetCellBackgroundColour(row, col)
-        if bg == Color.Pink or bg == gColorMisordered:
+        if bg == Color.Pink or bg == gColorMisordered or bg == gColorMisspelling:
             gw.SetToolTip(self.WhyIsCellColored(row, col) or "This cell has a problem that should be corrected.")
         else:
             gw.UnsetToolTip()
@@ -1257,6 +1357,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if analysis is not None and irow in analysis.RowReasons:
                 return analysis.RowReasons[irow]
             return "This row appears to be out of order relative to the others."
+
+        # A light-purple Display Text cell is a suspected mis-spelled fanzine name.
+        if bg == gColorMisspelling:
+            return "Possible mis-spelling"
 
         # Otherwise the cell is pink: a problem with this specific value.
         row=ds.Rows[irow]
