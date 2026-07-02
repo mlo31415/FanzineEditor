@@ -14,6 +14,10 @@ class FanzineIndexPageTableRow(GridDataRowClass):
         self._tableColdefs=coldefs
         self.SavedSignature: int=0
         self.UpdatedComment: str=""
+        # Analysis verdicts are stored on the row itself (not in row-index sets) so that when rows are moved,
+        # their coloring travels with them and stays correct without a whole-grid recolor.
+        self.MisorderedReason: str=""       # Non-empty -> row is out of order (yellow); the text is the tooltip
+        self.Misspelled: bool=False         # True -> the Display Text looks like a mis-spelled fanzine name (purple)
         if row is None:
             self._cells=[""]*len(self._tableColdefs)
         else:

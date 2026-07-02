@@ -21,7 +21,7 @@ from DeltaTracker import DeltaTracker
 from FanzineNames import FanzineNames
 from FanzineDateTime import FanzineDate, InterpretRelativeWords
 from FanzineIndexPageTableRow import FanzineIndexPageTableRow
-from FanzineIndexPageOrdering import AnalyzeOrdering as AnalyzeFIPOrdering
+from FanzineIndexPageOrdering import AnalyzeOrdering as AnalyzeFIPOrdering, ParseMessyNumber
 
 from FTP import FTP
 
@@ -245,7 +245,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Some fields are editable only for new fanzines (which will be in new server directories, allowing some things to be set for the first time.).
         serverDir=serverDir.strip()
         self.CreatingNewFanzineSeries=serverDir == ""
-        self.tServerDirectory.SetValue(serverDir)
+        # Note: throughout __init__ we use ChangeValue() rather than SetValue() -- SetValue fires the control's
+        # EVT_TEXT handler as if the user had typed, and each of those handlers triggers an expensive
+        # RefreshWindow/re-analysis. On a 600+ row page that cascade added several seconds to the load.
+        self.tServerDirectory.ChangeValue(serverDir)
 
         # Figure out the root directory which depends on whether we are in test mode or not
         self.RootDir="fanzines"
@@ -272,9 +275,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # The most recent ordering analysis (pink/yellow verdicts). Recomputed by RefreshWindow; consulted by the cell colorer.
         self._orderingAnalysis=None
-        # Rows whose Display Text may be a mis-spelled fanzine name (light purple). Recomputed by RefreshWindow.
-        self._spellingFlaggedRows: set[int]=set()
-        self._spellNameCol: int=1
+        # Re-analyzing + recoloring after a row move/paste is O(n^2), so we debounce it: each move (re)starts
+        # this single-shot timer, and we recolor only once the user pauses. This coalesces both rapid taps and
+        # held-key auto-repeat (a key-up trigger can't -- rapid taps each fire their own key-up).
+        self._moveRefreshTimer=wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.OnMoveRefreshTimer, self._moveRefreshTimer)
+        self._spellNameCol: int=1       # The column checked for mis-spelled fanzine names (normally Display Text)
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid, ColorSingleCellByValue=self.ColorSingleCellByValueOverride)
         self.Datasource=FanzineIndexPage()
@@ -333,12 +339,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             else:
                 self._dataGrid.AppendRows(self.Datasource.NumRows)
 
-            # Add the various values into the dialog
-            self.tCredits.SetValue(self.Datasource.Credits)
-            self.tDates.SetValue(self.Datasource.Dates)
-            self.tEditors.SetValue(self.Datasource.Editors)
-            self.tFanzineName.SetValue(self.Datasource.Name.MainName)
-            self.tOthernames.SetValue((self.Datasource.Name.OthernamesAsStr("\n")))
+            # Add the various values into the dialog. (ChangeValue, not SetValue: see note above.)
+            self.tCredits.ChangeValue(self.Datasource.Credits)
+            self.tDates.ChangeValue(self.Datasource.Dates)
+            self.tEditors.ChangeValue(self.Datasource.Editors)
+            self.tFanzineName.ChangeValue(self.Datasource.Name.MainName)
+            self.tOthernames.ChangeValue((self.Datasource.Name.OthernamesAsStr("\n")))
             if self.Datasource.FanzineType in self.chFanzineType.Items:
                 self.chFanzineType.SetSelection(self.chFanzineType.Items.index(self.Datasource.FanzineType))
             if self.Datasource.Significance in self.chSignificance.Items:
@@ -346,18 +352,18 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             iOrder=self.rbOrdering.FindString(self.Datasource.Ordering)
             if iOrder != wx.NOT_FOUND:
                 self.rbOrdering.SetSelection(iOrder)
-            self.tClubname.SetValue(self.Datasource.Clubname)
-            self.tLocaleText.SetValue(self.Datasource.LocaleAsText)
-            self.tTopComments.SetValue(self.Datasource.TopComments)
+            self.tClubname.ChangeValue(self.Datasource.Clubname)
+            self.tLocaleText.ChangeValue(self.Datasource.LocaleAsText)
+            self.tTopComments.ChangeValue(self.Datasource.TopComments)
 
-            self.cbComplete.SetValue(self.Datasource.Complete)
+            self.cbComplete.SetValue(self.Datasource.Complete)      # (A checkbox SetValue does not fire events)
 
-            self.tServerDirectory.SetValue(serverDir)
+            self.tServerDirectory.ChangeValue(serverDir)
             self.tServerDirectory.Disable()
 
             self.localDir=Settings("ServerToLocal").Get(self.ServerDir)
             if self.localDir is not None:
-                self.tLocalDirectory.SetValue(self.localDir)
+                self.tLocalDirectory.ChangeValue(self.localDir)
                 self.tLocalDirectory.Disable()
 
         # Read in the table of local directory to server directory equivalences
@@ -374,11 +380,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # Try to fill in the local directory
         if self.tServerDirectory.GetValue() in self.serverNameList:
-            self.tLocalDirectory.SetValue(self.localNameList[self.serverNameList.index(self.tServerDirectory.GetValue())])
+            self.tLocalDirectory.ChangeValue(self.localNameList[self.serverNameList.index(self.tServerDirectory.GetValue())])
 
-        self._dataGrid.RefreshWxGridFromDatasource()
         self.MarkAsSaved()
-        self.RefreshWindow()
+        self.RefreshWindow()        # This does the (single) full grid load: analyses + RefreshWxGridFromDatasource
         self.Raise()        # Bring the window to the top
         self.failure=False
 
@@ -447,6 +452,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if self.NeedsSaving():      # Upload failed or was cancelled -- keep the window open so the changes aren't lost
                 return
         self.MarkAsSaved()      # Uploaded, or the user chose to discard the changes
+        self._moveRefreshTimer.Stop()   # Don't let a pending debounced recolor fire after the window is gone
 
         # Save the local directory name/server dir name correspondences table
         s2LDirFilename=Settings().Get("Server To Local Table Name")
@@ -1033,31 +1039,67 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:
+        self._moveRefreshTimer.Stop()       # A full refresh supersedes any pending debounced move-recolor
         self.UpdateNeedsSavingFlag()
         self.UpdateDialogComponentEnabledStatus()
+        self._RecomputeAnalyses()
+        if not DontRefreshGrid:
+            self._dataGrid.RefreshWxGridFromDatasource()
+        self.EnableDialogFields()
 
-        # Re-analyze the row ordering so the cell colorer can flag contradictions (pink) and mis-ordered rows (yellow).
+
+    # Recompute the analyses and store each row's verdict ON THE ROW ITSELF (MisorderedReason, Misspelled).
+    # Because the verdicts live on the row objects rather than in row-index sets, moving rows carries their
+    # coloring along automatically and the display stays correct during a move burst.
+    def _RecomputeAnalyses(self) -> None:
         # The ordering checks only make sense for a normally-ordered fanzine; skip them for Collection/Other.
         if self.Datasource.Ordering == "Normal":
             self._orderingAnalysis=AnalyzeFIPOrdering(self.Datasource.Rows, self.Datasource.ColDefs)
         else:
             self._orderingAnalysis=None
 
-        # Flag Display Text cells that look like mis-spelled fanzine names (light purple). A Collection page
-        # holds unrelated titles, so the name-frequency heuristic doesn't apply there -- skip it.
+        # A Collection page holds unrelated titles, so the name-frequency mis-spelling heuristic doesn't apply.
+        spellingFlaggedRows=set()
         if self.Datasource.Ordering != "Collection":
             try:
                 self._spellNameCol=self.Datasource.ColDefs.index("Display Text")
             except Exception:
                 self._spellNameCol=1
             declared=[self.Datasource.Name.MainName]+list(self.Datasource.Name.Othernames or [])
-            self._spellingFlaggedRows=_AnalyzeSpelling(self.Datasource.Rows, self._spellNameCol, declared)
-        else:
-            self._spellingFlaggedRows=set()
+            spellingFlaggedRows=_AnalyzeSpelling(self.Datasource.Rows, self._spellNameCol, declared)
 
-        if not DontRefreshGrid:
-            self._dataGrid.RefreshWxGridFromDatasource()
-        self.EnableDialogFields()
+        # Transfer the (index-based, freshly-valid) results onto the row objects
+        analysis=self._orderingAnalysis
+        for i, row in enumerate(self.Datasource.Rows):
+            if analysis is not None and i in analysis.YellowRows:
+                row.MisorderedReason=analysis.RowReasons.get(i, "This row appears to be out of order relative to the others.")
+            else:
+                row.MisorderedReason=""
+            row.Misspelled=i in spellingFlaggedRows
+
+
+    # Lightweight refresh used after a row move: the row count is unchanged and the grid already shows the
+    # right values and colors (the row-attached verdicts traveled with the moved rows), so just recompute the
+    # analyses and recolor the few rows whose verdict actually changed.  This avoids both the full
+    # RefreshWxGridFromDatasource rebuild and a whole-grid recolor, which are the slow parts on a large page.
+    def RecolorGrid(self) -> None:
+        self.UpdateNeedsSavingFlag()
+        old={id(row): (row.MisorderedReason, row.Misspelled) for row in self.Datasource.Rows}
+        self._RecomputeAnalyses()
+        changed=[i for i, row in enumerate(self.Datasource.Rows)
+                 if old.get(id(row)) != (row.MisorderedReason, row.Misspelled)]
+        for r in changed:
+            if r < self._dataGrid.NumRows:
+                self._dataGrid.ColorCellsByValue(StartRow=r, EndRow=r)
+        # The move deliberately doesn't carry the cell cursor step-by-step (doing so mid-burst clears the row
+        # selection and kills auto-repeat). Now that the move has settled, put the cursor on the moved block
+        # and keep the block selected, so the cursor isn't left behind at the original click position.
+        if self._dataGrid.HasSelection():
+            top, left, bottom, _=self._dataGrid.SelectionBoundingBox()
+            if top >= 0:
+                cc=self.wxGrid.GetGridCursorCol()
+                self.wxGrid.SetGridCursor(top, cc if cc >= 0 else max(left, 0))
+                self._dataGrid.SelectRows(top, bottom)
 
 
     # ----------------------------------------------
@@ -1266,14 +1308,25 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         sigBefore=self.Signature()
         self._dataGrid.OnKeyDown(event) # Pass event to WxDataGrid to handle (may move/paste rows)
         self.UpdateNeedsSavingFlag()
-        # If a key action changed the data (e.g. a row move or paste), re-analyze the ordering and recolor.
-        # The grid only does a partial recolor against the stale analysis, so a full RefreshWindow is needed.
+        # If a key action changed the data (a row move or paste), the re-analysis + recolor is O(n^2), so don't
+        # do it per keystroke. (Re)start a short debounce timer instead; we recolor once, after the user pauses.
+        # The grid itself already does a cheap targeted repaint per step, so the block still moves responsively.
         if self.Signature() != sigBefore:
-            self.RefreshWindow()
+            # On a small page the re-analysis is a few ms, so recolor immediately -- colors stay live.
+            # On a large page it's expensive, so debounce: one recolor after the user pauses.
+            if self.Datasource.NumRows <= 150:
+                self.RecolorGrid()
+            else:
+                self._moveRefreshTimer.StartOnce(300)
 
     #-------------------
-    def OnKeyUp(self, event):       
+    def OnKeyUp(self, event):
         self._dataGrid.OnKeyUp(event) # Pass event to WxDataGrid to handle
+
+    #-------------------
+    # The move debounce timer fired -- the user has paused after moving rows, so recolor once now.
+    def OnMoveRefreshTimer(self, event):
+        self.RecolorGrid()
 
     #------------------
     def ColorSingleCellByValueOverride(self, icol: int, irow: int) -> None:
@@ -1296,23 +1349,22 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if year < d1 or year > d2:
                     self._dataGrid.SetCellBackgroundColor(irow, icol, Color.Pink)
 
-        # Ordering analysis coloring (see FanzineIndexPageOrdering)
-        analysis=self._orderingAnalysis
-        if analysis is not None:
-            # Option A: a messy-but-valid Whole/Vol/Num (e.g. "102A", "XIV") is not an error, so undo the
-            # grid's default int-type pink for it.
-            if (irow, icol) in analysis.ValidMessyCells:
+        # A messy-but-valid issue number (e.g. "102A", "XIV") is not an error, so undo the grid's default
+        # int-type pink for it. This is a per-value test (independent of row order), so it always runs; an
+        # unparseable value is left with the grid's default pink.
+        if self.Datasource.ColDefs[icol].Name in ("WholeNum", "Whole", "Vol", "Volume", "Num", "Number"):
+            val=self.Datasource.Rows[irow][icol].strip()
+            if val != "" and ParseMessyNumber(val) is not None:
                 self._dataGrid.SetCellBackgroundColor(irow, icol, Color.White)
-            # An ordering contradiction or an unparseable ordering value pinks the cell (takes precedence).
-            if (irow, icol) in analysis.PinkCells:
-                self._dataGrid.SetCellBackgroundColor(irow, icol, Color.Pink)
-            # A row that is out of order is colored light yellow -- but never paint over a pink cell.
-            elif irow in analysis.YellowRows:
-                if self._dataGrid.Grid.GetCellBackgroundColour(irow, icol) != Color.Pink:
-                    self._dataGrid.SetCellBackgroundColor(irow, icol, gColorMisordered)
 
-        # A Display Text that may be a mis-spelled fanzine name is tinted light purple (but never over a pink cell).
-        if icol == self._spellNameCol and irow in self._spellingFlaggedRows:
+        # Analysis coloring: a mis-ordered row (yellow) or a mis-spelled name (purple). The verdicts are stored
+        # on the row object itself, so when rows are moved their coloring travels with them and remains correct
+        # even mid-burst. Never paint over a pink cell.
+        row=self.Datasource.Rows[irow]
+        if row.MisorderedReason != "":
+            if self._dataGrid.Grid.GetCellBackgroundColour(irow, icol) != Color.Pink:
+                self._dataGrid.SetCellBackgroundColor(irow, icol, gColorMisordered)
+        if icol == self._spellNameCol and row.Misspelled:
             if self._dataGrid.Grid.GetCellBackgroundColour(irow, icol) != Color.Pink:
                 self._dataGrid.SetCellBackgroundColor(irow, icol, gColorMisspelling)
 
@@ -1354,9 +1406,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         bg=self.wxGrid.GetCellBackgroundColour(irow, icol)
 
         # A light-yellow cell only means the row is out of order -- the cell's own value is not the problem.
+        # The reason is stored on the row itself, so it stays attached to the right row across moves.
         if bg == gColorMisordered:
-            if analysis is not None and irow in analysis.RowReasons:
-                return analysis.RowReasons[irow]
+            if ds.Rows[irow].MisorderedReason != "":
+                return ds.Rows[irow].MisorderedReason
             return "This row appears to be out of order relative to the others."
 
         # A light-purple Display Text cell is a suspected mis-spelled fanzine name.
