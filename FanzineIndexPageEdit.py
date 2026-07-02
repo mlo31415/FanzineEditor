@@ -29,6 +29,7 @@ from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefini
 from WxHelpers import OnCloseHandling3, ProcessChar
 from WxHelpers import ModalDialogManager, ProgressMessage2
 from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, RemoveTopLevelHTMLTags, RegularizeBRTags, Pluralize
+from HelpersPackage import SortMessyNumber, SortTitle, SortPersonsName
 from HelpersPackage import  FindLinkInString, FindIndexOfStringInList, FindIndexOfStringInList2, FindAndReplaceSingleBracketedText, FindAndReplaceBracketedText
 from HelpersPackage import InsertBetweenHTMLComments, RemoveHyperlinkContainingPattern, CanonicizeColumnHeaders, RemoveArticles
 from HelpersPackage import MakeFancyLink, RemoveFancyLink, WikiUrlnameToWikiPagename, SplitOnSpansOfLineBreaks
@@ -1822,24 +1823,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow()
 
 
-    # A sort function which treats the input text (if it can) as NNNaaa where NNN is sorted as an integer and aaa is sorted alphabetically.  Decimal point ends NNN.
-    @staticmethod
-    def PseudonumericSort(x: str) -> float:
-        if IsInt(x):
-            return float(int(x))
-        m=re.match(r"([0-9]+)\.?(.*)$", x)
-        if m is None:
-            return 0
-        # Turn the trailing junk into something like a number.  The trailing junk will be things like ".1" or "A"
-        junk=m.groups()[1]
-        dec=0
-        pos=1
-        for j in junk:
-            dec+=ord(j)/(256**pos)      # Convert the trailing junk into ascii numbers and divide by 256 to create a float which sorts in the same order
-            pos+=1
-        return int(m.groups()[0])+dec
-
-
     # Sort a mailing column.  They will typically be an APA name follwoed by a mailing number, sometimes sollowed by a letter
     @staticmethod
     def MailingSort(h: str) -> int:
@@ -1853,29 +1836,31 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         return 0
 
 
-    def OnPopupSortOnSelectedColumn(self, event):       
+    def OnPopupSortOnSelectedColumn(self, event):
         self.wxGrid.SaveEditControlValue()
         # We already know that only a single column is selected because that's the only time this menu item is enabled and can be called
         col=self._dataGrid.clickedColumn
-        # If the column consists nothing but empty cells and numbers, we do a special numerical sort.
-        testIsInt=all([(x[col] == "" or IsInt(x[col])) for x in self.Datasource.Rows])
-        if testIsInt:
-            self.Datasource.Rows.sort(key=lambda x: Int0(x[col]))
+        colname=self.Datasource.ColDefs[col].Name
+        rows=self.Datasource.Rows
+
+        if all([(x[col] == "" or IsInt(x[col])) for x in rows]):
+            # A pure-integer column (e.g. Year, Pages): straight numeric sort
+            rows.sort(key=lambda x: Int0(x[col]))
+        elif all([(x[col] == "" or MonthNameToInt(x[col]) is not None) for x in rows]):
+            # A month column: chronological, not alphabetical
+            rows.sort(key=lambda x: ZeroIfNone(MonthNameToInt(x[col])))
+        elif colname.lower() == "mailing":
+            # An APA mailing column: sort by the mailing number
+            rows.sort(key=lambda x: self.MailingSort(x[col]))
+        elif colname in ("WholeNum", "Whole", "Vol", "Volume", "Num", "Number"):
+            # A (possibly messy) issue-number column: 102A, roman numerals, decimals, ...
+            rows.sort(key=lambda x: SortMessyNumber(x[col]))
+        elif colname in ("Editor", "Editors", "Author", "Authors"):
+            # A person-name column: sort by last name, case-insensitively
+            rows.sort(key=lambda x: SortPersonsName(x[col]).lower())
         else:
-            testIsMonth=all([(x[col] == "" or MonthNameToInt(x[col])) is not None for x in self.Datasource.Rows])
-            if testIsMonth:
-                self.Datasource.Rows.sort(key=lambda x: ZeroIfNone(MonthNameToInt(x[col])))
-            else:
-                if self.Datasource.ColHeaders[col].lower() == "mailing":
-                    self.Datasource.Rows.sort(key=lambda x: self.MailingSort(x[col]))
-                else:
-                    testIsSortaNum=self.Datasource.ColDefs[col].Name == "WholeNum" or self.Datasource.ColDefs[col].Name == "Whole" or \
-                                   self.Datasource.ColDefs[col].Name == "Vol" or self.Datasource.ColDefs[col].Name == "Volume" or \
-                                   self.Datasource.ColDefs[col].Name == "Num" or self.Datasource.ColDefs[col].Name == "Number"
-                    if testIsSortaNum:
-                        self.Datasource.Rows.sort(key=lambda x: self.PseudonumericSort(x[col]))
-                    else:
-                        self.Datasource.Rows.sort(key=lambda x:x[col])
+            # Any other text column: alphabetical, ignoring leading articles (A / An / The)
+            rows.sort(key=lambda x: SortTitle(x[col]))
         self.RefreshWindow()
 
 

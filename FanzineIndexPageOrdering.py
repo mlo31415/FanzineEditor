@@ -29,6 +29,7 @@ from __future__ import annotations
 import re
 
 from FanzineDateTime import MonthNameToInt
+from HelpersPackage import ExtractTrailingSequenceNumber
 
 
 # Pairwise comparison results
@@ -162,6 +163,7 @@ def AnalyzeOrdering(rows, coldefs) -> OrderingAnalysis:
     iWhole = _FindCol(coldefs, {"Whole", "WholeNum"}, "Whole")
     iVol = _FindCol(coldefs, {"Vol", "Volume"}, "Vol")
     iNum = _FindCol(coldefs, {"Num", "Number"}, "Num")
+    iName = _FindCol(coldefs, {"Display Text", "Title"}, "Display Text")   # the issue name, e.g. "Amor 2.5"
     iLink = 0   # Column 0 is always the filename/URL
 
     normal = [r for r in range(len(rows)) if rows[r].IsNormalRow and not rows[r].IsEmptyRow]
@@ -200,16 +202,35 @@ def AnalyzeOrdering(rows, coldefs) -> OrderingAnalysis:
         result.ValidMessyCells.add((irow, icol))
         return key
 
+    # The issue number carried in the Display Text name (decimal-aware, e.g. "Amor 2.5" -> 2.5). Used as a
+    # fallback for the Whole signal when the page has no Whole column, so a decimal that fits the sequence is
+    # recognized as in order rather than second-guessed by the noisy filename serial. Not a number column, so
+    # nothing is pinked here.
+    def ParseNameNumber(row) -> tuple[float, str] | None:
+        if iName < 0:
+            return None
+        s = _Cell(row, iName)
+        if s == "":
+            return None
+        _pre, _vol, num, _suf = ExtractTrailingSequenceNumber(s)
+        return ParseMessyNumber(num) if num.strip() != "" else None
+
     keys: dict[int, dict] = {}
     for r in normal:
         row = rows[r]
-        keys[r] = {
-            "y": ParseYear(row), "mo": ParseMonth(row), "d": ParseDay(row),
-            "whole": ParseNumberCell(row, iWhole, r),
-            "vol": ParseNumberCell(row, iVol, r),
-            "num": ParseNumberCell(row, iNum, r),
-            "serial": ExtractSerial(row.Cells[iLink]) if iLink < len(row.Cells) else None,
-        }
+        whole = ParseNumberCell(row, iWhole, r)
+        vol = ParseNumberCell(row, iVol, r)
+        num = ParseNumberCell(row, iNum, r)
+        if whole is None:                       # No Whole column value -> fall back to the number in the name (decimals OK)
+            whole = ParseNameNumber(row)
+        # The filename serial is a noisy last resort (e.g. "Amor-025.pdf" -> 25 even though the issue is 2.5),
+        # so only fall back to it when the row has no issue number from a column or from its name.
+        if whole is not None or vol is not None or num is not None:
+            serial = None
+        else:
+            serial = ExtractSerial(row.Cells[iLink]) if iLink < len(row.Cells) else None
+        keys[r] = {"y": ParseYear(row), "mo": ParseMonth(row), "d": ParseDay(row),
+                   "whole": whole, "vol": vol, "num": num, "serial": serial}
 
     # ---- Per-signal pairwise comparisons ----
     def CmpDate(a: int, b: int):
