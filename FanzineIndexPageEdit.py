@@ -79,12 +79,17 @@ def _SpellBaseName(s: str) -> str:
     for _ in range(3):
         before=s
         s=re.sub(r"[\s,(\-–]*((19|20)\d\d)\)?\s*$", "", s).strip()                             # trailing 4-digit year
+        s=re.sub(r"[\s,(\-–]*(\d{1,2}/)+\s*$", "", s).strip()      # slash-date remnant after the year strip: "... 12/28/" or "... 08/"
         s=re.sub(r"[\s,(\-–]*(" + _SpellMonths + r")\.?\)?\s*$", "", s, flags=re.IGNORECASE).strip()  # trailing month/season
         pre, _v, _n, _suf=ExtractTrailingSequenceNumber(s)                                     # trailing #/Vn#n/roman/number
         if pre.strip() and pre.strip() != s:
             s=pre.strip()
         if s == before:
             break
+    # Digits carry no spelling information, and issue numbers/dates can sit ANYWHERE in the display text
+    # (e.g. "APA-L 51 Table of Contents"). Collapse every digit run to '#' so texts that differ only in
+    # numbers reduce to the same base name; without this no repeated name can emerge as known-correct.
+    s=re.sub(r"\d+", "#", s)
     return re.sub(r"\s+", " ", RemoveAccents(s)).strip().lower()
 
 
@@ -108,7 +113,8 @@ def _AnalyzeSpelling(rows, nameCol: int, declaredNames: list[str],
     # Canonical (known-correct) names: those repeated in the list, plus the page's declared name(s).
     canon={b for b, c in freq.items() if c >= minCount}
     for dn in declaredNames:
-        nd=re.sub(r"\s+", " ", RemoveAccents(dn or "")).strip().lower()
+        nd=re.sub(r"\d+", "#", dn or "")        # Same digit normalization as _SpellBaseName
+        nd=re.sub(r"\s+", " ", RemoveAccents(nd)).strip().lower()
         if len(nd) >= minLen:
             canon.add(nd)
     if not canon:
@@ -273,6 +279,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Used to communicate with the fanzine list editor.  It is set to None, but is filled in with a CFL when something is uploaded.
         self.CFL: ClassicFanzinesLine|None=None
 
+        # CFLs of fanzines that rows were moved TO by "Move to Different Fanzine" (possibly newly created here).
+        # The main fanzines-list window collects these when this dialog closes and updates/adds its list entries.
+        self.MovedTargetCFLs: list[ClassicFanzinesLine]=[]
+        # If set, called once after a successful upload. Used by "Move to Different Fanzine" to make a move into
+        # a not-yet-created fanzine permanent only when that new fanzine is actually uploaded.
+        self.PostUploadCallback=None
+
         # The most recent ordering analysis (pink/yellow verdicts). Recomputed by RefreshWindow; consulted by the cell colorer.
         self._orderingAnalysis=None
         # Re-analyzing + recoloring after a row move/paste is O(n^2), so we debounce it: each move (re)starts
@@ -280,6 +293,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # held-key auto-repeat (a key-up trigger can't -- rapid taps each fire their own key-up).
         self._moveRefreshTimer=wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.OnMoveRefreshTimer, self._moveRefreshTimer)
+        self._recolorSnapCursor=False       # When the debounced recolor fires, should it snap the cursor to the selection? (Only after row moves.)
+        self._lastColoredDates=None         # The Dates value at the last recolor; a change means the Year column needs recoloring (range check)
         self._spellNameCol: int=1       # The column checked for mis-spelled fanzine names (normally Display Text)
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid, ColorSingleCellByValue=self.ColorSingleCellByValueOverride)
@@ -443,6 +458,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     def OnClose(self, event):
+        # If a cell edit is still open, commit it first and update the title's change marker, so the
+        # needs-saving state the warning tests is the same one the title displays.
+        self.wxGrid.SaveEditControlValue()
+        self.UpdateNeedsSavingFlag()
         # Offer Exit Anyway / Upload and Exit / Cancel when there are unsaved changes.
         choice=OnCloseHandling3(event, self.NeedsSaving(), "This fanzine index page has been changed but not yet uploaded.")
         if choice == "cancel":
@@ -893,6 +912,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             self.UpdateDialogComponentEnabledStatus()
 
+        # If someone (e.g. Move to Different Fanzine) registered work to be done after a successful upload, do it now
+        if callable(self.PostUploadCallback):
+            self.PostUploadCallback()
+
 
     # Update the new pdf's metadata and then upload it
     def UpdateAndUpload(self, row: FanzineIndexPageTableRow, sourcefilename: str, sourcepath: str, editors: str="", mainName: str="", country: str="", pm: ProgressMessage2|None=None) -> bool:
@@ -1039,13 +1062,24 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:
-        self._moveRefreshTimer.Stop()       # A full refresh supersedes any pending debounced move-recolor
+        self._moveRefreshTimer.Stop()       # A full refresh supersedes any pending debounced recolor
         self.UpdateNeedsSavingFlag()
         self.UpdateDialogComponentEnabledStatus()
         self._RecomputeAnalyses()
+        self._lastColoredDates=self.tDates.GetValue()
         if not DontRefreshGrid:
             self._dataGrid.RefreshWxGridFromDatasource()
         self.EnableDialogFields()
+
+
+    # Lightweight refresh for per-keystroke handlers (the header text fields, ordinary cell edits): update the
+    # dialog chrome immediately, but DEFER the O(n^2) re-analysis + recolor to the debounce timer so that typing
+    # on a large page doesn't freeze the UI on every keystroke ("gray circle" hangs).
+    def RefreshWindowDeferred(self) -> None:
+        self.UpdateNeedsSavingFlag()
+        self.UpdateDialogComponentEnabledStatus()
+        self.EnableDialogFields()
+        self._moveRefreshTimer.StartOnce(300)
 
 
     # Recompute the analyses and store each row's verdict ON THE ROW ITSELF (MisorderedReason, Misspelled).
@@ -1082,7 +1116,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # right values and colors (the row-attached verdicts traveled with the moved rows), so just recompute the
     # analyses and recolor the few rows whose verdict actually changed.  This avoids both the full
     # RefreshWxGridFromDatasource rebuild and a whole-grid recolor, which are the slow parts on a large page.
-    def RecolorGrid(self) -> None:
+    def RecolorGrid(self, SnapCursor: bool=True) -> None:
         self.UpdateNeedsSavingFlag()
         old={id(row): (row.MisorderedReason, row.Misspelled) for row in self.Datasource.Rows}
         self._RecomputeAnalyses()
@@ -1091,10 +1125,20 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         for r in changed:
             if r < self._dataGrid.NumRows:
                 self._dataGrid.ColorCellsByValue(StartRow=r, EndRow=r)
-        # The move deliberately doesn't carry the cell cursor step-by-step (doing so mid-burst clears the row
-        # selection and kills auto-repeat). Now that the move has settled, put the cursor on the moved block
-        # and keep the block selected, so the cursor isn't left behind at the original click position.
-        if self._dataGrid.HasSelection():
+
+        # The Dates range affects the out-of-range (pink) check on every Year cell, so if the Dates field has
+        # changed since the last recolor, the Year column needs recoloring too.
+        if self.tDates.GetValue() != self._lastColoredDates:
+            self._lastColoredDates=self.tDates.GetValue()
+            iYear=self.Datasource.ColHeaderIndex("year")
+            if iYear != -1:
+                self._dataGrid.ColorCellsByValue(StartCol=iYear, EndCol=iYear)
+
+        # After a row move: the move deliberately doesn't carry the cell cursor step-by-step (doing so mid-burst
+        # clears the row selection and kills auto-repeat). Now that the move has settled, put the cursor on the
+        # moved block and keep the block selected, so the cursor isn't left behind at the original click position.
+        # (SnapCursor is False when the recolor was triggered by typing rather than a row move.)
+        if SnapCursor and self._dataGrid.HasSelection():
             top, left, bottom, _=self._dataGrid.SelectionBoundingBox()
             if top >= 0:
                 cc=self.wxGrid.GetGridCursorCol()
@@ -1169,7 +1213,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.Datasource.Name.MainName=self.tFanzineName.GetValue()
         Log(f"OnFanzineNameText: Fanzine name updated to '{self.Datasource.Name.MainName}'")
         self.UpdateServerAndLocalDirNames(self.Datasource.Name.MainName)
-        self.RefreshWindow(DontRefreshGrid=True)
+        self.RefreshWindowDeferred()
         # Note that we don't call self.Skip() so we don't use default processing for this event
 
 
@@ -1247,12 +1291,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # Remove trailing newline
         if len(self.Datasource.Editors) > 0 and self.Datasource.Editors[-1] == "\n":
             self.Datasource.Editors=self.Datasource.Editors[:-1]
-        self.RefreshWindow(DontRefreshGrid=True)
+        self.RefreshWindowDeferred()
 
 
-    def OnDatesText(self, event):       
+    def OnDatesText(self, event):
         self.Datasource.Dates=self.tDates.GetValue()
-        self.RefreshWindow()
+        # Note: the deferred recolor also recolors the Year column when Dates has changed (the range check),
+        # so this no longer needs the (very expensive) full-grid refresh it used to do on every keystroke.
+        self.RefreshWindowDeferred()
 
 
     def OnFanzineTypeSelect(self, event):       
@@ -1275,17 +1321,17 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     def OnClubname(self, event):
         self.Datasource.Clubname=self.tClubname.GetValue()
-        self.RefreshWindow(DontRefreshGrid=True)
+        self.RefreshWindowDeferred()
 
 
     #------------------
-    def OnTopCommentsText(self, event):       
+    def OnTopCommentsText(self, event):
         if self.Datasource.TopComments is not None and len(self.Datasource.TopComments) > 0:
             self.Datasource.TopComments=self.tTopComments.GetValue()
         else:
             self.Datasource.TopComments=self.tTopComments.GetValue().strip()
 
-        self.RefreshWindow(DontRefreshGrid=True)
+        self.RefreshWindowDeferred()
 
     # ------------------
     def OnCheckComplete(self, event):      
@@ -1294,14 +1340,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow(DontRefreshGrid=True)
 
     #------------------
-    def OnLocaleText(self, event):       
+    def OnLocaleText(self, event):
         self.Datasource.Locale=self.tLocaleText.GetValue().split("\n")
-        self.RefreshWindow(DontRefreshGrid=True)
+        self.RefreshWindowDeferred()
 
     #------------------
     def OnCreditsText(self, event):
         self.Datasource.Credits=self.tCredits.GetValue().strip()
-        self.RefreshWindow(DontRefreshGrid=True)
+        self.RefreshWindowDeferred()
 
     #-------------------
     def OnKeyDown(self, event):
@@ -1317,6 +1363,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if self.Datasource.NumRows <= 150:
                 self.RecolorGrid()
             else:
+                self._recolorSnapCursor=True        # This was a row move: snap the cursor to the moved block when the recolor fires
                 self._moveRefreshTimer.StartOnce(300)
 
     #-------------------
@@ -1324,9 +1371,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.OnKeyUp(event) # Pass event to WxDataGrid to handle
 
     #-------------------
-    # The move debounce timer fired -- the user has paused after moving rows, so recolor once now.
+    # The debounce timer fired -- the user has paused (after moving rows or typing), so recolor once now.
     def OnMoveRefreshTimer(self, event):
-        self.RecolorGrid()
+        snap=self._recolorSnapCursor
+        self._recolorSnapCursor=False
+        self.RecolorGrid(SnapCursor=snap)
 
     #------------------
     def ColorSingleCellByValueOverride(self, icol: int, irow: int) -> None:
@@ -1485,10 +1534,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if event.GetCol() == 0:    # If the Filename changes, we may need to update the PDF and the Pages columns
             self.FillInPDFColumn()
             self.FillInPagesColumn()
-        self.RefreshWindow()
+            # A filename change can restructure columns (add/remove/move the PDF column), so do a full refresh
+            self.RefreshWindow()
+        else:
+            # The grid has already updated and recolored the edited cell itself; defer the expensive
+            # re-analysis + analysis recoloring so a series of cell edits doesn't freeze a large page.
+            self.RefreshWindowDeferred()
 
     #------------------
-    def OnGridCellRightClick(self, event):       
+    def OnGridCellRightClick(self, event):
         # Do generic RMB on grid processing
         self._dataGrid.OnGridCellRightClick(event, self.m_GridPopup)
 
@@ -1562,6 +1616,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if self._dataGrid.clickedRow != -1:
             Enable("Delete Row(s)")
             Enable("Insert a Row")
+            Enable("Move to Different Fanzine")
 
         # We enable the Add Column to Left item if we're on a column to the left of the first -- it can be off the right and a column will be added to the right
         if self._dataGrid.clickedColumn > 1:
@@ -1827,6 +1882,246 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.deltaTracker.Rename(oldname, newname, serverDirName=self.ServerDir, row=self.Datasource.Rows[irow])
 
         event.Skip()
+
+
+    # ------------------
+    # Move the selected row(s) -- their cells and the server files they point to -- to a different fanzine's FIP.
+    # If the named fanzine already exists, the rows are added to it and both pages are uploaded immediately.
+    # If it does not, a new-fanzine dialog is opened (like Add New Fanzine) pre-loaded with the rows and the server
+    # directory name; the move becomes permanent only when the user uploads it. Either way the target dialog is
+    # left open so the user can continue editing.
+    def OnPopupMoveToFanzine(self, event):
+        self.wxGrid.SaveEditControlValue()
+
+        # Identify the selected rows: the selected row range if there is one, else the clicked row
+        top, _, bottom, _=self._dataGrid.SelectionBoundingBox()
+        if top == -1 or bottom == -1:
+            top=bottom=self._dataGrid.clickedRow
+        if top < 0 or top >= self.Datasource.NumRows:
+            return
+        bottom=min(bottom, self.Datasource.NumRows-1)
+        movedRows=[self.Datasource.Rows[i] for i in range(top, bottom+1) if not self.Datasource.Rows[i].IsEmptyRow]
+        if len(movedRows) == 0:
+            return
+
+        # Rows with changes not yet uploaded can't be moved: their files aren't on the server yet
+        movedIds={id(r) for r in movedRows}
+        if any(delta.Row is not None and id(delta.Row) in movedIds for delta in self.deltaTracker.Deltas):
+            wx.MessageBox("Some of the selected rows have changes which have not yet been uploaded. "
+                          "Upload this page first, then move them.", "Move to Different Fanzine", parent=self)
+            return
+
+        # Ask for the target fanzine's server directory
+        dlg=wx.TextEntryDialog(self, "New Fanzine's Server Directory Name?", "Move to Different Fanzine")
+        ok=dlg.ShowModal() == wx.ID_OK
+        targetDir=dlg.GetValue().strip()
+        dlg.Destroy()
+        if not ok or targetDir == "":
+            return      # Cancel -- or OK with nothing entered -- just closes the dialog
+
+        if targetDir.lower() == self.ServerDir.lower():
+            wx.MessageBox("That is this fanzine's own directory.", "Move to Different Fanzine", parent=self)
+            return
+
+        # Check the server to see whether the target fanzine already exists (same lookup order as page loading).
+        # The probes are FTP round-trips, so show a progress message rather than silently freezing the UI.
+        realRoot=Settings().Get("Root directory", "fanzines")
+        with ModalDialogManager(ProgressMessage2, f"Checking the server for {targetDir}", parent=self):
+            exists=FTP().FileExists(f"/{self.RootDir}/{targetDir}/index.html")
+            if not exists and self.RootDir.lower() != realRoot.lower():
+                exists=FTP().FileExists(f"/{realRoot}/{targetDir}/index.html")
+
+        if exists:
+            # ---- Existing fanzine: move the rows and files, upload both pages, leave the target dialog open ----
+            fipw=FanzineIndexPageWindow(None, serverDir=targetDir)
+            if fipw.failure:
+                wx.MessageBox(f"Unable to load {targetDir}", "Move to Different Fanzine", parent=self)
+                fipw.Destroy()
+                return
+
+            # Check for filename collisions in the target before doing anything permanent
+            renames=self.ResolveTargetFilenameCollisions(movedRows, targetDir)
+            if renames is None:
+                fipw.Destroy()
+                return      # The user declined a rename: the whole move is aborted; nothing has been changed
+
+            self.CopyRowsIntoTarget(fipw, movedRows, renames)
+            fipw.RefreshWindow()        # Make the appended rows visible in the target dialog
+
+            if not self.MoveRowFilesOnServer(movedRows, targetDir, renames):
+                fipw.Destroy()
+                return      # File move failed; message already shown. No index pages have been changed.
+
+            fipw.OnUpload(None)
+            if not fipw._uploaded:
+                wx.MessageBox(f"The upload of {targetDir} failed. The moved files are in {targetDir}'s directory on the "
+                              f"server, but neither index page has been updated.", "Move to Different Fanzine", parent=self)
+                fipw.Destroy()
+                return
+
+            self.RemoveMovedRowsAndUploadSource(movedRows)
+
+            fipw.ShowModal()        # Leave the target dialog open for further editing
+            if fipw.CFL is not None:
+                self.MovedTargetCFLs.append(fipw.CFL)
+            fipw.Destroy()
+
+        else:
+            # ---- New fanzine: open a new-fanzine dialog pre-loaded; the move happens when the user uploads it ----
+            fipw=FanzineIndexPageWindow(None, ExistingFanzinesServerDirs=list(self._existingFanzinesServerDirsLowerCase))
+            fipw.tServerDirectory.ChangeValue(targetDir)
+            fipw._manualEditOfServerDirectoryNameBegun=True     # Typing the fanzine name must not overwrite the directory name
+            self.CopyRowsIntoTarget(fipw, movedRows, {})
+            fipw._dataGrid.RefreshWxGridFromDatasource()
+            fipw.RefreshWindow()
+
+            # The move becomes permanent only when the new fanzine is successfully uploaded. If the user just
+            # closes the dialog without uploading, nothing has changed anywhere.
+            def FinishMove() -> None:
+                fipw.PostUploadCallback=None                        # Run only once
+                actualTarget=fipw.ServerDir                         # The user may have edited the directory name
+                if not self.MoveRowFilesOnServer(movedRows, actualTarget, {}):
+                    return
+                self.RemoveMovedRowsAndUploadSource(movedRows)
+            fipw.PostUploadCallback=FinishMove
+
+            fipw.ShowModal()
+            if fipw.CFL is not None:
+                self.MovedTargetCFLs.append(fipw.CFL)
+            fipw.Destroy()
+
+
+    # The server filename a row points to, or "" if it has none (text rows, link rows, external URLs, empty)
+    @staticmethod
+    def RowServerFilename(row: FanzineIndexPageTableRow) -> str:
+        if not row.IsNormalRow:
+            return ""
+        fname=row.Cells[0].strip()
+        if fname == "" or "//" in fname or "http" in fname.lower():
+            return ""
+        return fname
+
+
+    # Check each moved row's file for a name collision in the target directory, offering an Explorer-style
+    # rename ("name (1).ext") for each collision. Returns {id(row): newname} (possibly empty), or None if the
+    # user declined a rename, which aborts the whole move. Nothing here changes the server.
+    # The FTP probing is done first, under a progress message (it's a set of server round-trips which would
+    # otherwise silently freeze the UI); the user is asked about any collisions afterwards.
+    def ResolveTargetFilenameCollisions(self, movedRows: list[FanzineIndexPageTableRow], targetDir: str) -> dict|None:
+        realRoot=Settings().Get("Root directory", "fanzines")
+
+        def ExistsInTarget(fn: str) -> bool:
+            if FTP().FileExists(f"/{self.RootDir}/{targetDir}/{fn}"):
+                return True
+            return self.RootDir.lower() != realRoot.lower() and FTP().FileExists(f"/{realRoot}/{targetDir}/{fn}")
+
+        # Phase 1: probe the server for collisions and compute a free alternative name for each
+        collisions: list=[]     # (row, fname, proposed newname)
+        with ModalDialogManager(ProgressMessage2, f"Checking {targetDir} for filename collisions", parent=self) as pm:
+            for row in movedRows:
+                fname=self.RowServerFilename(row)
+                if fname == "":
+                    continue
+                pm.Update(f"Checking {fname}")
+                if not ExistsInTarget(fname):
+                    continue
+                base, ext=os.path.splitext(fname)
+                n=1
+                newname=f"{base} ({n}){ext}"
+                while ExistsInTarget(newname):
+                    n+=1
+                    newname=f"{base} ({n}){ext}"
+                collisions.append((row, fname, newname))
+
+        # Phase 2: ask the user about each collision
+        renames: dict={}
+        for row, fname, newname in collisions:
+            dlg=wx.MessageDialog(self, f"'{fname}' already exists in {targetDir}.\n\nRename the incoming file to '{newname}'?",
+                                 "Filename collision", wx.YES_NO|wx.ICON_QUESTION)
+            rslt=dlg.ShowModal()
+            dlg.Destroy()
+            if rslt != wx.ID_YES:
+                return None
+            renames[id(row)]=newname
+        return renames
+
+
+    # Copy the moved rows' cells into the target FIP's datasource, adding columns to the target as needed.
+    # Columns 0 and 1 (filename and display text) are structural on every page and are copied positionally;
+    # the rest are matched by canonicized column name.
+    def CopyRowsIntoTarget(self, fipw: FanzineIndexPageWindow, movedRows: list[FanzineIndexPageTableRow], renames: dict) -> None:
+        targetds=fipw.Datasource
+        colmap={0: 0, 1: 1}
+        for i, cd in enumerate(self.Datasource.ColDefs):
+            if i < 2:
+                continue
+            name=CanonicizeColumnHeaders(cd.Name)
+            ti=targetds.ColHeaderIndex(name)
+            if ti == -1:
+                newcd=gStdColHeaders[name] if name in gStdColHeaders else ColDefinition(cd.Name, Type=cd.Type, Width=cd.Width)
+                targetds.InsertColumn2(targetds.NumCols, newcd)
+                ti=targetds.NumCols-1
+            colmap[i]=ti
+
+        # Drop any trailing empty rows from the target, then append the moved rows
+        while targetds.Rows and targetds.Rows[-1].IsEmptyRow:
+            targetds.Rows.pop()
+
+        for row in movedRows:
+            newrow=FanzineIndexPageTableRow(targetds.ColDefs)
+            for si, ti in colmap.items():
+                if si < len(row.Cells):
+                    newrow[ti]=row.Cells[si]
+            newrow.IsTextRow=row.IsTextRow
+            newrow.IsLinkRow=row.IsLinkRow
+            if id(row) in renames:
+                newrow[0]=renames[id(row)]
+            targetds.Rows.append(newrow)
+
+
+    # Move the moved rows' files on the server from this fanzine's directory into the target's.
+    # In test mode a file may exist only under the real root; in that case it is COPIED from the real root into
+    # the test target (the real root is never modified). Returns False (after telling the user) on any failure.
+    def MoveRowFilesOnServer(self, movedRows: list[FanzineIndexPageTableRow], targetDir: str, renames: dict) -> bool:
+        realRoot=Settings().Get("Root directory", "fanzines")
+        allok=True
+        with ModalDialogManager(ProgressMessage2, f"Moving files to {targetDir}", parent=self) as pm:
+            for row in movedRows:
+                fname=self.RowServerFilename(row)
+                if fname == "":
+                    continue
+                newname=renames.get(id(row), fname)
+                src=f"/{self.RootDir}/{self.ServerDir}/{fname}"
+                dst=f"/{self.RootDir}/{targetDir}/{newname}"
+                pm.Update(f"Moving {fname}")
+                if FTP().FileExists(src):
+                    ok=FTP().Rename(src, dst)
+                elif self.RootDir.lower() != realRoot.lower():
+                    # Test mode and the file was never uploaded to the test root: copy it from the real directory
+                    ok=FTP().CopyFile(f"/{realRoot}/{self.ServerDir}", f"/{self.RootDir}/{targetDir}", fname, Create=True)
+                    if ok and newname != fname:
+                        ok=FTP().Rename(f"/{self.RootDir}/{targetDir}/{fname}", f"/{self.RootDir}/{targetDir}/{newname}")
+                else:
+                    ok=False
+                if ok:
+                    FTPLog().AppendItemVerb("move file", f"{Tagit('From', src)} {Tagit('To', dst)}", Flush=True)
+                else:
+                    Log(f"MoveRowFilesOnServer: failed to move {src} to {dst} because {FTP().LastMessage}", isError=True)
+                    allok=False
+        if not allok:
+            wx.MessageBox("One or more files could not be moved (see the log). The move has been stopped; "
+                          "no index pages have been changed.", "Move to Different Fanzine", parent=self)
+        return allok
+
+
+    # Remove the moved rows from this page and upload it. Note that no delete-deltas are queued: the files were
+    # moved to the target's directory, not deleted.
+    def RemoveMovedRowsAndUploadSource(self, movedRows: list[FanzineIndexPageTableRow]) -> None:
+        movedIds={id(r) for r in movedRows}
+        self.Datasource.Rows=[r for r in self.Datasource.Rows if id(r) not in movedIds]
+        self.RefreshWindow()
+        self.OnUpload(None)
+        self.RefreshWindow()
 
 
     # Clear links in the selected row

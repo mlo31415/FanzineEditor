@@ -202,18 +202,28 @@ def AnalyzeOrdering(rows, coldefs) -> OrderingAnalysis:
         result.ValidMessyCells.add((irow, icol))
         return key
 
-    # The issue number carried in the Display Text name (decimal-aware, e.g. "Amor 2.5" -> 2.5). Used as a
-    # fallback for the Whole signal when the page has no Whole column, so a decimal that fits the sequence is
-    # recognized as in order rather than second-guessed by the noisy filename serial. Not a number column, so
-    # nothing is pinked here.
-    def ParseNameNumber(row) -> tuple[float, str] | None:
+    # The issue number(s) carried in the Display Text name, as a (vol, num) pair of keys. Used as a fallback
+    # when the row has no number columns. A name like "Amor 2.5" yields (None, 2.5); a name like
+    # "MT Void Vol. 39, No. 45" yields (39, 45). Distinguishing the two matters: a per-volume number restarts
+    # at 1 in each new volume, so it must feed the vol+num signal, NOT be mistaken for an absolute (whole)
+    # sequence number. Not a number column, so nothing is pinked here.
+    def ParseNameNumbers(row) -> tuple:
         if iName < 0:
-            return None
+            return None, None
         s = _Cell(row, iName)
         if s == "":
-            return None
-        _pre, _vol, num, _suf = ExtractTrailingSequenceNumber(s)
-        return ParseMessyNumber(num) if num.strip() != "" else None
+            return None, None
+        # A trailing DATE must not be mistaken for an issue designation -- "Club Notice 8/16/78" would otherwise
+        # parse as Vol 16, Num 78 via the nnn/nnn pattern.  Strip m/d/y dates and month/4-digit-year fractions.
+        # (A bare nn/nn like "3/4" is left alone: it's genuinely a vol/num.)
+        s = re.sub(r"[\s,(\-]*\d{1,2}/\d{1,2}/\d{2,4}\)?\s*$", "", s).strip()
+        s = re.sub(r"[\s,(\-]*\d{1,2}/(?:19|20)\d\d\)?\s*$", "", s).strip()
+        if s == "":
+            return None, None
+        _pre, vol, num, _suf = ExtractTrailingSequenceNumber(s)
+        numkey = ParseMessyNumber(num) if num.strip() != "" else None
+        volkey = ParseMessyNumber(vol) if vol.strip() != "" else None
+        return volkey, numkey
 
     keys: dict[int, dict] = {}
     for r in normal:
@@ -221,8 +231,13 @@ def AnalyzeOrdering(rows, coldefs) -> OrderingAnalysis:
         whole = ParseNumberCell(row, iWhole, r)
         vol = ParseNumberCell(row, iVol, r)
         num = ParseNumberCell(row, iNum, r)
-        if whole is None:                       # No Whole column value -> fall back to the number in the name (decimals OK)
-            whole = ParseNameNumber(row)
+        if whole is None and vol is None and num is None:
+            # No number columns for this row: fall back to the number(s) in the issue name
+            namevol, namenum = ParseNameNumbers(row)
+            if namevol is not None:
+                vol, num = namevol, namenum     # The name encodes Vol+Num (e.g. "Vol. 39, No. 45")
+            else:
+                whole = namenum                 # A bare trailing number (e.g. "Amor 2.5", decimals OK)
         # The filename serial is a noisy last resort (e.g. "Amor-025.pdf" -> 25 even though the issue is 2.5),
         # so only fall back to it when the row has no issue number from a column or from its name.
         if whole is not None or vol is not None or num is not None:
@@ -266,7 +281,34 @@ def AnalyzeOrdering(rows, coldefs) -> OrderingAnalysis:
         sa, sb = keys[a]["serial"], keys[b]["serial"]
         return _NA if sa is None or sb is None else _cmp(sa, sb)
 
-    signals = [("date", CmpDate), ("whole", CmpWhole), ("volnum", CmpVolNum), ("serial", CmpSerial)]
+    # Issue numbering restarts when a zine changes name or series (e.g. "Holmdel ... Vol 4, No 35" is followed
+    # by "Lincroft ... Vol 1, No 1"). A number descent onto a No. 1 (or Whole 1) row whose date does not descend
+    # is such a restart, not a misordering: split the rows into numbering SEGMENTS there, and only compare the
+    # number signals within a segment. (Dates are still compared across the whole page.)
+    seg: dict[int, int] = {}
+    segid = 0
+    lastnumbered = None      # the most recent normal row that carried any number key
+    for r in normal:
+        k = keys[r]
+        hasnum = k["whole"] is not None or k["vol"] is not None or k["num"] is not None
+        if hasnum and lastnumbered is not None:
+            descends = CmpWhole(lastnumbered, r) == _GREATER or CmpVolNum(lastnumbered, r) == _GREATER
+            startish = (k["num"] is not None and k["num"][0] <= 1) or (k["whole"] is not None and k["whole"][0] <= 1)
+            if descends and startish and CmpDate(lastnumbered, r) != _GREATER:
+                segid += 1
+        seg[r] = segid
+        if hasnum:
+            lastnumbered = r
+
+    # Wrap the number comparisons so rows in different numbering segments are incomparable
+    def SegGated(f):
+        def g(a: int, b: int):
+            if seg[a] != seg[b]:
+                return _NA
+            return f(a, b)
+        return g
+
+    signals = [("date", CmpDate), ("whole", SegGated(CmpWhole)), ("volnum", SegGated(CmpVolNum)), ("serial", CmpSerial)]
 
     # The list should be in ASCENDING order by every signal (date, whole, vol/num, and the filename serial).
     # Wherever a signal *descends* across a pair of rows, the list isn't ascending there -- that's an ordering

@@ -2962,6 +2962,20 @@
           <property name="bitmap"></property>
           <property name="checked">0</property>
           <property name="enabled">1</property>
+          <property name="help">Move the selected row(s), including their files, to another fanzine's index page.</property>
+          <property name="id">wxID_ANY</property>
+          <property name="kind">wxITEM_NORMAL</property>
+          <property name="label">Move to Different Fanzine</property>
+          <property name="name">m_menuItemPopupMoveToFanzine</property>
+          <property name="permission">none</property>
+          <property name="shortcut"></property>
+          <property name="unchecked_bitmap"></property>
+          <event name="OnMenuSelection">OnPopupMoveToFanzine</event>
+        </object>
+        <object class="wxMenuItem" expanded="false">
+          <property name="bitmap"></property>
+          <property name="checked">0</property>
+          <property name="enabled">1</property>
           <property name="help"></property>
           <property name="id">wxID_ANY</property>
           <property name="kind">wxITEM_NORMAL</property>

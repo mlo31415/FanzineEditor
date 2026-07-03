@@ -399,6 +399,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.m_menuItemPopupRenamePDF = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Rename PDF on Server", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemPopupRenamePDF )
 
+		self.m_menuItemPopupMoveToFanzine = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Move to Different Fanzine", u"Move the selected row(s), including their files, to another fanzine's index page.", wx.ITEM_NORMAL )
+		self.m_GridPopup.Append( self.m_menuItemPopupMoveToFanzine )
+
 		self.m_menuItemAllowEditing = wx.MenuItem( self.m_GridPopup, wx.ID_ANY, u"Allow Editing", wx.EmptyString, wx.ITEM_NORMAL )
 		self.m_GridPopup.Append( self.m_menuItemAllowEditing )
 
@@ -462,6 +465,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.Bind( wx.EVT_MENU, self.OnPopupMergeRows, id = self.m_menuItemPopupMergeRows.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupReplace, id = self.m_menuItemPopupReplace.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupRenamePDF, id = self.m_menuItemPopupRenamePDF.GetId() )
+		self.Bind( wx.EVT_MENU, self.OnPopupMoveToFanzine, id = self.m_menuItemPopupMoveToFanzine.GetId() )
 		self.Bind( wx.EVT_MENU, self.OnPopupAllowEditing, id = self.m_menuItemAllowEditing.GetId() )
 
 	def __del__( self ):
@@ -627,6 +631,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnPopupRenamePDF( self, event ):
+		event.Skip()
+
+	def OnPopupMoveToFanzine( self, event ):
 		event.Skip()
 
 	def OnPopupAllowEditing( self, event ):

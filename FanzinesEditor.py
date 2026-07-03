@@ -547,17 +547,36 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
         with FanzineIndexPageWindow(None, ExistingFanzinesServerDirs=self.Datasource.ServerDirs) as fsw:
             fsw.ShowModal()
-            if not fsw._uploaded:
-                return
 
-        FTPLog().AppendItemVerb("New Fanzine", f"{Tagit("FanzineName", fsw.CFL.Name.MainName)}", Flush=True)
+            # Rows may have been moved to other fanzines (possibly newly created ones) from within the dialog;
+            # update or add their list entries.
+            changed=False
+            for cfl in fsw.MovedTargetCFLs:
+                self.MergeCFLIntoList(cfl)
+                changed=True
 
-        # A new fanzine has been added.
-        self._fanzinesList.append(fsw.CFL)
+            if fsw._uploaded:
+                FTPLog().AppendItemVerb("New Fanzine", f"{Tagit("FanzineName", fsw.CFL.Name.MainName)}", Flush=True)
+                # A new fanzine has been added.
+                self.MergeCFLIntoList(fsw.CFL)
+                changed=True
+
+        if not changed:
+            return
         self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())
         self.Datasource.FanzineList=self._fanzinesList
         self.SearchFanzineList()
         self.RefreshWindow()
+
+
+    # Update the list entry for this CFL's server directory, or add it if it isn't in the list (e.g. a fanzine
+    # newly created by Move to Different Fanzine from within another fanzine's dialog).
+    def MergeCFLIntoList(self, cfl: ClassicFanzinesLine) -> None:
+        hits=[i for i, x in enumerate(self._fanzinesList) if x.ServerDir.lower() == cfl.ServerDir.lower()]
+        if hits:
+            self._fanzinesList[hits[0]]=cfl
+        else:
+            self._fanzinesList.append(cfl)
 
 
     def OnGridCellLeftClick( self, event ):
@@ -591,16 +610,18 @@ class FanzinesEditorWindow(FanzinesGridGen):
                 return
             fipw.ShowModal()
 
-        # The edit may have updated some of the parameters.
+        # The edit may have updated some of the parameters -- and rows may have been moved to other fanzines
+        # (possibly newly created ones) whose list entries also need updating or adding.
+        # (We can't use icol/irow to locate the entry -- they're meaningless if a search was active -- so we
+        # match on the server directory, which is unique.)
+        changed=False
         if fipw.CFL is not None:
-            # First, we have to figure out where to store the result. The icol and irow can be used only if the entire list of fanzines was being displayed.
-            # If they were the result of a search, they are meaningless
-            # We make use of the fact that the derver directories are unique.
-            index=[i for i, x in enumerate(self._fanzinesList) if x.ServerDir == fipw.CFL.ServerDir][0]    # There should be exactly one hit
-
-            self._fanzinesList[index]=fipw.CFL
-
-            #existingCFL: ClassicFanzinesLine=self._fanzinesList[self.Datasource.NumCols*event.Row+event.Col]
+            self.MergeCFLIntoList(fipw.CFL)
+            changed=True
+        for cfl in fipw.MovedTargetCFLs:
+            self.MergeCFLIntoList(cfl)
+            changed=True
+        if changed:
             # Display the updated fanzines list
             self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())
             self.Datasource.FanzineList=self._fanzinesList
