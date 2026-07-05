@@ -801,6 +801,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # Now execute the delta list on the files.
             self.failure=False
             Log("Begin delta processing.")
+            self._abortUploadRequested=False    # Set when the user answers No to continuing after a failed file upload
             # Due to a very reasonable (but as it turns out unhelpful) decision, rows
             for delta in self.deltaTracker.Deltas:
 
@@ -811,6 +812,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         sourceFilename=delta.Row[0]     # Need to allow for edits in col 0 after add, but before upload
                         # Note that we pass in cfl and Row because the row is likely to have been updated after the DeltaAdd is created, and we want to capture those updates
                         delta.Uploaded=self.UpdateAndUpload(delta.Row, sourceFilename, delta.SourcePath, editors=cfl.Editors, mainName=cfl.Name.MainName, country=cfl.Country, pm=pm)
+                        if not delta.Uploaded and self._abortUploadRequested:
+                            break       # The user answered No to "Continue with the remaining files?"
                         if delta.Uploaded:
                             if moveFilesAfterUploading:
                                 MoveToLocalDirectory(delta.SourcePath, localDirectoryPath, sourceFilename)
@@ -871,7 +874,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                                         f'{Tagit("clubname", self.Datasource.Clubname)}'+
                                                         f'{Tagit("Newname", delta.Row[0])} {Tagit("ServerDirName", delta.ServerDirName)} {Tagit("RootDir", self.RootDir)}', Flush=True)
 
-            c=sum([1 for x in self.deltaTracker.Deltas if not x.Uploaded and not x.ServerFilename.strip() == ""])
+            # Count the failures. (A delete of a blank server filename is skipped, not failed, so don't count it.
+            # Note that ServerFilename is None for add/replace deltas -- guard before stripping.)
+            c=sum([1 for x in self.deltaTracker.Deltas
+                   if not x.Uploaded and not (x.Verb == "delete" and (x.ServerFilename or "").strip() == "")])
             if c > 0:
                 dlg=wx.MessageDialog(self, f"{Pluralize(c, "upload")} failed")
                 dlg.ShowModal()
@@ -937,11 +943,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         pm.Update(f"Uploading {sourcefilename} as {sourcefilename}")
         Log(f"FTP().PutFile({copyfilepath}, {serverpathfile})")
         if not FTP().PutFile(copyfilepath, serverpathfile):
-            dlg=wx.MessageDialog(self, f"Unable to upload {copyfilepath} because {FTP().LastMessage}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
-            result=dlg.ShowModal()
+            dlg=wx.MessageDialog(self, f"Unable to upload {copyfilepath} because {FTP().LastMessage}\n\nContinue with the remaining files?",
+                                 "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+            result=dlg.ShowModal()      # Either way this upload FAILED; Yes just means keep going with the rest
             dlg.Destroy()
-            if result != wx.ID_YES:
-                return False
+            self._abortUploadRequested=result != wx.ID_YES
+            if isPdf:
+                os.remove(copyfilepath)     # Clean up the temporary metadata-annotated copy
+            return False        # The delta stays pending, gets counted as a failure, and can be retried
 
         if isPdf:
             # If this is a PDF, then we created a temporary file when adding the metadata. Delete it now.
