@@ -5,6 +5,7 @@ import wx
 import wx.grid
 import sys
 import re
+import html
 
 from FTP import FTP, Lock
 
@@ -114,6 +115,20 @@ def Log(text: str, isError: bool=False, noNewLine: bool=False, Print=True, Clear
 
 
 #==========================================================================================================
+# Fully decode HTML character entities, peeling repeated over-escaping (e.g. '&amp;amp;#225;' -> 'á').
+# Historically each download/upload cycle of the Classic page re-escaped the fanzine names ('&#225;' ->
+# '&amp;#225;' -> ...), so decoding to a fixpoint both reads correct data and repairs escalated entries.
+# (Tags such as <br> are left alone; only character entities are decoded.)
+def DecodeHtmlEntitiesFully(s: str) -> str:
+    for _ in range(4):
+        t=html.unescape(s)
+        if t == s:
+            break
+        s=t
+    return s
+
+
+#==========================================================================================================
 # Read the classic fanzine list on fanac.org and return a list of all *fanzine directory names*
 def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
     html=None
@@ -207,7 +222,10 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
                 continue
 
             url=m.group(1).strip()
-            cfl.Name=FanzineNames(StripSpecificTag(m.group(2), "strong", Number=5), m.group(3))
+            # The names are stored HTML-escaped on the page; decode them to Unicode here. (The upload
+            # re-escapes them, so failing to decode here escalates the escaping on every cycle.)
+            cfl.Name=FanzineNames(DecodeHtmlEntitiesFully(StripSpecificTag(m.group(2), "strong", Number=5)),
+                                  DecodeHtmlEntitiesFully(m.group(3)))
             m=re.match(r"https://fanac.org/fanzines([a-zA-Z 0-9\-]*?)/(.*)$", url, flags=re.IGNORECASE)
             if m is not None:
                 url=m.group(2)
@@ -215,14 +233,14 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
 
         # Column 2: Editor
         if row[2] != "":
-            cfl.Editors=ConvertHTMLishCharacters(row[2].strip())
+            cfl.Editors=DecodeHtmlEntitiesFully(ConvertHTMLishCharacters(row[2].strip()))
             # Strip trailing semicolon which otherwise looks like a second, blank editor
             if len(cfl.Editors) > 0 and cfl.Editors[-1] == ";":
                 cfl.Editors=cfl.Editors[:-1]
 
         # Column 3: Dates
         if row[3] != "":
-            cfl.Dates=ConvertHTMLishCharacters(row[3].strip())
+            cfl.Dates=DecodeHtmlEntitiesFully(ConvertHTMLishCharacters(row[3].strip()))
 
         # Column 4: Type
         if row[4] != "":
@@ -320,23 +338,24 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
 
         flags=("n" if newFlag else "")+("u" if updatedFlag else "")+("c" if fanzine.Complete else "")
 
+        # A single flag goes on the cell's first line; multiple flags get one line each.
         match flags:
             case "":
                 row+=f'<TD sorttable_customkey="zzzz"><BR>&nbsp;<br>\n'
             case "c":
-                row+=f'<TD sorttable_customkey="complete"><br><X CLASS="complete">Complete</X><br>\n'
+                row+=f'<TD sorttable_customkey="complete"><X CLASS="complete">Complete</X><br>\n'
             case "u":
-                row+=f'<TD sorttable_customkey="updated"><br><X CLASS="updated">Updated</X><br>\n'
+                row+=f'<TD sorttable_customkey="updated"><X CLASS="updated">Updated</X><br>\n'
             case "n":
-                row+=f'<TD sorttable_customkey="new"><br><X CLASS="new">New</X><br>\n'
+                row+=f'<TD sorttable_customkey="new"><X CLASS="new">New</X><br>\n'
             case "uc":
-                row+=f'<TD sorttable_customkey="complete+updated"><br><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X><br>\n'
+                row+=f'<TD sorttable_customkey="complete+updated"><X CLASS="complete">Complete</X><br><X CLASS="updated">Updated</X><br>\n'
             case "nc":
-                row+=f'<TD sorttable_customkey="complete+new"><br><X CLASS="complete">Complete</X><X CLASS="new">New</X><br>\n'
+                row+=f'<TD sorttable_customkey="complete+new"><X CLASS="complete">Complete</X><br><X CLASS="new">New</X><br>\n'
             case "nu":
-                row+=f'<TD sorttable_customkey="new+updated"><br><X CLASS="updated">Updated</X><X CLASS="new">New</X><br>\n'
+                row+=f'<TD sorttable_customkey="new+updated"><X CLASS="updated">Updated</X><br><X CLASS="new">New</X><br>\n'
             case "nuc":
-                row+=f'<TD sorttable_customkey="complete+updated+new"><br><X CLASS="complete">Complete</X><X CLASS="updated">Updated</X><X CLASS="new">New</X><br>\n'
+                row+=f'<TD sorttable_customkey="complete+updated+new"><X CLASS="complete">Complete</X><br><X CLASS="updated">Updated</X><br><X CLASS="new">New</X><br>\n'
 
         flu=""
         if fanzine.Updated is not None:
