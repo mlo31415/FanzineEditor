@@ -26,7 +26,7 @@ from FanzineIndexPageOrdering import AnalyzeOrdering as AnalyzeFIPOrdering, Pars
 from FTP import FTP
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, IsEditable
-from WxHelpers import OnCloseHandling3, ProcessChar, GuardReentry
+from WxHelpers import OnCloseHandling3, ProcessChar, GuardReentry, SetWindowIcon
 from WxHelpers import ModalDialogManager, ProgressMessage2
 from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, RemoveTopLevelHTMLTags, RegularizeBRTags, Pluralize
 from HelpersPackage import SortMessyNumber, SortTitle, SortPersonsName
@@ -238,6 +238,8 @@ def HtmlFancylinkToSpecialNameFormat(val: str) -> str:
 class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def __init__(self, parent, serverDir: str= "", ExistingFanzinesServerDirs: list[str]|None=None) -> None:
         FanzineIndexPageEditGen.__init__(self, parent)
+
+        SetWindowIcon(self, "FanzinesEditor.ico")   # Harmless no-op if the icon file is missing or bad
 
         self.failure=True
 
