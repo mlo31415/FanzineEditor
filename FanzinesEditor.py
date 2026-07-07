@@ -11,7 +11,7 @@ from FTP import FTP, Lock
 
 from FTPLog import FTPLog
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
-from WxHelpers import OnCloseHandling3, ProgressMessage2, ModalDialogManager
+from WxHelpers import OnCloseHandling3, ProgressMessage2, ModalDialogManager, GuardReentry
 from HelpersPackage import ExtractInvisibleTextInsideFanacComment, ConvertHTMLishCharacters
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, UnicodeToHtml, StripSpecificTag, Int0, TimestampFilename
 from Log import LogOpen, LogClose, LogError
@@ -43,6 +43,21 @@ def main():
 
     homedir=os.getcwd()
     LogOpen(os.path.join(homedir, "Log -- FanzinesEditor.txt"), os.path.join(homedir, "Log (Errors) -- FanzinesEditor.txt"))
+
+    # Uncaught exceptions in event handlers would otherwise be printed to stderr -- which is lost in the
+    # windowed exe -- while the app keeps running in a half-done state ("wonky"). Log them and tell the user.
+    def LogUncaughtException(exctype, value, tb):
+        import traceback
+        txt="".join(traceback.format_exception(exctype, value, tb))
+        Log("Uncaught exception:\n"+txt, isError=True, Flush=True)
+        try:
+            if wx.GetApp() is not None:
+                wx.MessageBox(f"An internal error occurred:\n\n{value}\n\nDetails were written to the log files. "
+                              f"FanzinesEditor will try to continue, but if things seem wrong, it is safest to restart it.",
+                              "FanzinesEditor internal error")
+        except Exception:
+            pass        # Never let the error reporter itself blow up
+    sys.excepthook=LogUncaughtException
     Log(f"Open Logfile {os.path.join(homedir, 'Log -- FanzinesEditor.txt')}")
     Log(f"{homedir=}")
     Log(f"{sys.executable=}")
@@ -562,6 +577,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self.RefreshWindow()
 
 
+    @GuardReentry
     def OnAddNewFanzine(self, event):
 
         with FanzineIndexPageWindow(None, ExistingFanzinesServerDirs=self.Datasource.ServerDirs) as fsw:
@@ -619,6 +635,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self.OpenClickedCell(event.Col, event.Row)
 
 
+    @GuardReentry
     def OpenClickedCell(self, icol: int, irow: int):
 
         serverDir=self._Datasource.Rows[irow][icol]
@@ -649,6 +666,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
     #-------------------
     # Upload the fanzines list to the classic fanzine page
+    @GuardReentry
     def OnUploadPressed( self, event ):
         success=PutClassicFanzineList(self._fanzinesList, self.RootDir)
         self.Raise()    # Bring the window to the top

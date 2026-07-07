@@ -26,7 +26,7 @@ from FanzineIndexPageOrdering import AnalyzeOrdering as AnalyzeFIPOrdering, Pars
 from FTP import FTP
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, IsEditable
-from WxHelpers import OnCloseHandling3, ProcessChar
+from WxHelpers import OnCloseHandling3, ProcessChar, GuardReentry
 from WxHelpers import ModalDialogManager, ProgressMessage2
 from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, RemoveTopLevelHTMLTags, RegularizeBRTags, Pluralize
 from HelpersPackage import SortMessyNumber, SortTitle, SortPersonsName
@@ -489,6 +489,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.EndModal(wx.OK)
 
 
+    @GuardReentry
     def OnAddNewIssues(self, event):       
 
         # Call the File Open dialog to select PDF files
@@ -696,6 +697,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     #------------------
     # Upload the current FanzineIndexPage (including any added fanzines) to the server
+    @GuardReentry
     def OnUpload(self, event):
         Log("OnUpload pressed")
         # if self.CreatingNewFanzineSeries:
@@ -1899,6 +1901,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # If it does not, a new-fanzine dialog is opened (like Add New Fanzine) pre-loaded with the rows and the server
     # directory name; the move becomes permanent only when the user uploads it. Either way the target dialog is
     # left open so the user can continue editing.
+    @GuardReentry
     def OnPopupMoveToFanzine(self, event):
         self.wxGrid.SaveEditControlValue()
 
