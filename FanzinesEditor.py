@@ -12,7 +12,7 @@ from FTP import FTP, Lock
 from FTPLog import FTPLog
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
 from WxHelpers import OnCloseHandling3, ProgressMessage2, ModalDialogManager, GuardReentry, SetWindowIcon
-from HelpersPackage import ExtractInvisibleTextInsideFanacComment, ConvertHTMLishCharacters
+from HelpersPackage import ExtractInvisibleTextInsideFanacComment, ConvertHTMLishCharacters, PyiResourcePath
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, UnicodeToHtml, StripSpecificTag, Int0, TimestampFilename
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
@@ -421,7 +421,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
     def __init__(self, parent):
         FanzinesGridGen.__init__(self, parent)
 
-        SetWindowIcon(self, "FanzinesEditor.ico")   # Harmless no-op if the icon file is missing or bad
+        SetWindowIcon(self, PyiResourcePath("FanzinesEditor.ico"))   # Bundled into the exe; harmless no-op if missing or bad
 
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzinesPage()      # Note that this is an empty instance

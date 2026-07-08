@@ -1,8 +1,9 @@
 @echo off
-rem Build FanzinesEditor.exe. If FanzinesEditor.ico is present it becomes the exe's icon;
-rem if not, the build proceeds with the default icon.
+rem Build FanzinesEditor.exe. If FanzinesEditor.ico is present it becomes the exe's icon and is also
+rem bundled inside the exe (PyiResourcePath finds it at runtime for the window/taskbar icon).
+rem If the icon is absent, the build proceeds with the default icon.
 if exist FanzinesEditor.ico (
-    .\venv12\Scripts\pyinstaller.exe --onefile --windowed --icon=FanzinesEditor.ico FanzinesEditor.py
+    .\venv12\Scripts\pyinstaller.exe --onefile --windowed --icon=FanzinesEditor.ico --add-data "FanzinesEditor.ico;." FanzinesEditor.py
 ) else (
     echo No FanzinesEditor.ico found -- building with the default icon.
     .\venv12\Scripts\pyinstaller.exe --onefile --windowed  FanzinesEditor.py
