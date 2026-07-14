@@ -33,7 +33,9 @@ class DeltaAdd(Delta):
         self.SourcePath=SourcePath
 
     def __str__(self) -> str:
-        s="Add: "+self.SourceFilename
+        # SourceFilename is often unset for adds -- the filename lives in the row (and may be edited there)
+        fname=self.SourceFilename or (self.Row.Cells[0] if self.Row is not None else "?")
+        s="Add: "+fname
         if self.ServerDirName is not None and len(self.ServerDirName) > 0:
             s+=" ServerDirName="+self.ServerDirName
         return s
@@ -60,7 +62,7 @@ class DeltaDelete(Delta):
         self.ServerFilename=row.Cells[0]
 
     def __str__(self) -> str:
-        s="Delete: "+self.SourceFilename
+        s="Delete: "+(self.ServerFilename or self.SourceFilename or "?")
         if self.ServerDirName is not None and len(self.ServerDirName) > 0:
             s+=" ServerDirName="+self.ServerDirName
         return s
