@@ -235,6 +235,26 @@ def HtmlFancylinkToSpecialNameFormat(val: str) -> str:
     return WikiUrlnameToWikiPagename(val)
 
 
+#####################################################################################
+# Background tint marking the row a drag-and-drop would land above (see _UpdateDragHighlight).
+gColorDragHighlight=wx.Colour(198, 224, 255)   # light blue, distinct from the grid's pink/yellow/purple colors
+
+
+# Bridges files dragged from a file-explorer window onto the issues grid to the window's drop handler.
+class _GridFileDropTarget(wx.FileDropTarget):
+    def __init__(self, win):
+        super().__init__()
+        self._win=win
+    def OnDropFiles(self, x: int, y: int, filenames: list[str]) -> bool:
+        return self._win._OnFilesDropped(x, y, filenames)
+    def OnDragOver(self, x: int, y: int, defResult):
+        # Fired continuously during the drag: tint the row the files would be inserted above.
+        self._win._UpdateDragHighlight(x, y)
+        return defResult
+    def OnLeave(self):
+        self._win._ClearDragHighlight()
+
+
 class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def __init__(self, parent, serverDir: str= "", ExistingFanzinesServerDirs: list[str]|None=None) -> None:
         FanzineIndexPageEditGen.__init__(self, parent)
@@ -306,6 +326,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # This is runtime-only (wxFormBuilder can't do dynamic cell tooltips), so it lives here in the subclass.
         self._tooltipCell=None      # The (row, col) the tooltip currently describes, to avoid flicker
         self.wxGrid.GetGridWindow().Bind(wx.EVT_MOTION, self.OnGridMotion)
+
+        # Accept PDFs dragged in from a file-explorer window: they are added exactly like "Add New Issues",
+        # inserted just above the row they are dropped on (see _OnFilesDropped). Keep a reference to the
+        # drop target so the Python object isn't garbage-collected out from under the C++ side.
+        self._fileDropTarget=_GridFileDropTarget(self)
+        self.wxGrid.GetGridWindow().SetDropTarget(self._fileDropTarget)
+        self._dragHighlightRow=None     # the grid row currently tinted to show a drag-drop target, or None
 
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
@@ -537,6 +564,88 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # self._dataGrid.RefreshWxGridFromDatasource(RetainSelection=False)
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
+
+
+    # ----------------------------------------------
+    # Handle files dragged from a file-explorer window onto the issues grid. PDFs are added exactly as
+    # "Add New Issues" does, inserted just ABOVE the row they were dropped on -- pushing that row and
+    # everything below it down. (A drop below the last row, or on an empty grid, appends at the end.)
+    # Non-PDF items are skipped. Returns True if anything was added.
+    def _OnFilesDropped(self, x: int, y: int, filenames: list[str]) -> bool:
+        try:
+            self._ClearDragHighlight()      # The drag is over; remove the target-row tint
+            accepted=[f for f in filenames if os.path.isfile(f) and os.path.splitext(f)[1].lower() == ".pdf"]
+            skipped=[f for f in filenames if f not in accepted]
+            if not accepted:
+                if filenames:
+                    wx.MessageBox("None of the dropped items is a PDF file.", "Nothing added", wx.OK|wx.ICON_INFORMATION)
+                return False
+            accepted.sort()
+            accepted=[f.replace("\\", "/") for f in accepted]       # Backslash separators give trouble downstream
+
+            # Remove any trailing empty rows (as Add New Issues does), then compute the insertion point:
+            # just above the row the files were dropped on; YToRow() returns wx.NOT_FOUND when the drop is
+            # below the last row (or the grid is empty) -> append at the end.
+            while self.Datasource.Rows and self.Datasource.Rows[-1].IsEmptyRow:
+                self.Datasource.Rows.pop()
+            _, uy=self.wxGrid.CalcUnscrolledPosition(x, y)
+            row=self.wxGrid.YToRow(uy)
+            insertAt=self.Datasource.NumRows if row == wx.NOT_FOUND else min(row, self.Datasource.NumRows)
+
+            self.Datasource.InsertEmptyRows(insertAt, len(accepted))
+            for i, path in enumerate(accepted):
+                newrow=self.Datasource.Rows[insertAt+i]
+                newrow.FileSourcePath=path
+                newrow[0]=os.path.basename(path)
+                self.deltaTracker.Add(path, row=newrow)
+
+            # Add a PDF column (if needed) and fill in the PDF column and page counts
+            self.FillInPDFColumn()
+            self.FillInPagesColumn()
+
+            self._dataGrid.RefreshWxGridFromDatasource()
+            self.RefreshWindow()
+
+            if skipped:
+                wx.MessageBox(f"Added {len(accepted)} PDF(s). Skipped (not PDFs):\n"+
+                              "\n".join(os.path.basename(s) for s in skipped), "Some files skipped", wx.OK|wx.ICON_INFORMATION)
+            return True
+        except Exception as e:
+            import traceback
+            LogError(f"_OnFilesDropped: failed to add dropped files: {e}\n{traceback.format_exc()}")
+            return False
+
+
+    # ----------------------------------------------
+    # During a file drag over the grid, tint the row the files would be inserted ABOVE (i.e. the row that a
+    # drop would push down) so the user sees the target.
+    # Only repaints when the hovered row changes (OnDragOver fires continuously). Cosmetic only -- it touches
+    # cell background color, never data; _ClearDragHighlight restores the row's proper colors.
+    def _UpdateDragHighlight(self, x: int, y: int) -> None:
+        try:
+            _, uy=self.wxGrid.CalcUnscrolledPosition(x, y)
+            row=self.wxGrid.YToRow(uy)
+            if row == wx.NOT_FOUND:                  # past the last row -> the files land below the last row
+                row=self.Datasource.NumRows-1
+            if row == self._dragHighlightRow:
+                return
+            self._ClearDragHighlight()               # reset the previously-tinted row
+            if 0 <= row < self.Datasource.NumRows:
+                for col in range(self.wxGrid.GetNumberCols()):
+                    self._dataGrid.SetCellBackgroundColor(row, col, gColorDragHighlight)
+                self.wxGrid.ForceRefresh()
+                self._dragHighlightRow=row
+        except Exception:
+            pass    # a hover hint is never worth disrupting the drag
+
+    # ----------------------------------------------
+    # Remove the drag hover tint, restoring the row's normal colors.
+    def _ClearDragHighlight(self) -> None:
+        r=self._dragHighlightRow
+        self._dragHighlightRow=None
+        if r is not None and 0 <= r < self.Datasource.NumRows:
+            self._dataGrid.RefreshWxGridFromDatasource(StartRow=r, EndRow=r)
+            self.wxGrid.ForceRefresh()
 
 
     #--------------------------
@@ -2696,16 +2805,24 @@ class FanzineIndexPage(GridDataSource):
         return x
 
 
-    def GetFanzineIndexPageOld(self, html: str) -> bool:  
+    def GetFanzineIndexPageOld(self, html: str) -> bool:
         soup=BeautifulSoup(html, 'html.parser')
         body=soup.findAll("body")
+        if len(body) == 0:
+            LogError("GetFanzineIndexPageOld(): the page has no <body> -- it isn't a Fanzine Index Page and can't be edited with FanzinesEditor.")
+            return False
         bodytext=str(body)
 
         bodytext=self.RemoveA0C2Crap(bodytext)
         _, bodytext=SearchAndReplace(r"(<script>.+?</script>)", bodytext, "", ignorenewlines=True)
 
-
+        # A standard old-style FIP has (at least) three tables: the topmatter, a spacer, and the issue table.
+        # Special pages (e.g. the APA_Mailings hub) don't -- they aren't FIPs and can't be edited here.
         tables=body[0].findAll("table")
+        if len(tables) < 3:
+            LogError(f"GetFanzineIndexPageOld(): this page has {len(tables)} table(s) where a Fanzine Index Page has at least 3. "
+                     f"It isn't a standard FIP and can't be edited with FanzinesEditor.")
+            return False
         top=tables[0]
         theTable=tables[2]
         #bottom=tables[3]
