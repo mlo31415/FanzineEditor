@@ -23,6 +23,8 @@ dist/
 # Runtime logs
 Log -- *.txt
 Log (Errors) -- *.txt
+Log.txt
+Log Errors.txt
 *.log
 
 # Runtime / per-user state
@@ -32,6 +34,9 @@ FanzinesEditor positions.json
 Local Directories/
 Files.zip
 Not_a_pdf.txt
+LocalToServer Conversion.txt
+Template - Fanzine Index Page (old or test).html
+Test pdfs/
 
 # Symlinks to shared packages -- machine-specific, regenerated locally by the mklinks*.bat scripts.
 # Do NOT commit these: they point to absolute paths on the dev's machine and would check out as
