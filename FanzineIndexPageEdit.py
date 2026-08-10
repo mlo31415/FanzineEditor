@@ -239,6 +239,8 @@ def HtmlFancylinkToSpecialNameFormat(val: str) -> str:
 # Background tint marking the row a drag-and-drop would land above (see _UpdateDragHighlight).
 gColorDragHighlight=wx.Colour(198, 224, 255)   # light blue, distinct from the grid's pink/yellow/purple colors
 
+_ROW_DRAG_THRESHOLD=5   # pixels of vertical movement before a press-inside-a-selection becomes a row drag
+
 
 # Bridges files dragged from a file-explorer window onto the issues grid to the window's drop handler.
 class _GridFileDropTarget(wx.FileDropTarget):
@@ -333,6 +335,27 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._fileDropTarget=_GridFileDropTarget(self)
         self.wxGrid.GetGridWindow().SetDropTarget(self._fileDropTarget)
         self._dragHighlightRow=None     # the grid row currently tinted to show a drag-drop target, or None
+
+        # Drag rows up/down to reorder them (alongside the arrow-key reorder). Two entry points: a drag that
+        # starts on an UNSELECTED row fires EVT_GRID_CELL_BEGIN_DRAG (EnableDragCell) and moves that one row;
+        # a drag that starts INSIDE the current selection is caught in _OnGridLeftDown -- we consume the click
+        # so the grid can't collapse the selection -- and detected by a movement threshold in _OnRowDragMotion.
+        # The drop target is shown with the same row highlight as the file-drop feature, and a timer
+        # auto-scrolls the grid while the cursor is held near a top/bottom edge.
+        # (The grid window's EVT_MOTION is also bound to the tooltip handler above; this handler is bound
+        # later so it runs first, owns the events during a drag, and Skip()s otherwise so tooltips still work.)
+        self._rowDragBlock=None          # (top, bottom) of the block being actively dragged, or None
+        self._armedDragBlock=None        # (top, bottom) grabbed inside a selection on left-down, pending a drag
+        self._armedDragStartY=0
+        self._armedDragRow=0
+        self.wxGrid.EnableDragCell(True)
+        self.wxGrid.Bind(wx.grid.EVT_GRID_CELL_BEGIN_DRAG, self._OnRowBeginDrag)
+        _gw=self.wxGrid.GetGridWindow()
+        _gw.Bind(wx.EVT_LEFT_DOWN, self._OnGridLeftDown)
+        _gw.Bind(wx.EVT_MOTION, self._OnRowDragMotion)
+        _gw.Bind(wx.EVT_LEFT_UP, self._OnRowDragEnd)
+        self._dragScrollTimer=wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self._OnDragScrollTick, self._dragScrollTimer)
 
         # Get the default PDF directory
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
@@ -647,6 +670,124 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self._dataGrid.RefreshWxGridFromDatasource(StartRow=r, EndRow=r)
             self.wxGrid.ForceRefresh()
 
+    # ----------------------------------------------
+    # ----- Drag rows up/down to reorder them -----
+    # Left-down: if it lands INSIDE the current selection, grab the block to drag -- consume the event so the
+    # grid can't collapse the selection, and arm a drag that _OnRowDragMotion starts once the mouse moves.
+    # Otherwise let the grid select normally (a drag on an unselected row starts via begin-drag = one row).
+    def _OnGridLeftDown(self, event) -> None:
+        self._armedDragBlock=None
+        try:
+            _, uy=self.wxGrid.CalcUnscrolledPosition(*event.GetPosition())
+            row=self.wxGrid.YToRow(uy)
+            if row >= 0:
+                # The selection may be whole rows (row-label clicks, the keyboard-move flow) or a cell block
+                # (rubber-band selection) -- HasSelection()/LocateSelection() only see the latter, so check both.
+                selrows=self.wxGrid.GetSelectedRows()
+                if selrows:
+                    top, bottom=min(selrows), max(selrows)
+                elif self._dataGrid.HasSelection():
+                    top, _l, bottom, _r=self._dataGrid.LocateSelection()
+                else:
+                    top, bottom=-1, -2
+                if top <= row <= bottom:
+                    self._armedDragBlock=(top, bottom)
+                    self._armedDragStartY=uy
+                    self._armedDragRow=row
+                    return          # consumed: selection preserved, no rubber-band, no begin-drag
+        except Exception:
+            self._armedDragBlock=None
+        event.Skip()
+
+    # begin-drag fires only for a drag started on a row NOT in the selection (its left-down was Skipped, so the
+    # grid selected that single row) -> drag just that row.
+    def _OnRowBeginDrag(self, event) -> None:
+        startRow=event.GetRow()
+        if 0 <= startRow < self.Datasource.NumRows:
+            self._StartRowDrag((startRow, startRow))
+
+    def _StartRowDrag(self, block) -> None:
+        self._rowDragBlock=block
+        self._dataGrid.SelectRows(block[0], block[1])
+        self._dragScrollTimer.Start(60)     # auto-scroll while the cursor is held near a top/bottom edge
+
+    def _EndRowDrag(self) -> None:
+        self._rowDragBlock=None
+        self._dragScrollTimer.Stop()
+        self._ClearDragHighlight()
+
+    # While dragging (or while armed and awaiting the movement threshold), mark the row the block would be
+    # inserted ABOVE. We own these events (no Skip) so the grid does not rubber-band-select.
+    def _OnRowDragMotion(self, event) -> None:
+        if self._rowDragBlock is not None:
+            if not event.LeftIsDown():      # button released off the grid -> abandon the move
+                self._EndRowDrag()
+                event.Skip()
+                return
+            self._UpdateDragHighlight(*event.GetPosition())
+            return
+        if self._armedDragBlock is not None and event.LeftIsDown():
+            _, uy=self.wxGrid.CalcUnscrolledPosition(*event.GetPosition())
+            if abs(uy-self._armedDragStartY) > _ROW_DRAG_THRESHOLD:
+                block=self._armedDragBlock
+                self._armedDragBlock=None
+                self._StartRowDrag(block)
+                self._UpdateDragHighlight(*event.GetPosition())
+            return          # consumed the down -> own these events even before the threshold
+        event.Skip()        # not our gesture: let the tooltip motion handler (bound earlier) see it
+
+    # Drop: move the block just ABOVE the row under the cursor (append at the end past the last row).
+    def _OnRowDragEnd(self, event) -> None:
+        armed=self._armedDragBlock is not None
+        self._armedDragBlock=None
+        block=self._rowDragBlock
+        if block is None:
+            if not armed:                   # not our gesture
+                event.Skip()
+            else:                           # pressed inside the selection but never dragged -> a plain click:
+                self._dataGrid.SelectRows(self._armedDragRow, self._armedDragRow)    # collapse to that row (Explorer-style)
+            return
+        self._EndRowDrag()
+        try:
+            top, bottom=block
+            count=bottom-top+1
+            _, uy=self.wxGrid.CalcUnscrolledPosition(*event.GetPosition())
+            row=self.wxGrid.YToRow(uy)
+            ins=self.Datasource.NumRows if row == wx.NOT_FOUND else row      # the block lands ABOVE this row
+            if top <= ins <= bottom+1:
+                return          # dropped onto (or right below) the block itself -> no move
+            newrow=ins if ins < top else ins-count                          # account for the removed block
+            if newrow != top:
+                self._dataGrid.MoveRows(top, count, newrow)
+                # Repaint only the span that changed, then do the delta re-analysis/recolor (cheap; also
+                # updates the needs-saving flag). A full RefreshWindow here would cost 1-2s on a large page.
+                lo=min(top, newrow)
+                hi=max(bottom, newrow+count-1)
+                self._dataGrid.RefreshWxGridFromDatasource(StartRow=lo, EndRow=hi)
+                self._dataGrid.SelectRows(newrow, newrow+count-1)            # keep the moved block selected
+                self.RecolorGrid()
+                self.wxGrid.ForceRefresh()
+        except Exception as e:
+            import traceback
+            LogError(f"_OnRowDragEnd: row move failed: {e}\n{traceback.format_exc()}")
+
+    # While a row drag hovers near the top/bottom edge, scroll the grid so off-screen rows become reachable.
+    # Motion events stop firing when the cursor is held still, so a timer drives the scrolling.
+    def _OnDragScrollTick(self, event) -> None:
+        if self._rowDragBlock is None:
+            self._dragScrollTimer.Stop()
+            return
+        gw=self.wxGrid.GetGridWindow()
+        pt=gw.ScreenToClient(wx.GetMousePosition())
+        h=gw.GetClientSize().height
+        if pt.y < 24:
+            self.wxGrid.ScrollLines(-1)
+        elif pt.y > h-24:
+            self.wxGrid.ScrollLines(1)
+        else:
+            return
+        self._UpdateDragHighlight(pt.x, pt.y)   # re-evaluate the target row after the scroll
+
 
     #--------------------------
     # Allow user to change the fanzine's name
@@ -807,13 +948,33 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     #------------------
+    # Does a directory of this name already exist on the server? (Checked under the active root, and under
+    # the real root as well when running in test mode.)  Used to keep a new fanzine from silently
+    # overwriting an existing directory's index page.
+    def ServerDirExistsOnServer(self, dirname: str) -> bool:
+        if FTP().FileExists(f"/{self.RootDir}/{dirname}/index.html"):
+            return True
+        realRoot=Settings().Get("Root directory", "fanzines")
+        return self.RootDir.lower() != realRoot.lower() and FTP().FileExists(f"/{realRoot}/{dirname}/index.html")
+
+
+    #------------------
     # Upload the current FanzineIndexPage (including any added fanzines) to the server
     @GuardReentry
     def OnUpload(self, event):
         Log("OnUpload pressed")
-        # if self.CreatingNewFanzineSeries:
-        #     wx.MessageBox(f"There is already a directory named {self.tServerDirectory.GetValue()} on the server. Please select another name.", parent=self)
-        #     return
+
+        # A NEW fanzine must never overwrite an existing directory's index page. The pink warning in the
+        # dialog is advisory only, and it only knows the fanzines list (which may be search-filtered, and
+        # doesn't include directories that aren't on the Classic list) -- so ask the server itself.
+        if self.CreatingNewFanzineSeries:
+            with ModalDialogManager(ProgressMessage2, f"Checking the server for '{self.ServerDir}'", parent=self):
+                exists=self.ServerDirExistsOnServer(self.ServerDir)
+            if exists:
+                wx.MessageBox(f"There is already a directory named '{self.ServerDir}' on the server. "
+                              f"Please select another name.", "Cannot create fanzine", parent=self)
+                Log(f"OnUpload: blocked creation of new fanzine over existing directory '{self.ServerDir}'")
+                return
 
         # Check the dates to make sure that the dated issues all fall into the date range given for the fanzine
         # Date range should be of the form yyyy-yyyy with question marks abounding

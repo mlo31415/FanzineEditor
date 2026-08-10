@@ -582,7 +582,9 @@ class FanzinesEditorWindow(FanzinesGridGen):
     @GuardReentry
     def OnAddNewFanzine(self, event):
 
-        with FanzineIndexPageWindow(None, ExistingFanzinesServerDirs=self.Datasource.ServerDirs) as fsw:
+        # Pass the FULL list of server directories (not self.Datasource.ServerDirs, which reflects only the
+        # currently-displayed rows and so would miss duplicates while a search filter is active).
+        with FanzineIndexPageWindow(None, ExistingFanzinesServerDirs=[x.ServerDir for x in self._fanzinesList]) as fsw:
             fsw.ShowModal()
 
             # Rows may have been moved to other fanzines (possibly newly created ones) from within the dialog;
