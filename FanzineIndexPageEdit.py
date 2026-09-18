@@ -3068,13 +3068,17 @@ class FanzineIndexPage(GridDataSource):
                 url=HtmlEscapesToUnicode(url, isURL=True)
                 if url == "" and text == "":
                     cols0=RemoveAllHTMLLikeTags(cols0)
-                    row=["", cols0]
+                    row=["", HtmlEscapesToUnicode(cols0)]
                 else:
-                    row=[url, text]
+                    row=[url, HtmlEscapesToUnicode(text)]
 
                 cols=[RegularizeBRTags(str(x)) for x in cols[1:]]   # Turn all <br/> and </br> to <br>
                 cols=[RemoveTopLevelHTMLTags(x, LeaveLinks=True) for x in cols]     # Remove non-link HTML
                 cols=[x if x.strip().lower() != "<br>" else "" for x in cols]   # Remove all <br> (old FIPs sometimes has this in blank cells)
+                # Hold the cells as plain text, exactly as the V2 reader does, because they are escaped again
+                # on write: anything left as markup here would be written out as literal text, and an escape
+                # left undecoded would gain another "amp;" on every cycle.
+                cols=[HtmlEscapesToUnicode(RemoveAllHTMLLikeTags(x)) for x in cols]
 
                 # We treat the Mailing column (if present) specially by removing the hyperlink to the issue -- it will be returned when it is loaded back to the server.
                 if iMailingCol is not None:
@@ -3128,9 +3132,13 @@ class FanzineIndexPage(GridDataSource):
         Log(f"     {fanzinetype=}")
         Log(f"     {locale=}")
         Log(f"     {name.MainName=}")
-        self.Credits=credits
-        self.Dates=dates
-        self.Editors=editors
+        # These fields are all escaped again by PutFanzineIndexPage, so decode them here. Without this,
+        # converting an old page to V2.1 double-escapes every one of them that contains an "&".
+        name.MainName=HtmlEscapesToUnicode(name.MainName)
+        name.Othernames=[HtmlEscapesToUnicode(x) for x in name.Othernames]
+        self.Credits=HtmlEscapesToUnicode(credits)
+        self.Dates=HtmlEscapesToUnicode(dates)
+        self.Editors=[HtmlEscapesToUnicode(x) for x in editors] if isinstance(editors, list) else HtmlEscapesToUnicode(editors)
         self.FanzineType=fanzinetype
         self.Locale=locale
         self._name=name
@@ -3225,7 +3233,7 @@ class FanzineIndexPage(GridDataSource):
             if m is not None:
                 fipr=FanzineIndexPageTableRow(self._colDefs)
                 fipr.Cells[0]=m.groups()[1]
-                fipr.Cells[1]=m.groups()[2]
+                fipr.Cells[1]=HtmlEscapesToUnicode(m.groups()[2])    # The display text is written escaped, so decode it here
                 fipr.IsLinkRow=True
                 self.Rows.append(fipr)
                 continue
@@ -3236,7 +3244,10 @@ class FanzineIndexPage(GridDataSource):
             if m is not None:
                 fipr=FanzineIndexPageTableRow(self._colDefs)
                 contents=StripSpecificTag(m.groups()[0], "b")
-                contents=ConvertHTMLEscapes(contents)
+                # Decode *all* escapes, not just the handful ConvertHTMLEscapes knows: the text is written
+                # through UnicodeToHtmlEscapes, so anything left undecoded here (e.g. "&eacute;") would pick
+                # up another "amp;" on each cycle.
+                contents=HtmlEscapesToUnicode(contents)
                 fipr.Cells[0]=contents
 
                 fipr.IsTextRow=True
@@ -3266,20 +3277,25 @@ class FanzineIndexPage(GridDataSource):
             if "gostak.org.uk" in url:
                 url="http:"+url
 
-            # There are at least a few pages which have "&amp;nbsp;" in text -- this should be displayed as "&nbsp;"
-            text=text.replace("&amp;nbsp;", "&nbsp;")
+            # The display text is HTML, so decode its escapes. (This subsumes the old special case for pages
+            # carrying "&amp;nbsp;": it decodes to a non-breaking space, which is written back out as "&nbsp;".)
+            text=HtmlEscapesToUnicode(text)
             if self._version == "2":
                 url=HtmlEscapesToUnicode(url, isURL=True).replace("&amp;", "&")
             else:
                 url=HtmlEscapesToUnicode(url, isURL=True)
             if url == "" and text == "":
-                cols=["", cols0]+cols[1:]
+                # No link in the first cell, so its whole contents become the display text. Decode it like any
+                # other cell: leaving it raw would make an all-"&nbsp;" (i.e. empty) row look like a row whose
+                # only non-empty cell is this one, which FanzineIndexPageTableRow reads as a text row.
+                cols=["", HtmlEscapesToUnicode(cols0)]+cols[1:]
             else:
                 cols=[url, text]+cols[1:]
 
             if cols is not None:
-                # Remove HTML tags from the columns
-                row=cols[:2]+[RemoveAllHTMLLikeTags(str(x)) for x in cols[2:]]
+                # Remove HTML tags from the columns, then decode the escapes in what's left (the cells are
+                # written back out through UnicodeToHtmlEscapes, so this keeps read and write symmetric)
+                row=cols[:2]+[HtmlEscapesToUnicode(RemoveAllHTMLLikeTags(str(x))) for x in cols[2:]]
                 fipr=FanzineIndexPageTableRow(self._colDefs, row)
             else:
                 fipr=FanzineIndexPageTableRow(self._colDefs)
@@ -3288,7 +3304,7 @@ class FanzineIndexPage(GridDataSource):
             fipr.UpdatedComment=updated
             self.Rows.append(fipr)
 
-        self.Credits=ExtractHTMLUsingFanacStartEndCommentPair(html, "scan").strip()
+        self.Credits=HtmlEscapesToUnicode(ExtractHTMLUsingFanacStartEndCommentPair(html, "scan"))   # Written escaped, so decode
 
         # Log(f"GetFanzinePageNew():")
         # Log(f"     {self.Credits=}")
@@ -3425,15 +3441,15 @@ class FanzineIndexPage(GridDataSource):
             insert+=f"\n<TR>"
             href=row.Cells[0].replace("#", "%23").replace("&", "%26").strip()
             if href != "":
-                insert+=f'\n<TD><a href="{href}">{row.Cells[1]}</A></TD>\n'
+                insert+=f'\n<TD><a href="{href}">{UnicodeToHtmlEscapes(row.Cells[1])}</A></TD>\n'
             else:
-                insert+=f'\n<TD>{row.Cells[1]}</TD>\n'
+                insert+=f'\n<TD>{UnicodeToHtmlEscapes(row.Cells[1])}</TD>\n'
             # And now the rest
             for i, cell in enumerate(row.Cells[2:]):
                 if self.ColHeaders[i+2].lower() == "mailing":
-                    insert+=f"<TD CLASS='left'>{self.ProcessAPALinks(cell)}</TD>\n"
+                    insert+=f"<TD CLASS='left'>{self.ProcessAPALinks(cell)}</TD>\n"   # This generates its own HTML from plain text
                 else:
-                    insert+=f"<TD CLASS='left'>{cell}</TD>\n"
+                    insert+=f"<TD CLASS='left'>{UnicodeToHtmlEscapes(cell)}</TD>\n"
 
             # Record the update date of this line
             if row.SavedSignature != row.Signature():
