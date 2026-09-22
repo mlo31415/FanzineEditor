@@ -748,6 +748,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 self._dataGrid.SelectRows(self._armedDragRow, self._armedDragRow)    # collapse to that row (Explorer-style)
             return
         self._EndRowDrag()
+        # Let the grid see the button release too. A drag that began on an unselected row was started by the
+        # grid itself (EVT_GRID_CELL_BEGIN_DRAG), so swallowing the mouse-up leaves the grid believing a drag
+        # is still under way -- and holding the mouse capture that goes with it.
+        event.Skip()
         try:
             top, bottom=block
             count=bottom-top+1

@@ -52,9 +52,11 @@ def main():
         Log("Uncaught exception:\n"+txt, isError=True, Flush=True)
         try:
             if wx.GetApp() is not None:
+                # Give the box an explicit parent: a parentless modal can open behind the main window, where it
+                # is invisible but still blocks every other window -- which looks exactly like the app hanging.
                 wx.MessageBox(f"An internal error occurred:\n\n{value}\n\nDetails were written to the log files. "
                               f"FanzinesEditor will try to continue, but if things seem wrong, it is safest to restart it.",
-                              "FanzinesEditor internal error")
+                              "FanzinesEditor internal error", parent=wx.GetApp().GetTopWindow())
         except Exception:
             pass        # Never let the error reporter itself blow up
     sys.excepthook=LogUncaughtException
