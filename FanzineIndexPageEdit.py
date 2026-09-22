@@ -3431,7 +3431,7 @@ class FanzineIndexPage(GridDataSource):
                 continue
 
             if row.IsLinkRow:
-                insert+=fr'\n<TR><TD colspan="{self.NumCols}"><a href="{row.Cells[0]}">{UnicodeToHtmlEscapes(row.Cells[1])}</a></TD></TR>'
+                insert+=f'\n<TR><TD colspan="{self.NumCols}"><a href="{row.Cells[0]}">{UnicodeToHtmlEscapes(row.Cells[1])}</a></TD></TR>'
                 continue
 
             # OK, it's an ordinary row
