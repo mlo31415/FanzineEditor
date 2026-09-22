@@ -3064,7 +3064,7 @@ class FanzineIndexPage(GridDataSource):
                 # We treat column 0 specially, extracting its hyperref and turning it into two
                 cols0=str(cols[0])
                 cols0=self.RemoveA0C2Crap(cols0)
-                _, url, text, _=FindLinkInString(cols0)
+                _, url, text, _=FindLinkInString(cols0, KeepScheme=True)   # See the note at the V2 reader's call
                 url=HtmlEscapesToUnicode(url, isURL=True)
                 if url == "" and text == "":
                     cols0=RemoveAllHTMLLikeTags(cols0)
@@ -3270,12 +3270,10 @@ class FanzineIndexPage(GridDataSource):
             # The first col is complicated, because it needs to have URLs which match the actual filename on the server. This is only an issue the first time we write a V2.1 or later FIP.
             # Expand the first col in the FIP into two columns for display
             cols0=str(cols[0])
-            _, url, text, _=FindLinkInString(cols0)
-
-            # UGLY! Kludge!
-            # Edie requests that links to gostak.org.uk be treated specially and have a hard-wored http:
-            if "gostak.org.uk" in url:
-                url="http:"+url
+            # KeepScheme: the href is stored in the cell and written straight back out on upload, so dropping
+            # the scheme here would silently turn the "https://host/..." the user typed into "//host/...".
+            # (That is what the old gostak.org.uk special case existed to undo, for one domain.)
+            _, url, text, _=FindLinkInString(cols0, KeepScheme=True)
 
             # The display text is HTML, so decode its escapes. (This subsumes the old special case for pages
             # carrying "&amp;nbsp;": it decodes to a non-breaking space, which is written back out as "&nbsp;".)
