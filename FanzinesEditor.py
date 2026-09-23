@@ -478,9 +478,6 @@ class FanzinesEditorWindow(FanzinesGridGen):
             self.m_TestMode.SetLabelText(f"Test Mode: {self.RootDir}")
 
 
-        self._savedSignature=0   # We need this member. ClearMainWindow() will initialize it
-        self._fanzinesCount=0   # Also used to prevent exist with loss of data
-
         self.MarkAsSaved()
         self.tSearch.SetFocus()     # Start up with the entry cursor in the search box
         self.RefreshWindow()
@@ -542,19 +539,15 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
 
     # ----------------------------------------------
-    # Used to determine if anything has been updated
-    def Signature(self) -> int:       
-        return self.Datasource.Signature()
-
-
-    def MarkAsSaved(self):       
-        self._savedSignature=self.Signature()
-        self._fanzinesCount=len(self._fanzinesList)
+    # The list's changes have been uploaded -- or the user chose to discard them
+    def MarkAsSaved(self):
+        self._listChanges={}
         self.UpdateNeedsSavingFlag()
 
 
+    # Only real changes count. (Comparing the displayed grid with what was saved made a search look like a change.)
     def NeedsSaving(self):
-        return self._savedSignature != self.Signature() or self._fanzinesCount != len(self._fanzinesList) or len(self._listChanges) > 0
+        return len(self._listChanges) > 0
 
 
     def OnSearchText(self, event):       
@@ -721,7 +714,6 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
         # Show the list as it now is on the server, including other sessions' changes
         self._fanzinesList=fresh
-        self._listChanges={}
         self.Datasource.FanzineList=self._fanzinesList
         self.SearchFanzineList()
         self.RefreshWindow()
