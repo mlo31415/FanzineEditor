@@ -441,22 +441,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # saved in the server-to-local table when the page is closed
             self._allowManualEntryOfLocalDirectoryName=(self.localDir or "").strip() == ""
 
-        # Read in the table of local directory to server directory equivalences
-        s2l=Settings().Get("Server To Local Table Name")
-        with open(s2l, "r") as f:
-            l2sLines=f.readlines()
-        self.serverNameList: list[str]=[]
-        self.localNameList: list[str]=[]
-        for line in l2sLines:
-            line=line.split("=")
-            if len(line) == 2:
-                self.localNameList.append(line[0])
-                self.serverNameList.append(line[1])
-
-        # Try to fill in the local directory
-        if self.tServerDirectory.GetValue() in self.serverNameList:
-            self.tLocalDirectory.ChangeValue(self.localNameList[self.serverNameList.index(self.tServerDirectory.GetValue())])
-
         self.MarkAsSaved()
         self.RefreshWindow()        # This does the (single) full grid load: analyses + RefreshWxGridFromDatasource
         self.Raise()        # Bring the window to the top
