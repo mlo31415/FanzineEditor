@@ -525,12 +525,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.MarkAsSaved()      # Uploaded, or the user chose to discard the changes
         self._moveRefreshTimer.Stop()   # Don't let a pending debounced recolor fire after the window is gone
 
-        # Save the local directory name/server dir name correspondences table
+        # Save the local directory name/server dir name correspondences table -- but only if this fanzine's entry has
+        # changed, so that routine closes don't pile up identical timestamped backups of it
         s2LDirFilename=Settings().Get("Server To Local Table Name")
-        shutil.copyfile(s2LDirFilename, TimestampFilename(s2LDirFilename))        # Make a timestamped backup copy of the table
         Settings("ServerToLocal").Load(s2LDirFilename)
-        Settings("ServerToLocal").Put(self.tServerDirectory.GetValue().strip(), self.tLocalDirectory.GetValue().strip())
-        Settings("ServerToLocal").Save()
+        serverDir=self.tServerDirectory.GetValue().strip()
+        localDir=self.tLocalDirectory.GetValue().strip()
+        if (Settings("ServerToLocal").Get(serverDir) or "") != localDir:
+            shutil.copyfile(s2LDirFilename, TimestampFilename(s2LDirFilename))        # Make a timestamped backup copy of the table
+            Settings("ServerToLocal").Put(serverDir, localDir)      # (Put saves the table)
 
         # Save the window's position
         pos=self.GetPosition()
