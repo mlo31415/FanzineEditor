@@ -147,28 +147,25 @@ class DeltaTracker:
 
     # We want to replace one file on the server with another, leaving the rest of the data unchanged
     # This will cause a new upload and may change the name of the pdf on the server
+    # (The caller has already put the new file's path and name in the row, which is where the upload takes them from.)
     def Replace(self, oldSourceFilename: str="", newfilepathname: str="", row: FanzineIndexPageTableRow|None=None, serverDirName: str=""):
-        newfilepath, newfilename=os.path.split(newfilepathname)
-        # Check to see if the replacement is in a row already scheduled to be renamed.
+        newfilepath, _=os.path.split(newfilepathname)
+        # Look for a change already pending for this row. Match on the row itself, as Rename does: the grid has already
+        # put the new name in the row, so comparing filenames finds nothing.
         for i, item in enumerate(self._deltas):
-            if item.Verb == "rename" and item.SourceFilename == oldSourceFilename:
-                # This is a bit ugly, as it's not completely clear what is intended.
-                # First, the user elected to change an existing filename on the server and later decided to replace it by uploading a new file.
-                # Question: Is the new file supposed to be given the new name, also?  It's hard to see why, so we'll change this to:
-                # Upload the new file
-                self.Add(newfilepathname, row=row)
-                # Delete the old file
-                self.Delete(oldSourceFilename, row=row)
-                # Delete the rename request
+            if item.Row is not row:
+                continue
+            if item.Verb in ("add", "replace"):
+                # The row's file is still to be uploaded, and that upload will now take the new file
+                item.SourcePath=newfilepath     # (For the log)
+                return
+            if item.Verb == "rename":
+                # The row's file was to be renamed on the server. Done after the new file's upload, the rename would move the
+                # old file onto the new name, overwriting the replacement -- so drop it: the file being replaced is the
+                # one on the server under its original name.
+                oldSourceFilename=item.OldFilename
                 del self._deltas[i]
-                return
-
-        # Check to see if this is a replacement of a file already scheduled to be added
-        for item in self._deltas:
-            if item.Verb == "add" and item.SourceFilename == oldSourceFilename:
-                # Just update the local pathname to the new file in the add entry
-                item.SourceFilename=newfilename
-                return
+                break
 
         # If it doesn't match anything in the delta list, then it must be a new local file to replace the server file in an existing entry
         # Just upload the replacement.  It may or may not overwrite the existing file; we don't care.  Nor do we try to remove the existing file.

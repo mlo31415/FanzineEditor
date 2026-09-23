@@ -374,7 +374,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if tlws:
             self.SetSize(tlws)
 
-        self._savedSignature=0   # We need this member. ClearMainWindow() will initialize it
+        self._savedSignature=0   # We need this member. MarkAsSaved() will initialize it
 
         if self.CreatingNewFanzineSeries:
             # New directory: Do basic setup.
@@ -972,35 +972,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     self.Datasource.MoveColumns(iMailing, 1, iNotes)
 
         self.RefreshWindow()
-
-
-    # ------------------
-    # Initialize an existing, initializedm main window to empty
-    # This also initiazes the datasource
-    def ClearMainWindow(self):       
-
-        # Create an empty datasource
-        self.Datasource._fanzineList=[]
-
-        # Update the dialog's grid from the data
-        self._dataGrid.RefreshWxGridFromDatasource(RetainSelection=False)
-
-        # Fill in the dialog's upper stuff
-        self.tFanzineName.SetValue("")
-        self.tTopComments.SetValue("")
-        self.tEditors.SetValue("")
-        self.tDates.SetValue("")
-        self.chFanzineType.SetSelection(0)
-        self.chSignificance.SetSelection(0)
-        self.tClubname.SetValue("")
-        self.tLocaleText.SetValue("")
-        self.tCredits.SetValue("")
-        self.cbComplete.SetValue(False)
-
-        self.Datasource.Credits=Settings().Get("Scanning credits default", default="")
-
-        # Set the signature to the current (empty) state so any change will trigger a request to save on exit
-        self.MarkAsSaved()
 
 
     #------------------
@@ -1974,15 +1945,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if event.GetCol() == 0:
             oldURL=self.Datasource.Rows[event.GetRow()][0]
 
-        # If this is cell 0 of a link line, remove any HTML decoration, leaving the bare URL
         irow=event.GetRow()
         icol=event.GetCol()
-        if self.Datasource.Rows[irow].IsNormalRow and icol == 0:
-            val=self.Datasource.Rows[irow][icol].strip()
-            m=re.match(r"http:=(.*)$", val, flags=re.IGNORECASE)
-            if m is not None:
-                val=m.groups()[0]
-                self.Datasource.Rows[irow][icol]=val.removeprefix("//")
 
         self._dataGrid.OnGridCellChanged(event)  # Pass event handling to WxDataGrid
 

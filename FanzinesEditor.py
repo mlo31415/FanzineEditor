@@ -169,11 +169,6 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
 
         return None
 
-    # Remove the &amp;amp;amp;amp;amp;... that has crept in to some pages.
-    while "&amp;amp;" in html:
-        html=html.replace("amp;amp;", "amp;")
-        Log(f"redundant 'amp;'s removed from Classic_Fanzines.html")
-
     rows=ReadClassicFanzinesTable(html)
     assert rows is not None
 
