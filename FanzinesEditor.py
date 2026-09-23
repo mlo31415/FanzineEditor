@@ -615,6 +615,11 @@ class FanzinesEditorWindow(FanzinesGridGen):
     def MergeCFLIntoList(self, cfl: ClassicFanzinesLine) -> None:
         hits=[i for i, x in enumerate(self._fanzinesList) if x.ServerDir.lower() == cfl.ServerDir.lower()]
         if hits:
+            # A fanzine index page only knows its creation date while the fanzine is being created, so the CFL from
+            # uploading an existing fanzine has none. Keep the list entry's date rather than letting the replacement
+            # blank it -- it would be written back as "January 01, 1900", which also drops the "New" flag.
+            if cfl._created is None:
+                cfl._created=self._fanzinesList[hits[0]]._created
             self._fanzinesList[hits[0]]=cfl
         else:
             self._fanzinesList.append(cfl)
