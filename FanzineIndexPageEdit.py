@@ -1029,7 +1029,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # Save the fanzine's values to return to the main fanzines page.
         cfl=ClassicFanzinesLine()
-        cfl.Issues=self.Datasource.NumRows
+        # The Issues count is of the issues a reader can open: issue rows linking to a PDF, or (old-style pages) to an html
+        # page. Text, link and empty rows, and issue rows with no file, aren't counted.
+        cfl.Issues=sum(1 for row in self.Datasource.Rows if row.IsNormalRow and row[0].strip() != "")
         cfl.Editors=self.tEditors.GetValue().replace("\n", "<br>")
         cfl.ServerDir=self.tServerDirectory.GetValue()
         cfl.Name=FanzineNames(self.tFanzineName.GetValue(), self.tOthernames.GetValue())
