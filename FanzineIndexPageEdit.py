@@ -432,6 +432,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if self.localDir is not None:
                 self.tLocalDirectory.ChangeValue(self.localDir)
                 self.tLocalDirectory.Disable()
+            # An existing fanzine with no local directory on record can be given one: it's typed into the box, and
+            # saved in the server-to-local table when the page is closed
+            self._allowManualEntryOfLocalDirectoryName=(self.localDir or "").strip() == ""
 
         # Read in the table of local directory to server directory equivalences
         s2l=Settings().Get("Server To Local Table Name")
@@ -477,6 +480,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def ServerDir(self) -> str:
         return self.tServerDirectory.GetValue()
 
+    # The local directory name is only used to file uploaded PDFs under the "Local Directory Root Path", so it is
+    # needed for an upload only on a machine where that is set. (Elsewhere, nothing is moved after uploading.)
+    @property
+    def LocalDirectoryRequired(self) -> bool:
+        return Settings().Get("Local Directory Root Path", default="") != ""
+
 
     # Look at information available and color buttons and fields accordingly.
     def EnableDialogFields(self):                      
@@ -497,7 +506,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # The Upload button is enabled only if sufficient information is present
         self.bUpload.Enabled=False
-        if len(self.tServerDirectory.GetValue()) > 0 and len(self.tLocalDirectory.GetValue()) > 0 and len(self.tFanzineName.GetValue()) > 0:
+        if len(self.tServerDirectory.GetValue()) > 0 and (len(self.tLocalDirectory.GetValue()) > 0 or not self.LocalDirectoryRequired) and len(self.tFanzineName.GetValue()) > 0:
             # This is definitely not enough!!
             self.bUpload.Enabled=True
 
@@ -1482,14 +1491,14 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # The Upload button is enabled iff certain text boxes have content and there's at least one fanzine
         enable=True
-        if IsEmpty(self.tServerDirectory.GetValue()) or IsEmpty(self.tFanzineName.GetValue()) or IsEmpty(self.tLocalDirectory.GetValue()):
+        if IsEmpty(self.tServerDirectory.GetValue()) or IsEmpty(self.tFanzineName.GetValue()) or (self.LocalDirectoryRequired and IsEmpty(self.tLocalDirectory.GetValue())):
             enable=False
         if len(self.Datasource.Rows) == 0:
             enable=False
         self.bUpload.Enabled=enable
 
-        # The local directory text box is editable in a new directory, but not in an existing one
-        self.tLocalDirectory.Enabled=len(self.tLocalDirectory.GetValue()) == 0 or self.CreatingNewFanzineSeries
+        # The local directory text box is editable in a new directory, and in an existing one which has none on record
+        self.tLocalDirectory.Enabled=len(self.tLocalDirectory.GetValue()) == 0 or self.CreatingNewFanzineSeries or self._allowManualEntryOfLocalDirectoryName
 
         # The Clubname label and field are shown only when the fanzine type is "Clubzine"
         showClub="Clubzine" == self.chFanzineType.Items[self.chFanzineType.GetSelection()]
@@ -1679,16 +1688,21 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     def OnLocalDirectoryChar( self, event ):
         Log(f"OnLocalDirectoryChar: triggered")
-        if not self.CreatingNewFanzineSeries:     # Only for new fanzines can the local directory name be updated
+        # Only for a new fanzine, or an existing one with no local directory on record, can the local directory name be updated
+        if not self._allowManualEntryOfLocalDirectoryName:
             return
 
         fname, cursorloc=ProcessChar(self.tLocalDirectory.GetValue(), event.GetKeyCode(), self.tLocalDirectory.GetInsertionPoint())
         self.tLocalDirectory.SetValue(fname)
         self.tLocalDirectory.SetInsertionPoint(cursorloc)
 
-        self.ColortLocalDirectory(fname)
+        # Pink warns that a folder of that name already exists -- which for an existing fanzine is just what's wanted
+        if self.CreatingNewFanzineSeries:
+            self.ColortLocalDirectory(fname)
 
         self._manualEditOfLocalDirectoryNameBegun=True
+        self.UpdateDialogComponentEnabledStatus()       # Supplying a local directory may enable Upload
+        self.EnableDialogFields()
         Log(f"OnLocalDirectoryChar: updated to '{fname}'")
         return
 
