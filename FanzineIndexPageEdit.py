@@ -263,6 +263,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         SetWindowIcon(self, PyiResourcePath("FanzinesEditor.ico"))   # Bundled into the exe; harmless no-op if missing or bad
 
+        # A note in the toolbar, after Close, saying why Upload is grayed out (Windows shows no tooltips on disabled buttons)
+        self.tUploadNote=wx.StaticText(self.m_toolBarTop, wx.ID_ANY, "")
+        self.m_toolBarTop.InsertControl(self.m_toolBarTop.GetToolPos(self.bClose.GetId())+1, self.tUploadNote)
+        self.m_toolBarTop.Realize()
+
         self.failure=True
 
         # We save the existing list of server directories in lowercase for case-insensitive comparison -- Windows dir names are not case-sensitive.
@@ -509,6 +514,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if len(self.tServerDirectory.GetValue()) > 0 and (len(self.tLocalDirectory.GetValue()) > 0 or not self.LocalDirectoryRequired) and len(self.tFanzineName.GetValue()) > 0:
             # This is definitely not enough!!
             self.bUpload.Enabled=True
+        self.ShowWhyUploadIsDisabled()
 
         self.tFanzineName.Enabled=self.CreatingNewFanzineSeries or self._AllowFanzineNameEdit
         self.tFanzineName.SetEditable(True)
@@ -1496,6 +1502,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if len(self.Datasource.Rows) == 0:
             enable=False
         self.bUpload.Enabled=enable
+        self.ShowWhyUploadIsDisabled()
 
         # The local directory text box is editable in a new directory, and in an existing one which has none on record
         self.tLocalDirectory.Enabled=len(self.tLocalDirectory.GetValue()) == 0 or self.CreatingNewFanzineSeries or self._allowManualEntryOfLocalDirectoryName
@@ -1506,6 +1513,26 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.tClubname.Show(showClub)
             self.m_staticText1Clubname.Show(showClub)
             self.Layout()      # Reflow so the hidden controls don't leave a gap
+
+
+    # If Upload is grayed out, say why in the note beside it
+    def ShowWhyUploadIsDisabled(self) -> None:
+        missing=[]
+        if not self.bUpload.IsEnabled():
+            if self.tServerDirectory.GetValue().strip() == "":
+                missing.append("a Server Directory")
+            if self.tFanzineName.GetValue().strip() == "":
+                missing.append("a Fanzine Name")
+            if self.LocalDirectoryRequired and self.tLocalDirectory.GetValue().strip() == "":
+                missing.append("a Local Directory")
+            if len(self.Datasource.Rows) == 0:
+                missing.append("at least one row")
+        note=""
+        if missing:
+            note="      Upload needs "+(missing[0] if len(missing) == 1 else ", ".join(missing[:-1])+" and "+missing[-1])
+        if note != self.tUploadNote.GetLabel():
+            self.tUploadNote.SetLabel(note)
+            self.m_toolBarTop.Realize()     # Re-lay out the toolbar to fit the new text
 
 
     def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:
