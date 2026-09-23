@@ -1109,8 +1109,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # Make a dated backup copy of the existing index page
             ret=FTP().BackupServerFile(f"/{self.RootDir}/{self.ServerDir}/index.html")
             if not ret:
-                Log(f"Could not make a backup copy: {self.RootDir}/{self.ServerDir}/{TimestampFilename('index.html')} because {FTP().LastMessage}")
+                why=FTP().LastMessage       # (Reading it clears it)
+                Log(f"Could not make a backup copy: {self.RootDir}/{self.ServerDir}/{TimestampFilename('index.html')} because {why}")
                 self.failure=True
+                wx.MessageBox(f"The upload stopped before changing anything, because the existing index page could not be "
+                              f"backed up ({why}).\n\nNothing has been changed on the server, so you can simply try again.",
+                              "Upload stopped", wx.OK|wx.ICON_WARNING, parent=self)
                 return
             FTPLog().AppendItemVerb("backup index.html", f"{Tagit("RootDir", self.RootDir)} {Tagit("ServerDir", self.ServerDir)}", Flush=True)
 
@@ -1118,135 +1122,213 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             # Move the uploaded file from where it is on disk into the fanzine's local directory, under the filename
             # it has on the server (which differs from its name on disk if it was renamed after being added).
-            def MoveToLocalDirectory(sourcefile: str, localdirpath: str, filename: str):
+            # Returns "" on success, else what went wrong. The upload has already succeeded by then, so a failure here
+            # (e.g. the file is still open in a PDF viewer) mustn't stop it -- it's reported at the end.
+            # (A same-named file already in the folder is simply replaced, as it has been on the server.)
+            def MoveToLocalDirectory(sourcefile: str, localdirpath: str, filename: str) -> str:
                 if filename is None or filename == "":
-                    return  # Nothing to do here, move along...
-                # if the target directory does not exist, create it
-                if not os.path.exists(localdirpath):
-                    os.makedirs(localdirpath)
-                Log(f"MoveToLocalDirectory({sourcefile}, {localdirpath}, {filename})")
-                shutil.move(sourcefile, localdirpath+"/"+filename)
-                Log(f"shutil.move({sourcefile}, {localdirpath+"/"+filename})")
+                    return ""  # Nothing to do here, move along...
+                try:
+                    # if the target directory does not exist, create it
+                    if not os.path.exists(localdirpath):
+                        os.makedirs(localdirpath)
+                    Log(f"MoveToLocalDirectory({sourcefile}, {localdirpath}, {filename})")
+                    shutil.move(sourcefile, localdirpath+"/"+filename)
+                    Log(f"shutil.move({sourcefile}, {localdirpath+"/"+filename})")
+                except Exception as e:
+                    LogError(f"MoveToLocalDirectory({sourcefile}, {localdirpath}, {filename}) failed: {e}")
+                    return f"{filename} ({e})"
+                return ""
 
-            # Now execute the delta list on the files.
+            # Do renames on the server, remembering each in 'renamed'. Returns "" or why it stopped.
+            def DoRenames(renames: list, renamed: list) -> str:
+                for delta in renames:
+                    oldserverpathfile=f"/{self.RootDir}/{self.ServerDir}/{delta.OldFilename}"
+                    newserverpathfile=f"/{self.RootDir}/{self.ServerDir}/{delta.Row[0]}"
+                    pm.Update(f"Renaming {oldserverpathfile} as {newserverpathfile}")
+                    if not FTP().Rename(oldserverpathfile, newserverpathfile):
+                        return f"'{delta.OldFilename}' could not be renamed to '{delta.Row[0]}' ({FTP().LastMessage})"
+                    delta.Uploaded=True
+                    renamed.append(delta)
+                return ""
+
+            # Put back renames made in this run: the live page still links the old names. Returns the ones which
+            # couldn't be put back (whose links on the live page are now broken).
+            def UndoRenames(renamed: list) -> list[str]:
+                notUndone=[]
+                uploadedNames={d.Row[0].strip().lower() for d in self.deltaTracker.Deltas if d.Verb in ("add", "replace") and d.Uploaded}
+                for delta in reversed(renamed):
+                    if delta.OldFilename.strip().lower() in uploadedNames:
+                        continue    # A new file now has the old name, so leave this one where the page will want it
+                    if FTP().Rename(f"/{self.RootDir}/{self.ServerDir}/{delta.Row[0]}", f"/{self.RootDir}/{self.ServerDir}/{delta.OldFilename}"):
+                        delta.Uploaded=False        # Still to be done
+                    else:
+                        LogError(f"OnUpload: could not undo the rename of '{delta.OldFilename}' to '{delta.Row[0]}': {FTP().LastMessage}")
+                        notUndone.append(f"'{delta.Row[0]}' (was '{delta.OldFilename}')")
+                return notUndone
+
+            # Now execute the delta list, in an order which never leaves the live page linking to a file that isn't
+            # on the server:
+            #   1. Uploads (add/replace). These can't break the live page: a new file just isn't linked yet, and a
+            #      same-name replacement only changes what an existing link serves. If any fails, stop after them.
+            #   2. Renames. These DO break the live page, which still links the old names, so if one fails -- or the
+            #      page can't then be published -- the renames made in this run are undone.
+            #   3. Publish the index page.
+            #   4. Deletes, once the published page no longer links those files. A failed one just leaves an unlinked
+            #      file on the server.
+            # Whatever doesn't complete stays pending, so the user can fix the problem and upload again.
             self.failure=False
             Log("Begin delta processing.")
             self._abortUploadRequested=False    # Set when the user answers No to continuing after a failed file upload
-            # Due to a very reasonable (but as it turns out unhelpful) decision, rows
-            for delta in self.deltaTracker.Deltas:
+            stopReason=""               # Why the upload stopped before publishing the page, if it did
+            renamed: list=[]            # Renames made on the server in this run
+            notUndone: list[str]=[]     # ...of which, ones that couldn't be undone
+            localProblems: list[str]=[] # Uploaded files that couldn't be filed in the local directory
+            deleteProblems: list[str]=[]
+            try:
+                # A rename away from a name which a new file is about to be uploaded under must be done first, or the
+                # upload would overwrite the file being renamed
+                uploads=[d for d in self.deltaTracker.Deltas if d.Verb in ("add", "replace") and not d.Uploaded]
+                uploadNames={d.Row[0].strip().lower() for d in uploads}
+                renames=[d for d in self.deltaTracker.Deltas if d.Verb == "rename" and not d.Uploaded]
+                stopReason=DoRenames([d for d in renames if d.OldFilename.strip().lower() in uploadNames], renamed)
 
-                match delta.Verb:
-                    case "add" | "replace":
-                        # Add a new file to the server or Replace a file already on server.  (We ignore the old file. It gets overwritten if the filename is the same or just left otherwise.)
-                        assert delta.Row is not None
-                        sourceFilename=delta.Row[0]     # Need to allow for edits in col 0 after add, but before upload
-                        # Note that we pass in cfl and Row because the row is likely to have been updated after the DeltaAdd is created, and we want to capture those updates
-                        delta.Uploaded=self.UpdateAndUpload(delta.Row, sourceFilename, editors=cfl.Editors, mainName=cfl.Name.MainName, country=cfl.Country, pm=pm)
-                        if not delta.Uploaded and self._abortUploadRequested:
-                            break       # The user answered No to "Continue with the remaining files?"
-                        if delta.Uploaded:
-                            if moveFilesAfterUploading:
-                                MoveToLocalDirectory(delta.Row.FileSourcePath, localDirectoryPath, sourceFilename)
+                # 1. Uploads
+                for delta in uploads if stopReason == "" else []:
+                    # Add a new file to the server or Replace a file already on server.  (We ignore the old file. It gets overwritten if the filename is the same or just left otherwise.)
+                    assert delta.Row is not None
+                    sourceFilename=delta.Row[0]     # Need to allow for edits in col 0 after add, but before upload
+                    # Note that we pass in cfl and Row because the row is likely to have been updated after the DeltaAdd is created, and we want to capture those updates
+                    delta.Uploaded=self.UpdateAndUpload(delta.Row, sourceFilename, editors=cfl.Editors, mainName=cfl.Name.MainName, country=cfl.Country, pm=pm)
+                    if not delta.Uploaded:
+                        if self._abortUploadRequested:
+                            break       # The user answered No to "Continue uploading the remaining files?"
+                        continue
+                    if moveFilesAfterUploading:
+                        problem=MoveToLocalDirectory(delta.Row.FileSourcePath, localDirectoryPath, sourceFilename)
+                        if problem != "":
+                            localProblems.append(problem)
 
-                        text=f'{Tagit("IssueName", delta.Row[1])} ' + \
-                                        f'{Tagit("ServerDir", self.ServerDir)} ' +\
-                                        f'{Tagit("RootDir", self.RootDir)} ' +\
-                                        f'{Tagit("issuenum", IssueNumber(delta.Row, self.Datasource.ColDefs))} '+\
-                                        f'{Tagit("date", DateFmt(delta.Row, self.Datasource.ColDefs))} '+\
-                                        f'{Tagit("fanzinename", self.Datasource.Name.MainName)} '+\
-                                        f'{Tagit("editor", Editors(delta.Row, self.Datasource.ColDefs, self.Editors))} '+\
-                                        f'{Tagit("fanzinetype", self.Datasource.FanzineType)} '+\
-                                        f'{Tagit("clubname", self.Datasource.Clubname)} '+\
-                                        f'{Tagit("SourcePath", delta.SourcePath)} '+\
-                                        f'{Tagit("SourceFilename", sourceFilename)} '
-                        if delta.Verb == "replace":
-                            text+=f"{Tagit("Oldname", delta.OldFilename)}"
-                        FTPLog().AppendItemVerb(delta.Verb, text, Flush=True)
+                    # (Logged only once the file really is on the server)
+                    text=f'{Tagit("IssueName", delta.Row[1])} ' + \
+                                    f'{Tagit("ServerDir", self.ServerDir)} ' +\
+                                    f'{Tagit("RootDir", self.RootDir)} ' +\
+                                    f'{Tagit("issuenum", IssueNumber(delta.Row, self.Datasource.ColDefs))} '+\
+                                    f'{Tagit("date", DateFmt(delta.Row, self.Datasource.ColDefs))} '+\
+                                    f'{Tagit("fanzinename", self.Datasource.Name.MainName)} '+\
+                                    f'{Tagit("editor", Editors(delta.Row, self.Datasource.ColDefs, self.Editors))} '+\
+                                    f'{Tagit("fanzinetype", self.Datasource.FanzineType)} '+\
+                                    f'{Tagit("clubname", self.Datasource.Clubname)} '+\
+                                    f'{Tagit("SourcePath", delta.SourcePath)} '+\
+                                    f'{Tagit("SourceFilename", sourceFilename)} '
+                    if delta.Verb == "replace":
+                        text+=f"{Tagit("Oldname", delta.OldFilename)}"
+                    FTPLog().AppendItemVerb(delta.Verb, text, Flush=True)
 
-                    case "delete":
-                        # Delete a file on the server
-                        filenameOnServer=delta.ServerFilename
-                        serverpathfile=f"/{self.RootDir}/{self.ServerDir}/{filenameOnServer}"
-                        if filenameOnServer.strip() != "":
-                            pm.Update(f"Deleting {serverpathfile} from server")
-                            delta.Uploaded= FTP().DeleteFile(serverpathfile)
-                            if not delta.Uploaded:
-                                dlg=wx.MessageDialog(self, f"Unable to delete {serverpathfile} because {FTP().LastMessage}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
-                                result=dlg.ShowModal()
-                                dlg.Destroy()
-                                if result != wx.ID_YES:
-                                    break
-                        if delta.Uploaded:
-                            FTPLog().AppendItemVerb("delete", f'{Tagit("ServerDirName", delta.ServerDirName)} {Tagit("ServerFilename", delta.ServerFilename)}  '+
-                                                        f'{Tagit("fanzinename", self.Datasource.Name.MainName)}'+
-                                                        f'{Tagit("fanzinetype", self.Datasource.FanzineType)}'+
-                                                        f'{Tagit("clubname", self.Datasource.Clubname)}'+
-                                                        f"{Tagit("IssueName", delta.Row[1])}  {Tagit("RootDir", self.RootDir)}", Flush=True)
+                failed=[d for d in uploads if not d.Uploaded]
+                if stopReason == "" and failed:
+                    stopReason=f"{Pluralize(len(failed), 'file')} could not be uploaded"
 
-                    case "rename":
-                        # Rename file on the server
-                        assert delta.Row is not None
-                        assert len(delta.Row[1]) > 0
-                        oldserverpathfile=f"/{self.RootDir}/{self.ServerDir}/{delta.OldFilename}"
-                        newserverpathfile=f"/{self.RootDir}/{self.ServerDir}/{delta.Row[0]}"
-                        pm.Update(f"Renaming {oldserverpathfile} as {newserverpathfile}")
-                        delta.Uploaded=FTP().Rename(oldserverpathfile, newserverpathfile)
-                        if not delta.Uploaded:
-                            dlg=wx.MessageDialog(self, f"Unable to rename {oldserverpathfile} to {newserverpathfile} because {FTP().LastMessage}", "Continue?", wx.YES_NO|wx.ICON_QUESTION)
-                            result=dlg.ShowModal()
-                            dlg.Destroy()
-                            if result != wx.ID_YES:
-                                break
-                        if delta.Uploaded:
-                            FTPLog().AppendItemVerb("rename", f'{Tagit("Oldname", delta.OldFilename)} {Tagit("IssueName", delta.Row[1])} '+
-                                                        f'{Tagit("fanzinename", self.Datasource.Name.MainName)}'+
-                                                        f'{Tagit("fanzinetype", self.Datasource.FanzineType)}'+
-                                                        f'{Tagit("clubname", self.Datasource.Clubname)}'+
-                                                        f'{Tagit("Newname", delta.Row[0])} {Tagit("ServerDirName", delta.ServerDirName)} {Tagit("RootDir", self.RootDir)}', Flush=True)
+                # 2. Renames
+                if stopReason == "":
+                    stopReason=DoRenames([d for d in renames if not d.Uploaded], renamed)
 
-            # Count the failures. (A delete of a blank server filename is skipped, not failed, so don't count it.
-            # Note that ServerFilename is None for add/replace deltas -- guard before stripping.)
-            c=sum([1 for x in self.deltaTracker.Deltas
-                   if not x.Uploaded and not (x.Verb == "delete" and (x.ServerFilename or "").strip() == "")])
-            if c > 0:
-                dlg=wx.MessageDialog(self, f"{Pluralize(c, "upload")} failed")
-                dlg.ShowModal()
+                # 3. Publish the page
+                if stopReason == "":
+                    Log(f"Datasource.PutFanzineIndexPage({self.RootDir}, {self.ServerDir})")
+                    if not self.Datasource.PutFanzineIndexPage(self.RootDir, self.ServerDir):
+                        stopReason="the index page itself could not be uploaded"
+            except Exception as e:
+                # Whatever went wrong, don't leave renames applied under a page that still links the old names
+                import traceback
+                LogError(f"OnUpload: {e}\n{traceback.format_exc()}")
+                stopReason=f"of an unexpected error ({e})"
+
+            if stopReason != "":
+                notUndone=UndoRenames(renamed)
+                FTPLog().AppendItemVerb("upload FIP partial ended", f"{Tagit("RootDir", self.RootDir)} {Tagit("ServerDir", self.ServerDir)}", Flush=True)
+                self.failure=True
+                Log(f"Upload stopped: {stopReason}\n")
+            else:
+                # 4. Deletes: the page just published no longer links these files -- unless a new file was uploaded
+                # or renamed under the same name, which has already replaced the old one and mustn't be deleted
+                inUse=self.FilenamesInUse()
+                for delta in [d for d in self.deltaTracker.Deltas if d.Verb == "delete" and not d.Uploaded]:
+                    filenameOnServer=(delta.ServerFilename or "").strip()
+                    if filenameOnServer == "" or filenameOnServer.lower() in inUse:
+                        delta.Uploaded=True     # Nothing on the server to delete
+                        continue
+                    serverpathfile=f"/{self.RootDir}/{self.ServerDir}/{filenameOnServer}"
+                    pm.Update(f"Deleting {serverpathfile} from server")
+                    delta.Uploaded=FTP().DeleteFile(serverpathfile)
+                    if not delta.Uploaded:
+                        deleteProblems.append(f"{filenameOnServer} ({FTP().LastMessage})")
+                        continue
+                    FTPLog().AppendItemVerb("delete", f'{Tagit("ServerDirName", delta.ServerDirName)} {Tagit("ServerFilename", delta.ServerFilename)}  '+
+                                                f'{Tagit("fanzinename", self.Datasource.Name.MainName)}'+
+                                                f'{Tagit("fanzinetype", self.Datasource.FanzineType)}'+
+                                                f'{Tagit("clubname", self.Datasource.Clubname)}'+
+                                                f"{Tagit("IssueName", delta.Row[1])}  {Tagit("RootDir", self.RootDir)}", Flush=True)
+
+                # The renames are logged only now that they're final (an undone rename didn't happen)
+                for delta in renamed:
+                    FTPLog().AppendItemVerb("rename", f'{Tagit("Oldname", delta.OldFilename)} {Tagit("IssueName", delta.Row[1])} '+
+                                                f'{Tagit("fanzinename", self.Datasource.Name.MainName)}'+
+                                                f'{Tagit("fanzinetype", self.Datasource.FanzineType)}'+
+                                                f'{Tagit("clubname", self.Datasource.Clubname)}'+
+                                                f'{Tagit("Newname", delta.Row[0])} {Tagit("ServerDirName", delta.ServerDirName)} {Tagit("RootDir", self.RootDir)}', Flush=True)
+
+                Log("All uploads succeeded.")
+                FTPLog().AppendItemVerb("upload FIP succeeded", f"{Tagit("RootDir", self.RootDir)} {Tagit("ServerDir", self.ServerDir)}", Flush=True)
+
+                self.CFL=cfl
+
+                self._uploaded=True
+                self.MarkAsSaved()
+
+                # Once a new fanzine has been uploaded, the server and local directories are no longer changeable
+                self.CreatingNewFanzineSeries=False
+                self._allowManualEditOfServerDirectoryName=False
+                self._manualEditOfServerDirectoryNameBegun=False
+                self._allowManualEntryOfLocalDirectoryName=False
+                self._manualEditOfLocalDirectoryNameBegun=False
+                self._AllowFanzineNameEdit=False
+
+                self.UpdateDialogComponentEnabledStatus()
 
             FTPLog.Flush()
 
-            # Delete all deltas which were uploaded
+            # Keep whatever didn't get done, to be retried on the next upload
             oldDeltas=self.deltaTracker
             self.deltaTracker=DeltaTracker()
             for delta in oldDeltas.Deltas:
                 if not delta.Uploaded:
                     self.deltaTracker.Deltas.append(delta)
 
-            # Put the FanzineIndexPage on the server as an HTML file
-            Log(f"Datasource.PutFanzineIndexPage({self.RootDir}, {self.ServerDir})")
-            if not self.Datasource.PutFanzineIndexPage(self.RootDir, self.ServerDir):
-                wx.MessageBox(f"Upload of index file failed")
-                FTPLog().AppendItemVerb("upload FIP partial ended", f"{Tagit("RootDir", self.RootDir)} {Tagit("ServerDir", self.ServerDir)}", Flush=True)
-                self.failure=True
-                Log("Failed\n")
-                return
+        # Report what went wrong, if anything, now that the progress message has gone
+        if stopReason != "":
+            msg=f"The upload stopped because {stopReason}.\n\nThe page was not published"
+            if notUndone:
+                msg+=(". WARNING: these files had been renamed on the server and could not be renamed back, so the live "
+                      "page's links to them are broken until the next successful upload:\n"+"\n".join(notUndone))
+            else:
+                msg+=", so the live page is unchanged."
+            msg+="\n\nEverything that didn't get done is still pending, so you can fix the problem and upload again."
+            if localProblems:
+                msg+=("\n\nAlso, these uploaded files could not be filed in the local directory and are still where they "
+                      "were:\n"+"\n".join(localProblems))
+            wx.MessageBox(msg, "Upload stopped", wx.OK|wx.ICON_WARNING, parent=self)
+            return
 
-            Log("All uploads succeeded.")
-            FTPLog().AppendItemVerb("upload FIP succeeded", f"{Tagit("RootDir", self.RootDir)} {Tagit("ServerDir", self.ServerDir)}", Flush=True)
-
-            self.CFL=cfl
-
-            self._uploaded=True
-            self.MarkAsSaved()
-
-            # Once a new fanzine has been uploaded, the server and local directories are no longer changeable
-            self.CreatingNewFanzineSeries=False
-            self._allowManualEditOfServerDirectoryName=False
-            self._manualEditOfServerDirectoryNameBegun=False
-            self._allowManualEntryOfLocalDirectoryName=False
-            self._manualEditOfLocalDirectoryNameBegun=False
-            self._AllowFanzineNameEdit=False
-
-            self.UpdateDialogComponentEnabledStatus()
+        problems=[]
+        if deleteProblems:
+            problems.append("These files could not be deleted from the server. The page no longer links them, and they "
+                            "will be tried again on the next upload:\n"+"\n".join(deleteProblems))
+        if localProblems:
+            problems.append("These uploaded files could not be filed in the local directory and are still where they "
+                            "were:\n"+"\n".join(localProblems))
+        if problems:
+            wx.MessageBox("The page was uploaded, but:\n\n"+"\n\n".join(problems), "Upload finished with problems", wx.OK|wx.ICON_INFORMATION, parent=self)
 
         # If someone (e.g. Move to Different Fanzine) registered work to be done after a successful upload, do it now
         if callable(self.PostUploadCallback):
@@ -1267,7 +1349,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if "Editor" in self.Datasource.ColDefs:  # Editor in the row overrides editors for the whole zine series
                 editors=row[self.Datasource.ColDefs.index("Editor")]
             copyfilepath=SetPDFMetadata(localfile, row, self.Datasource.ColDefs, editors=editors, mainName=mainName, country=country)
-            assert copyfilepath != ""
+            if copyfilepath == "":      # It couldn't be read (SetPDFMetadata has logged why)
+                return self.UploadFailed(f"{os.path.basename(localfile)} could not be read as a PDF -- it may be missing, "
+                                         f"encrypted or damaged (the log has the details)")
         else:
             copyfilepath=localfile
 
@@ -1277,19 +1361,27 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         pm.Update(f"Uploading {os.path.basename(localfile)} as {serverfilename}")
         Log(f"FTP().PutFile({copyfilepath}, {serverpathfile})")
         if not FTP().PutFile(copyfilepath, serverpathfile):
-            dlg=wx.MessageDialog(self, f"Unable to upload {copyfilepath} because {FTP().LastMessage}\n\nContinue with the remaining files?",
-                                 "Continue?", wx.YES_NO|wx.ICON_QUESTION)
-            result=dlg.ShowModal()      # Either way this upload FAILED; Yes just means keep going with the rest
-            dlg.Destroy()
-            self._abortUploadRequested=result != wx.ID_YES
+            why=FTP().LastMessage       # (Reading it clears it)
             if isPdf:
                 os.remove(copyfilepath)     # Clean up the temporary metadata-annotated copy
-            return False        # The delta stays pending, gets counted as a failure, and can be retried
+            return self.UploadFailed(f"{os.path.basename(localfile)} could not be uploaded ({why})")
 
         if isPdf:
             # If this is a PDF, then we created a temporary file when adding the metadata. Delete it now.
             os.remove(copyfilepath)
         return True
+
+
+    # A file couldn't be uploaded: say so, and ask whether to carry on with the rest. The page won't be published
+    # this time either way, but uploading the remaining files now leaves less to redo. Returns False (a failure).
+    def UploadFailed(self, why: str) -> bool:
+        dlg=wx.MessageDialog(self, f"{why}.\n\nThe page won't be published this time, but any remaining files can still be "
+                                   f"uploaded now, leaving less to redo. Continue with the remaining files?",
+                             "Continue?", wx.YES_NO|wx.ICON_QUESTION)
+        result=dlg.ShowModal()
+        dlg.Destroy()
+        self._abortUploadRequested=result != wx.ID_YES
+        return False        # The delta stays pending, so it can be retried
 
     # Take the date range (if any) on the Fanzine Index Page and return a years start, end tuple
     # Return 1900, 2200 for missing information
@@ -3566,11 +3658,11 @@ class FanzineIndexPage(GridDataSource):
 
 def SetPDFMetadata(pdfPathFilename: str, row: FanzineIndexPageTableRow, colNames: ColDefinitionsList, editors: str="", mainName: str="", country: str="") -> str:
 
+    # Returns "" if the file can't be read or the copy can't be written (missing, encrypted, damaged...); the caller tells the user.
     try:
         writer=PdfWriter(clone_from=pdfPathFilename)
-    except FileNotFoundError:
-        wx.MessageBox(f"Unable to open file {pdfPathFilename}")
-        LogError(f"SetPDFMetadata: Unable to open file {pdfPathFilename}")
+    except Exception as e:
+        LogError(f"SetPDFMetadata: Unable to open file {pdfPathFilename}: {type(e).__name__}: {e}")
         return ""
 
     # Title, issue, date, editors, country code, apa
@@ -3601,6 +3693,10 @@ def SetPDFMetadata(pdfPathFilename: str, row: FanzineIndexPageTableRow, colNames
     newfilepath=os.path.join(tmpdirname, filename)
     Log(f"{newfilepath=}")
 
-    with open(newfilepath, 'wb') as fp:
-        writer.write(fp)
+    try:
+        with open(newfilepath, 'wb') as fp:
+            writer.write(fp)
+    except Exception as e:
+        LogError(f"SetPDFMetadata: Unable to write {newfilepath}: {type(e).__name__}: {e}")
+        return ""
     return newfilepath
