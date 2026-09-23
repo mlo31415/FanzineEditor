@@ -736,7 +736,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
         if type == "left":
             selectedFanzine=self._dataGrid.Datasource.Rows[row][col]
 
-            dlg=wx.MessageDialog(None, f"Really delete {selectedFanzine}?", "Delete fanzine?", wx.YES_NO|wx.ICON_QUESTION)
+            dlg=wx.MessageDialog(self, f"Really delete {selectedFanzine}?", "Delete fanzine?", wx.YES_NO|wx.ICON_QUESTION)
             result=dlg.ShowModal()
             dlg.Destroy()
             if result == wx.ID_YES:

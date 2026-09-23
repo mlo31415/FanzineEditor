@@ -646,7 +646,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             skipped=[f for f in filenames if f not in accepted]
             if not accepted:
                 if filenames:
-                    wx.MessageBox("None of the dropped items is a PDF file.", "Nothing added", wx.OK|wx.ICON_INFORMATION)
+                    wx.MessageBox("None of the dropped items is a PDF file.", "Nothing added", wx.OK|wx.ICON_INFORMATION, parent=self)
                 return False
             accepted.sort()
             accepted=[f.replace("\\", "/") for f in accepted]       # Backslash separators give trouble downstream
@@ -682,7 +682,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             if skipped:
                 wx.MessageBox(f"Added {len(accepted)} PDF(s). Skipped (not PDFs):\n"+
-                              "\n".join(os.path.basename(s) for s in skipped), "Some files skipped", wx.OK|wx.ICON_INFORMATION)
+                              "\n".join(os.path.basename(s) for s in skipped), "Some files skipped", wx.OK|wx.ICON_INFORMATION, parent=self)
             if clashes:
                 self.ReportFilenameClashes(clashes)
             return True
@@ -1107,7 +1107,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     # If not, copy the existing index.htl file on /fanzines/ in to the test root.
                     # Note that this will create the server directory if it does not already exist.
                     if not FTP().CopyFile(f"/fanzines/{self.ServerDir}", f"/{self.RootDir}/{self.ServerDir}", "index.html", Create=True):
-                        wx.MessageBox(f"Attempt to copy index.html from /fanzines/{self.ServerDir} to /{self.RootDir}/{self.ServerDir} failed with error message {FTP().LastMessage}.")
+                        wx.MessageBox(f"Attempt to copy index.html from /fanzines/{self.ServerDir} to /{self.RootDir}/{self.ServerDir} failed with error message {FTP().LastMessage}.", parent=self)
 
             # Make a dated backup copy of the existing index page
             ret=FTP().BackupServerFile(f"/{self.RootDir}/{self.ServerDir}/index.html")
@@ -2318,13 +2318,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # Rename the PDF on the server. This does not change its name locally
     def OnPopupRenamePDF(self, event):
         oldname=self.Datasource.Rows[self._dataGrid.clickedRow][0]
-        dlg=wx.TextEntryDialog(self, 'Enter the newname of the pdf: ', 'Rename a PDF on the server', value=oldname)
-        #dlg.SetValue("Turn a cell into a link")
-        if dlg.ShowModal() != wx.ID_OK:
-            event.Skip()
-            return
-        newname=dlg.GetValue()
-        dlg.Destroy()
+        with wx.TextEntryDialog(self, 'Enter the newname of the pdf: ', 'Rename a PDF on the server', value=oldname) as dlg:     # (with: destroyed on Cancel, too)
+            #dlg.SetValue("Turn a cell into a link")
+            if dlg.ShowModal() != wx.ID_OK:
+                event.Skip()
+                return
+            newname=dlg.GetValue()
 
         if newname == "" or newname == oldname:
             event.Skip()
@@ -2610,13 +2609,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         row=self.Datasource.Rows[irow]
 
         # Create text input
-        dlg=wx.TextEntryDialog(self, 'Enter the URL to be used (just the URL, no HTML): ', 'Turn cell text into a hyperlink')
-        #dlg.SetValue("Turn a cell into a link")
-        if dlg.ShowModal() != wx.ID_OK:
-            event.Skip()
-            return
-        ret=dlg.GetValue()
-        dlg.Destroy()
+        with wx.TextEntryDialog(self, 'Enter the URL to be used (just the URL, no HTML): ', 'Turn cell text into a hyperlink') as dlg:     # (with: destroyed on Cancel, too)
+            #dlg.SetValue("Turn a cell into a link")
+            if dlg.ShowModal() != wx.ID_OK:
+                event.Skip()
+                return
+            ret=dlg.GetValue()
 
         if ret == "":
             event.Skip()
