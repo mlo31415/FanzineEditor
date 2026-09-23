@@ -98,9 +98,15 @@ def main():
     # Attempt to establish a lock on the Fanzines directories
     lockEstablished=False
     if id is not None:
+        oldLockid, oldLockdate=Lock().GetLock(rootDir)
         rslt=Lock().SetLock(rootDir, id)
         if rslt == "":
             lockEstablished=True
+            if oldLockid not in ("", id):
+                # SetLock silently takes over someone else's lock once it's 12 hours old -- but people leave FE running for days
+                wx.MessageBox(f"'{oldLockid}' locked the fanzines on {oldLockdate}. That lock has expired and is now yours, "
+                              f"but {oldLockid} may still have FanzinesEditor open.\n\nThe list of fanzines is safe either way, "
+                              f"but avoid both editing the same fanzine at the same time.", "Lock taken over", wx.OK|wx.ICON_INFORMATION)
         else:
             dlg=wx.MessageDialog(None, f"Unable to establish a lock for id '{id}' in directory '{rootDir}' because: \n{rslt}. \n\n Do you wish to proceed, anyway? ", "Continue (and risk disaster)?", wx.YES_NO|wx.ICON_QUESTION)
             result=dlg.ShowModal()
@@ -428,6 +434,9 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
         self._fanzinesList: list[ClassicFanzinesLine]=[]        # This holds the linear list of fanzines that gets folded into the rectangular grid
+        # This session's changes to the list, by lower-cased server directory (None=deleted). The upload applies just
+        # these to the list as it is on the server then, so it doesn't overwrite changes other sessions made meanwhile.
+        self._listChanges: dict[str, ClassicFanzinesLine|None]={}
 
         # Position the window on the screen it was on before at the size it was before
         tlwp=Settings("FanzinesEditor positions.json").Get("Top Level Window Position")
@@ -544,8 +553,8 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self.UpdateNeedsSavingFlag()
 
 
-    def NeedsSaving(self):       
-        return self._savedSignature != self.Signature() or self._fanzinesCount != len(self._fanzinesList)
+    def NeedsSaving(self):
+        return self._savedSignature != self.Signature() or self._fanzinesCount != len(self._fanzinesList) or len(self._listChanges) > 0
 
 
     def OnSearchText(self, event):       
@@ -623,6 +632,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
             self._fanzinesList[hits[0]]=cfl
         else:
             self._fanzinesList.append(cfl)
+        self._listChanges[cfl.ServerDir.lower()]=cfl
 
 
     def OnGridCellLeftClick( self, event ):
@@ -679,11 +689,49 @@ class FanzinesEditorWindow(FanzinesGridGen):
     # Upload the fanzines list to the classic fanzine page
     @GuardReentry
     def OnUploadPressed( self, event ):
-        success=PutClassicFanzineList(self._fanzinesList, self.RootDir)
+        # FE is often left running for days, and other sessions may have uploaded the list since this one read it. So
+        # don't write our copy over theirs: re-read the list from the server and apply just this session's changes.
+        with ModalDialogManager(ProgressMessage2, "Downloading main fanzine page", parent=self):
+            fresh=GetClassicFanzinesList()
+        if fresh is None or len(fresh) == 0:
+            wx.MessageBox("The list of fanzines could not be read from the server, so it was not uploaded. Your changes "
+                          "are still pending: try the upload again later.", "Upload failed", wx.OK|wx.ICON_WARNING, parent=self)
+            return
+        for serverDir, cfl in self._listChanges.items():
+            hits=[i for i, x in enumerate(fresh) if x.ServerDir.lower() == serverDir]
+            if cfl is None:
+                for i in reversed(hits):
+                    del fresh[i]
+            elif hits:
+                # The server's list is where creation dates live, so keep its date unless it's missing or was wiped (FE-1)
+                if fresh[hits[0]]._created is not None and fresh[hits[0]]._created.Date.year > 1900:
+                    cfl._created=fresh[hits[0]]._created
+                fresh[hits[0]]=cfl
+            else:
+                fresh.append(cfl)
+        fresh.sort(key=lambda cfl: cfl.ServerDir.casefold())
+
+        success=PutClassicFanzineList(fresh, self.RootDir)
         self.Raise()    # Bring the window to the top
         self.tSearch.SetFocus()     # And put the focus/cursor in the search box
-        if success:
-            self.MarkAsSaved()
+        if not success:
+            wx.MessageBox("The list of fanzines could not be uploaded (the log has the details). Your changes are still "
+                          "pending: try the upload again later.", "Upload failed", wx.OK|wx.ICON_WARNING, parent=self)
+            return
+
+        # Show the list as it now is on the server, including other sessions' changes
+        self._fanzinesList=fresh
+        self._listChanges={}
+        self.Datasource.FanzineList=self._fanzinesList
+        self.SearchFanzineList()
+        self.RefreshWindow()
+        self.MarkAsSaved()
+
+        # Refresh our lock's timestamp, so it expires 12 hours after we last did something rather than after we started
+        # (SetLock leaves someone else's unexpired lock alone)
+        id=Settings().Get("ID")
+        if id is not None:
+            Lock().SetLock(f"/{self.RootDir}", id)
 
     # ------------------
     def OnDeleteFanzineClicked( self, event):
@@ -701,6 +749,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
             dlg.Destroy()
             if result == wx.ID_YES:
                 self._fanzinesList=[x for x in self._fanzinesList if x.ServerDir != selectedFanzine]
+                self._listChanges[selectedFanzine.lower()]=None
                 self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())
                 searchtext=self.tSearch.GetValue()
                 fanzinelist=self._fanzinesList
