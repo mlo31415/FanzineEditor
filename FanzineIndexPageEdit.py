@@ -541,8 +541,41 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.EndModal(wx.OK)
 
 
+    # ----------------------------------------------
+    # The filenames already used by this page's issues (lower-cased), optionally leaving out one row.
+    # Two issues must never share a filename: they would share one file on the server, so uploading either one
+    # silently overwrites the other (and only index.html is backed up). Compared case-insensitively: names that
+    # differ only in case are almost certainly a mistake, and couldn't both live in one Windows folder anyway.
+    def FilenamesInUse(self, exceptRow: FanzineIndexPageTableRow|None=None) -> set[str]:
+        return {r[0].strip().lower() for r in self.Datasource.Rows if r is not exceptRow and r.IsNormalRow and r[0].strip() != ""}
+
+
+    # Split files about to be added into those whose names are free and those that clash with an issue already on
+    # the page (or with an earlier file in the same batch). Returns (accepted, clashes).
+    def SplitOffFilenameClashes(self, files: list[str]) -> tuple[list[str], list[str]]:
+        inUse=self.FilenamesInUse()
+        accepted: list[str]=[]
+        clashes: list[str]=[]
+        for f in files:
+            name=os.path.basename(f).strip().lower()
+            if name in inUse:
+                clashes.append(f)
+            else:
+                accepted.append(f)
+                inUse.add(name)
+        return accepted, clashes
+
+
+    def ReportFilenameClashes(self, clashes: list[str]) -> None:
+        wx.MessageBox("These files were not added, because an issue on this page already uses the same filename -- "
+                      "uploading them would overwrite that issue's file on the server:\n\n"+
+                      "\n".join(os.path.basename(f) for f in clashes)+
+                      "\n\nTo replace an issue's file, right-click its filename and choose Replace w/new PDF.",
+                      "Some files were not added", wx.OK|wx.ICON_INFORMATION, parent=self)
+
+
     @GuardReentry
-    def OnAddNewIssues(self, event):       
+    def OnAddNewIssues(self, event):
 
         # Call the File Open dialog to select PDF files
         with wx.FileDialog(self,
@@ -561,6 +594,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         # The files come back with '//' as the separator which gives troubel downstream. Fix it.
         files=[file.replace("\\", "/") for file in files]
+
+        # Leave out any file whose name an issue on this page already uses: its upload would overwrite that file
+        files, clashes=self.SplitOffFilenameClashes(files)
+        if len(files) == 0:
+            self.ReportFilenameClashes(clashes)
+            return
 
         # We have a list of file names and need to add them to the fanzine index page
         # Start by removing any already-existing empty trailing rows from the datasource
@@ -588,6 +627,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
 
+        if clashes:
+            self.ReportFilenameClashes(clashes)
+
 
     # ----------------------------------------------
     # Handle files dragged from a file-explorer window onto the issues grid. PDFs are added exactly as
@@ -605,6 +647,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 return False
             accepted.sort()
             accepted=[f.replace("\\", "/") for f in accepted]       # Backslash separators give trouble downstream
+
+            # Leave out any file whose name an issue on this page already uses: its upload would overwrite that file
+            accepted, clashes=self.SplitOffFilenameClashes(accepted)
+            if not accepted:
+                self.ReportFilenameClashes(clashes)
+                return False
 
             # Remove any trailing empty rows (as Add New Issues does), then compute the insertion point:
             # just above the row the files were dropped on; YToRow() returns wx.NOT_FOUND when the drop is
@@ -632,6 +680,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if skipped:
                 wx.MessageBox(f"Added {len(accepted)} PDF(s). Skipped (not PDFs):\n"+
                               "\n".join(os.path.basename(s) for s in skipped), "Some files skipped", wx.OK|wx.ICON_INFORMATION)
+            if clashes:
+                self.ReportFilenameClashes(clashes)
             return True
         except Exception as e:
             import traceback
@@ -1066,15 +1116,17 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
             pm.Update(f"Uploading new Fanzine Index Page: {self.ServerDir}")
 
-            def MoveToLocalDirectory(sourcepath: str, localdirpath: str, filename: str):
+            # Move the uploaded file from where it is on disk into the fanzine's local directory, under the filename
+            # it has on the server (which differs from its name on disk if it was renamed after being added).
+            def MoveToLocalDirectory(sourcefile: str, localdirpath: str, filename: str):
                 if filename is None or filename == "":
                     return  # Nothing to do here, move along...
                 # if the target directory does not exist, create it
                 if not os.path.exists(localdirpath):
                     os.makedirs(localdirpath)
-                Log(f"MoveToLocalDirectory({sourcepath}, {localdirpath}, {filename})")
-                shutil.move(sourcepath+"/"+filename, localdirpath+"/"+filename)
-                Log(f"shutil.move({sourcepath+"/"+filename}, {localdirpath+"/"+filename})")
+                Log(f"MoveToLocalDirectory({sourcefile}, {localdirpath}, {filename})")
+                shutil.move(sourcefile, localdirpath+"/"+filename)
+                Log(f"shutil.move({sourcefile}, {localdirpath+"/"+filename})")
 
             # Now execute the delta list on the files.
             self.failure=False
@@ -1089,12 +1141,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                         assert delta.Row is not None
                         sourceFilename=delta.Row[0]     # Need to allow for edits in col 0 after add, but before upload
                         # Note that we pass in cfl and Row because the row is likely to have been updated after the DeltaAdd is created, and we want to capture those updates
-                        delta.Uploaded=self.UpdateAndUpload(delta.Row, sourceFilename, delta.SourcePath, editors=cfl.Editors, mainName=cfl.Name.MainName, country=cfl.Country, pm=pm)
+                        delta.Uploaded=self.UpdateAndUpload(delta.Row, sourceFilename, editors=cfl.Editors, mainName=cfl.Name.MainName, country=cfl.Country, pm=pm)
                         if not delta.Uploaded and self._abortUploadRequested:
                             break       # The user answered No to "Continue with the remaining files?"
                         if delta.Uploaded:
                             if moveFilesAfterUploading:
-                                MoveToLocalDirectory(delta.SourcePath, localDirectoryPath, sourceFilename)
+                                MoveToLocalDirectory(delta.Row.FileSourcePath, localDirectoryPath, sourceFilename)
 
                         text=f'{Tagit("IssueName", delta.Row[1])} ' + \
                                         f'{Tagit("ServerDir", self.ServerDir)} ' +\
@@ -1201,24 +1253,28 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.PostUploadCallback()
 
 
-    # Update the new pdf's metadata and then upload it
-    def UpdateAndUpload(self, row: FanzineIndexPageTableRow, sourcefilename: str, sourcepath: str, editors: str="", mainName: str="", country: str="", pm: ProgressMessage2|None=None) -> bool:
+    # Update the new pdf's metadata and then upload it.
+    # The file is read from where it really is on disk (row.FileSourcePath) and uploaded under the row's current
+    # filename. The two differ when the filename was edited after the file was added -- reading the file under
+    # the edited name would fail, since nothing on disk has that name.
+    def UpdateAndUpload(self, row: FanzineIndexPageTableRow, serverfilename: str, editors: str="", mainName: str="", country: str="", pm: ProgressMessage2|None=None) -> bool:
         # Note that we passed in Row because the row is likely to have been updated after the DeltaAdd is created, and we want to capture those updates
-        _, ext=os.path.splitext(sourcefilename)
+        localfile=row.FileSourcePath
+        _, ext=os.path.splitext(localfile)
         isPdf=ext.lower() == ".pdf"
         # If this is a PDF, we need to update the metadata
         if isPdf:
             if "Editor" in self.Datasource.ColDefs:  # Editor in the row overrides editors for the whole zine series
                 editors=row[self.Datasource.ColDefs.index("Editor")]
-            copyfilepath=SetPDFMetadata(sourcepath+"/"+sourcefilename, row, self.Datasource.ColDefs, editors=editors, mainName=mainName, country=country)
+            copyfilepath=SetPDFMetadata(localfile, row, self.Datasource.ColDefs, editors=editors, mainName=mainName, country=country)
             assert copyfilepath != ""
         else:
-            copyfilepath=os.path.join(sourcepath, sourcefilename)
+            copyfilepath=localfile
 
-        serverpathfile=f"/{self.RootDir}/{self.ServerDir}/{sourcefilename}"
+        serverpathfile=f"/{self.RootDir}/{self.ServerDir}/{serverfilename}"
 
 
-        pm.Update(f"Uploading {sourcefilename} as {sourcefilename}")
+        pm.Update(f"Uploading {os.path.basename(localfile)} as {serverfilename}")
         Log(f"FTP().PutFile({copyfilepath}, {serverpathfile})")
         if not FTP().PutFile(copyfilepath, serverpathfile):
             dlg=wx.MessageDialog(self, f"Unable to upload {copyfilepath} because {FTP().LastMessage}\n\nContinue with the remaining files?",
@@ -1816,6 +1872,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # But if we are inserting an external URL, there is no need to create a rename on the old contents
             newurl=self.Datasource.Rows[irow][icol]
             if "http:" not in newurl.lower() and "//" not in newurl:
+                # Two issues can't share a filename -- they would share one file on the server -- so put the old one back
+                if newurl.strip().lower() in self.FilenamesInUse(exceptRow=self.Datasource.Rows[irow]):
+                    self.Datasource.Rows[irow][icol]=oldURL
+                    self._dataGrid.RefreshWxGridFromDatasource(StartRow=irow, EndRow=irow)
+                    # (Shown once this handler has returned, rather than from inside the grid's cell-change processing)
+                    wx.CallAfter(wx.MessageBox, f"'{newurl}' is already the filename of another issue on this page, so the "
+                                 f"change was undone: two issues sharing a filename would share one file on the server.",
+                                 "Filename already in use", wx.OK|wx.ICON_INFORMATION, parent=self)
+                    return
                 self.deltaTracker.Rename(oldURL, newurl, serverDirName=self.ServerDir, row=self.Datasource.Rows[irow])
 
         if event.GetCol() == 0:    # If the Filename changes, we may need to update the PDF and the Pages columns
@@ -2134,6 +2199,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         irow=self._dataGrid.clickedRow
         oldfile=self.Datasource.Rows[irow][0]
         newfilepath, newfilename=os.path.split(filepath[0])
+        # The replacement mustn't take a filename another issue already uses: its upload would overwrite that
+        # issue's file. (Keeping this row's own filename is fine -- that's an ordinary replacement.)
+        if newfilename.strip().lower() in self.FilenamesInUse(exceptRow=self.Datasource.Rows[irow]):
+            wx.MessageBox(f"'{newfilename}' is already the filename of another issue on this page, so uploading it would "
+                          f"overwrite that issue's file on the server. Rename the replacement file and try again.",
+                          "Replacement not made", wx.OK|wx.ICON_INFORMATION, parent=self)
+            return
         self.Datasource.Rows[irow][0]=newfilename
         self.Datasource.Rows[irow].FileSourcePath=filepath[0]      # Point at the replacement so its page count can be read
         self.deltaTracker.Replace(oldSourceFilename=oldfile, newfilepathname=filepath[0], serverDirName=self.ServerDir, row=self.Datasource.Rows[irow])
@@ -2164,6 +2236,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             return
 
         irow=self._dataGrid.clickedRow
+        if newname.strip().lower() in self.FilenamesInUse(exceptRow=self.Datasource.Rows[irow]):
+            wx.MessageBox(f"'{newname}' is already the filename of another issue on this page, so renaming this file to it "
+                          f"would overwrite that issue's file on the server.", "Not renamed", wx.OK|wx.ICON_INFORMATION, parent=self)
+            event.Skip()
+            return
         self.Datasource.Rows[irow][0]=newname
         self.RefreshWindow()
         self.deltaTracker.Rename(oldname, newname, serverDirName=self.ServerDir, row=self.Datasource.Rows[irow])

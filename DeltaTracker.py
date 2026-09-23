@@ -124,18 +124,21 @@ class DeltaTracker:
         if row is None:
             return
 
-        # First check to see if this is a rename of a rename.  If it is, merge them by replacing the existing rename.
-        for item in self._deltas:
-            if item.Verb == "rename":
-                if item.Row.Cells[0] == row.Cells[0]:        # Is the *old* filename for this rename the same as the *new* filename for a previous one?
-                    return
+        # A rename needs a filename at both ends. With no old name there is no file on the server yet (a filename
+        # was typed into an empty row); with no new name the cell was cleared. Either way, queuing it would ask the
+        # server to rename a path ending in "/" -- the fanzine's own directory.
+        if sourceFilename.strip() == "" or newname.strip() == "":
+            return
 
-        # Now check to see if this is a rename of a file that is on the delta list to be added.
-        # If so, we're done since the new name will be taken from the row
+        # If this row already has a rename, add or replace pending, the upload takes the filename from the row, so
+        # there is nothing more to queue: a pending rename then goes from the original name to the latest one, and
+        # a pending add or replace uploads straight under the new name.
+        # Match on the row itself, not on its filename: by the time we are called the grid has already put the new
+        # name in the row, so comparing names never finds the row's own pending add -- and the rename would then
+        # be attempted on a file that isn't on the server yet.
         for item in self._deltas:
-            if item.Verb == "add":
-                if item.Row.Cells[0] == sourceFilename:
-                    return
+            if item.Row is row and item.Verb in ("rename", "add", "replace"):
+                return
 
         # If it doesn't match anything in the delta list, then it must be a rename of an existing file.
         # The current name of the existing file will be pulled from the row
