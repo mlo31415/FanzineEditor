@@ -2595,7 +2595,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow()
 
 
-    # Add a link to the selected cell
+    # Insert a link line (a row which is just a link) above the clicked row
     def OnPopupInsertLinkLine(self, event):
         irow=self._dataGrid.clickedRow
         icol=self._dataGrid.clickedColumn
@@ -2603,28 +2603,33 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             event.Skip()
             return
 
+        # Ask before inserting anything, so that Cancel leaves the page as it was
+        with wx.TextEntryDialog(self, 'Enter the URL to be used (just the URL, no HTML): ', 'Insert a Link line') as dlg:     # (with: destroyed on Cancel, too)
+            if dlg.ShowModal() != wx.ID_OK:
+                event.Skip()
+                return
+            url=dlg.GetValue().strip()
+        if url == "":
+            event.Skip()
+            return
+        with wx.TextEntryDialog(self, 'Enter the text to be shown for the link: ', 'Insert a Link line', value=url) as dlg:
+            if dlg.ShowModal() != wx.ID_OK:
+                event.Skip()
+                return
+            text=dlg.GetValue().strip() or url
+
         if irow > self.Datasource.NumRows:
             self._dataGrid.ExpandDataSourceToInclude(irow, 0)   # If we're inserting past the end of the datasource, insert empty rows as necessary to fill in between
         self._dataGrid.InsertEmptyRows(irow, 1)     # Insert the new empty row
         row=self.Datasource.Rows[irow]
 
-        # Create text input
-        with wx.TextEntryDialog(self, 'Enter the URL to be used (just the URL, no HTML): ', 'Turn cell text into a hyperlink') as dlg:     # (with: destroyed on Cancel, too)
-            #dlg.SetValue("Turn a cell into a link")
-            if dlg.ShowModal() != wx.ID_OK:
-                event.Skip()
-                return
-            ret=dlg.GetValue()
-
-        if ret == "":
-            event.Skip()
-            return
-
-        row[icol]=ret
-        self._dataGrid.Grid.SetCellSize(irow, 0, 1, self._dataGrid.NumCols)
-        for icol in range(self._dataGrid.NumCols):
+        # A link row is written to the page from just two cells -- the URL (col 0) and the text shown (col 1) -- and is
+        # displayed that way, too, so those are the cells to fill in and allow editing of
+        row[0]=url
+        row[1]=text
+        row.IsLinkRow=True
+        for icol in (0, 1):
             self._dataGrid.AllowCellEdit(irow, icol)
-        self.Datasource.Rows[irow].IsLinkRow=True
         self._dataGrid.RefreshWxGridFromDatasource()
         self.RefreshWindow()
 
