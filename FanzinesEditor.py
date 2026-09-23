@@ -746,23 +746,6 @@ class FanzinesEditorWindow(FanzinesGridGen):
                 self.RefreshWindow()
 
 
-    # ------------------
-    # Initialize the main window to empty
-    # This also initiazes the datasource
-    def ClearMainWindow(self):       
-
-        # Re-initialize the form
-
-        # Create an empty datasource
-        self.Datasource._fanzineList=[]
-
-        # Update the dialog's grid from the data
-        self._dataGrid.RefreshWxGridFromDatasource(RetainSelection=False)
-
-        # Set the signature to the current (empty) state so any change will trigger a request to save on exit
-        self.MarkAsSaved()
-
-
 #=============================================================
 # An individual file to be listed under a convention
 # This is a single row
