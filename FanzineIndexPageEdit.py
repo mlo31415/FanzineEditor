@@ -8,6 +8,7 @@ import shutil
 from datetime import datetime
 from math import floor, ceil
 import tempfile
+from urllib.parse import quote
 
 from bs4 import BeautifulSoup
 import bs4
@@ -36,11 +37,19 @@ from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonLi
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, ExtractHTMLUsingFanacStartEndCommentPair, SplitListOfNamesOnPattern
 from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename, InsertInvisibleTextInsideFanacComment, ExtractHTMLUsingFanacTagCommentPair
 from HelpersPackage import RemoveAccents, ExtractTrailingSequenceNumber
-from PDFHelpers import GetPdfPageCount, AddStdMetadata
+from PDFHelpers import GetPdfPageCount, AddStdMetadata, AddPdfPageHeader
 from HtmlHelpersPackage import HtmlEscapesToUnicode, UnicodeToHtmlEscapes, ConvertHTMLEscapes
 from Log import Log, LogError
 from Settings import Settings
 from FanzineDateTime import MonthNameToInt
+
+# The FANAC logo stamped into uploaded PDFs' page headers. Loaded once at startup (see main() in FanzinesEditor) and held
+# here as raw image bytes; None means no logo (the file is missing or unreadable), and the headers are stamped without one.
+_g_headerLogo: bytes|None=None
+
+def SetHeaderLogo(data: bytes|None) -> None:
+    global _g_headerLogo
+    _g_headerLogo=data
 
 # Background color for rows that are out of order (a valid ordering exists, but the rows aren't in it)
 gColorMisordered=wx.Colour(255, 255, 200)   # Light yellow
@@ -1159,6 +1168,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             notUndone: list[str]=[]     # ...of which, ones that couldn't be undone
             localProblems: list[str]=[] # Uploaded files that couldn't be filed in the local directory
             deleteProblems: list[str]=[]
+            self._headerProblems: list[str]=[]  # Uploaded PDFs whose page header couldn't be added (UpdateAndUpload fills it)
             try:
                 # A rename away from a name which a new file is about to be uploaded under must be done first, or the
                 # upload would overwrite the file being renamed
@@ -1292,6 +1302,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if localProblems:
                 msg+=("\n\nAlso, these uploaded files could not be filed in the local directory and are still where they "
                       "were:\n"+"\n".join(localProblems))
+            if self._headerProblems:
+                msg+=("\n\nAlso, these files were uploaded without their page header (Regenerate PDF Header can add it "
+                      "later):\n"+"\n".join(self._headerProblems))
             wx.MessageBox(msg, "Upload stopped", wx.OK|wx.ICON_WARNING, parent=self)
             return
 
@@ -1302,6 +1315,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if localProblems:
             problems.append("These uploaded files could not be filed in the local directory and are still where they "
                             "were:\n"+"\n".join(localProblems))
+        if self._headerProblems:
+            problems.append("These files were uploaded without their page header (the log has the details; Regenerate "
+                            "PDF Header can add it later):\n"+"\n".join(self._headerProblems))
         if problems:
             wx.MessageBox("The page was uploaded, but:\n\n"+"\n\n".join(problems), "Upload finished with problems", wx.OK|wx.ICON_INFORMATION, parent=self)
 
@@ -1310,7 +1326,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.PostUploadCallback()
 
 
-    # Update the new pdf's metadata and then upload it.
+    # Update the new pdf's metadata and page header and then upload it.
     # The file is read from where it really is on disk (row.FileSourcePath) and uploaded under the row's current
     # filename. The two differ when the filename was edited after the file was added -- reading the file under
     # the edited name would fail, since nothing on disk has that name.
@@ -1320,10 +1336,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         localfile=row.FileSourcePath
         _, ext=os.path.splitext(localfile)
         isPdf=ext.lower() == ".pdf"
-        # If this is a PDF, we need to update the metadata. (SetPDFMetadata uses the row's own Editor, if it has one.)
+        # If this is a PDF, we need to update the metadata and add the header. (The metadata uses the row's own Editor, if it has one.)
         if isPdf:
-            copyfilepath=SetPDFMetadata(localfile, row, self.Datasource.ColDefs, editors=editors, mainName=mainName, country=country,
-                                        fanzineType=fanzineType, clubname=clubname)
+            pm.Update(f"Adding metadata and header to {os.path.basename(localfile)}")
+            copyfilepath, headerProblem=PrepareIssuePdf(localfile, row, self.Datasource.ColDefs, self.ServerDir, editors=editors, mainName=mainName,
+                                                        country=country, fanzineType=fanzineType, clubname=clubname)
+            if headerProblem != "":     # It's uploaded without the header, and reported at the end
+                self._headerProblems.append(f"{serverfilename} ({headerProblem})")
             if copyfilepath == "":      # It couldn't be read (SetPDFMetadata has logged why)
                 return self.UploadFailed(f"{os.path.basename(localfile)} could not be read as a PDF -- it may be missing, "
                                          f"encrypted or damaged (the log has the details)")
@@ -2045,6 +2064,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if len(self.Datasource.Rows[irow][0]) > 0 and ".pdf" in self.Datasource.Rows[irow][0].lower():
                     Enable("Rename PDF on Server")
 
+        # A row whose file is a PDF can have its PDF's metadata and header regenerated (clicked anywhere in the row)
+        if self.RowServerFilename(self.Datasource.Rows[self._dataGrid.clickedRow]).lower().endswith(".pdf"):
+            Enable("Regenerate PDF Header")
+
         if not isGridCellClick:
             Enable("Sort on Selected Column") # It's a label click, so sorting on the column is always OK
 
@@ -2398,7 +2421,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.CopyRowsIntoTarget(fipw, movedRows, renames)
             fipw.RefreshWindow()        # Make the appended rows visible in the target dialog
 
-            if not self.MoveRowFilesOnServer(movedRows, targetDir, renames):
+            if not self.MoveRowFilesOnServer(movedRows, targetDir, renames, fipw):
                 fipw.Destroy()
                 return      # File move failed; message already shown. No index pages have been changed.
 
@@ -2430,7 +2453,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             def FinishMove() -> None:
                 fipw.PostUploadCallback=None                        # Run only once
                 actualTarget=fipw.ServerDir                         # The user may have edited the directory name
-                if not self.MoveRowFilesOnServer(movedRows, actualTarget, {}):
+                if not self.MoveRowFilesOnServer(movedRows, actualTarget, {}, fipw):
                     return
                 self.RemoveMovedRowsAndUploadSource(movedRows)
             fipw.PostUploadCallback=FinishMove
@@ -2529,12 +2552,107 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             targetds.Rows.append(newrow)
 
 
+    # Re-do the metadata and page header of the selected rows' PDFs on the server, from the page as it is now -- e.g. after the
+    # fanzine's or an issue's name or date has changed, or for a PDF uploaded before FanzinesEditor added headers.
+    def OnPopupRegeneratePDFHeader(self, event):
+        self.wxGrid.SaveEditControlValue()
+        top, _, bottom, _=self._dataGrid.SelectionBoundingBox()
+        if top == -1 or bottom == -1:
+            top=bottom=self._dataGrid.clickedRow
+        if top < 0 or top >= self.Datasource.NumRows:
+            return
+        bottom=min(bottom, self.Datasource.NumRows-1)
+        rows=[r for r in self.Datasource.Rows[top:bottom+1] if self.RowServerFilename(r).lower().endswith(".pdf")]
+        if len(rows) == 0:
+            return
+
+        # A row with changes not yet uploaded doesn't match its file on the server (which may not even be there yet)
+        pendingIds={id(delta.Row) for delta in self.deltaTracker.Deltas if delta.Row is not None}
+        if any(id(r) in pendingIds for r in rows):
+            wx.MessageBox("Some of the selected rows have changes which have not yet been uploaded. "
+                          "Upload this page first, then regenerate their headers.", "Regenerate PDF Header", parent=self)
+            return
+
+        failures: list[str]=[]
+        headerProblems: list[str]=[]
+        with ModalDialogManager(ProgressMessage2, "Regenerating PDF headers", parent=self) as pm:
+            for r in rows:
+                fname=self.RowServerFilename(r)
+                pm.Update(f"Regenerating the metadata and header of {fname}")
+                why=self.RestampPdfOnServer(r, fname, self, self.ServerDir, fname, headerProblems)
+                if why != "":
+                    Log(f"OnPopupRegeneratePDFHeader: {why}", isError=True)
+                    failures.append(why)
+                    continue
+                FTPLog().AppendItemVerb("regenerate pdf header", f"{Tagit('Filename', fname)} {Tagit('ServerDir', self.ServerDir)} "
+                                                                 f"{Tagit('RootDir', self.RootDir)}", Flush=True)
+
+        done=len(rows)-len(failures)-len(headerProblems)
+        msg=f"The metadata and page header of {Pluralize(done, 'PDF')} {'was' if done == 1 else 'were'} regenerated."
+        if headerProblems:
+            msg+=("\n\nThese got new metadata, but their page header could not be added (the log has the details):\n"+
+                  "\n".join(headerProblems))
+        if failures:
+            msg+="\n\nThese could not be regenerated:\n"+"\n".join(failures)
+        wx.MessageBox(msg, "Regenerate PDF Header", wx.OK|(wx.ICON_WARNING if failures or headerProblems else wx.ICON_INFORMATION), parent=self)
+
+
+    # The fanzine-level values that go into its PDFs' metadata and page headers, taken from this dialog as the upload takes them
+    def PdfFanzineInfo(self) -> dict:
+        return dict(editors=self.tEditors.GetValue().replace("\n", "<br>"),
+                    mainName=FanzineNames(self.tFanzineName.GetValue(), self.tOthernames.GetValue()).MainName,
+                    country=self.tLocaleText.GetValue(),
+                    fanzineType=self.chFanzineType.Items[self.chFanzineType.GetSelection()],
+                    clubname=self.tClubname.GetValue())
+
+
+    # Re-do the metadata and page header of one of this fanzine's PDFs which is already on the server: download it, prepare
+    # a new copy for the fanzine 'target' describes (this one, or the one it's being moved to), and upload that copy as
+    # targetDir/newname. In test mode a file which is only on the real site is read from there -- the real site is never
+    # changed. Returns "" on success, else what went wrong. A header which couldn't be added goes into headerProblems.
+    def RestampPdfOnServer(self, row: FanzineIndexPageTableRow, fname: str, target: FanzineIndexPageWindow, targetDir: str, newname: str,
+                           headerProblems: list[str]) -> str:
+        realRoot=Settings().Get("Root directory", "fanzines")
+        getDir=f"/{self.RootDir}/{self.ServerDir}"
+        if not FTP().FileExists(f"{getDir}/{fname}"):
+            if self.RootDir.lower() == realRoot.lower():
+                return f"{fname} is not on the server"
+            getDir=f"/{realRoot}/{self.ServerDir}"
+        fd, localpath=tempfile.mkstemp(suffix=".pdf")
+        os.close(fd)
+        copyfilepath=""
+        try:
+            if not FTP().GetFile(getDir, fname, localpath):
+                return f"{fname} could not be downloaded ({FTP().LastMessage})"
+            copyfilepath, headerProblem=PrepareIssuePdf(localpath, row, self.Datasource.ColDefs, targetDir, **target.PdfFanzineInfo())
+            if copyfilepath == "":
+                return f"{fname} could not be read as a PDF (the log has the details)"
+            if headerProblem != "":
+                headerProblems.append(f"{newname} ({headerProblem})")
+            # (In test mode a target fanzine which is only on the real site has no test directory yet)
+            if not FTP().SetDirectory(f"/{self.RootDir}/{targetDir}", Create=True):
+                return f"the directory /{self.RootDir}/{targetDir} could not be created ({FTP().LastMessage})"
+            if not FTP().PutFile(copyfilepath, f"/{self.RootDir}/{targetDir}/{newname}"):
+                return f"{newname} could not be uploaded ({FTP().LastMessage})"
+            return ""
+        finally:
+            for f in (localpath, copyfilepath):
+                try:
+                    if f != "" and os.path.exists(f):
+                        os.remove(f)
+                except Exception as e:
+                    Log(f"RestampPdfOnServer: could not delete temporary file {f}: {e}")
+
+
     # Move the moved rows' files on the server from this fanzine's directory into the target's.
+    # A PDF is re-done for the target fanzine on the way (its metadata and page header name the fanzine it's in): it's
+    # downloaded, re-stamped and uploaded to the target, and then the original is deleted. Other files are just moved.
     # In test mode a file may exist only under the real root; in that case it is COPIED from the real root into
     # the test target (the real root is never modified). Returns False (after telling the user) on any failure.
-    def MoveRowFilesOnServer(self, movedRows: list[FanzineIndexPageTableRow], targetDir: str, renames: dict) -> bool:
+    def MoveRowFilesOnServer(self, movedRows: list[FanzineIndexPageTableRow], targetDir: str, renames: dict, target: FanzineIndexPageWindow) -> bool:
         realRoot=Settings().Get("Root directory", "fanzines")
         allok=True
+        headerProblems: list[str]=[]
         with ModalDialogManager(ProgressMessage2, f"Moving files to {targetDir}", parent=self) as pm:
             for row in movedRows:
                 fname=self.RowServerFilename(row)
@@ -2544,7 +2662,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 src=f"/{self.RootDir}/{self.ServerDir}/{fname}"
                 dst=f"/{self.RootDir}/{targetDir}/{newname}"
                 pm.Update(f"Moving {fname}")
-                if FTP().FileExists(src):
+                if fname.lower().endswith(".pdf"):
+                    why=self.RestampPdfOnServer(row, fname, target, targetDir, newname, headerProblems)
+                    ok=why == ""
+                    if not ok:
+                        Log(f"MoveRowFilesOnServer: {why}", isError=True)
+                    elif FTP().FileExists(src) and not FTP().DeleteFile(src):
+                        # The move itself worked, so this isn't a failure: the page no longer links the original
+                        Log(f"MoveRowFilesOnServer: moved {fname}, but could not delete the original {src}: {FTP().LastMessage}", isError=True)
+                elif FTP().FileExists(src):
                     ok=FTP().Rename(src, dst)
                 elif self.RootDir.lower() != realRoot.lower():
                     # Test mode and the file was never uploaded to the test root: copy it from the real directory
@@ -2561,6 +2687,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if not allok:
             wx.MessageBox("One or more files could not be moved (see the log). The move has been stopped; "
                           "no index pages have been changed.", "Move to Different Fanzine", parent=self)
+        elif headerProblems:
+            wx.MessageBox("The files were moved, but the page headers of these PDFs could not be updated for their new fanzine "
+                          "(the log has the details; Regenerate PDF Header can do it later):\n\n"+"\n".join(headerProblems),
+                          "Move to Different Fanzine", wx.OK|wx.ICON_INFORMATION, parent=self)
         return allok
 
 
@@ -3653,20 +3783,63 @@ class FanzineIndexPage(GridDataSource):
 
 
 
-# The PDF's title: "{fanzine}: {issue}" -- or just the issue's name when it already begins with the fanzine's name, e.g.
-# "Quandry 13" rather than "Quandry: Quandry 13". The names are compared as whole words, ignoring case, punctuation
-# and a leading (or trailing ", The") article.
-def PDFTitle(mainName: str, issueName: str) -> str:
+# Does the issue's name already begin with the fanzine's name? (E.g. "Quandry 13" for Quandry.) The names are compared
+# as whole words, ignoring case, punctuation and a leading (or trailing ", The") article.
+def IssueNameBeginsWithFanzineName(mainName: str, issueName: str) -> bool:
     def Words(s: str) -> str:
         return " ".join(re.sub(r"[\W_]+", " ", RemoveArticles(s.strip()).casefold()).split())
     series, issue=Words(mainName), Words(issueName)
-    if series == "":
-        return issueName.strip()
-    if issue == "":
+    return series == "" or issue == series or issue.startswith(series+" ")
+
+
+# The PDF's title: "{fanzine}: {issue}" -- or just the issue's name when it already begins with the fanzine's name, e.g.
+# "Quandry 13" rather than "Quandry: Quandry 13".
+def PDFTitle(mainName: str, issueName: str) -> str:
+    if issueName.strip() == "":
         return mainName.strip()
-    if issue == series or issue.startswith(series+" "):
+    if IssueNameBeginsWithFanzineName(mainName, issueName):
         return issueName.strip()
     return f"{mainName.strip()}: {issueName.strip()}"
+
+
+# The header stamped on the first page of an uploaded PDF, as the format string and items AddPdfPageHeader takes (a URL
+# item becomes a link whose text is the item after it). It links readers who arrive at the PDF directly -- e.g. from a
+# search engine -- back up to the fanzine's index page and to fanac.org/fanzines. Both the fanzine's name and the issue's
+# link to the fanzine's index page, and as in the title the fanzine's name is left off when the issue's begins with it:
+#   [Quandry 13] (September 1951)  --  from [fanac.org/fanzines]
+#   [Clubby News]: [Bulletin 4] (1980)  --  from [fanac.org/fanzines]
+def PDFHeader(mainName: str, issueName: str, serverDir: str, date: str) -> tuple[str, list]:
+    fipURL=f"https://www.fanac.org/fanzines/{quote(serverDir.strip(), safe='')}/"
+    if issueName.strip() == "":
+        fmt, items="{}", [fipURL, mainName.strip()]
+    elif IssueNameBeginsWithFanzineName(mainName, issueName):
+        fmt, items="{}", [fipURL, issueName.strip()]
+    else:
+        fmt, items="{}: {}", [fipURL, mainName.strip(), fipURL, issueName.strip()]
+    if date.strip() != "":
+        fmt+=" ({})"
+        items.append(date.strip())
+    fmt+="  --  from {}"
+    items+=["https://www.fanac.org/fanzines/", "fanac.org/fanzines"]
+    return fmt, items
+
+
+# Make the copy of an issue's PDF which gets uploaded: fanac.org's metadata and the page header linking back to the fanzine.
+# Returns (the copy's path, or "" if the PDF can't be read; why the header couldn't be added, or "").
+# A PDF whose header can't be added is still worth uploading, so that's for the caller to report rather than a failure.
+def PrepareIssuePdf(pdfPathFilename: str, row: FanzineIndexPageTableRow, colNames: ColDefinitionsList, serverDir: str, editors: str="",
+                    mainName: str="", country: str="", fanzineType: str="", clubname: str="") -> tuple[str, str]:
+    copyfilepath=SetPDFMetadata(pdfPathFilename, row, colNames, editors=editors, mainName=mainName, country=country,
+                                fanzineType=fanzineType, clubname=clubname)
+    if copyfilepath == "":
+        return "", ""
+    fmt, items=PDFHeader(mainName, row.Cells[colNames.index("Display Text")], serverDir, DateFmt(row, colNames))
+    try:
+        AddPdfPageHeader(copyfilepath, fmt, items, logo=_g_headerLogo)
+    except Exception as e:
+        LogError(f"PrepareIssuePdf: could not add the page header to {pdfPathFilename}: {type(e).__name__}: {e}")
+        return copyfilepath, f"{type(e).__name__}: {e}"
+    return copyfilepath, ""
 
 
 # Make a copy of the PDF in the temporary directory, with fanac.org's metadata, for uploading.

@@ -19,7 +19,7 @@ from Log import Log as RealLog
 from Settings import Settings
 from FanacFanzinesHelpers import ReadClassicFanzinesTable
 
-from FanzineIndexPageEdit import FanzineIndexPageWindow, ClassicFanzinesDate, Tagit
+from FanzineIndexPageEdit import FanzineIndexPageWindow, ClassicFanzinesDate, Tagit, SetHeaderLogo
 from FanzineNames import FanzineNames
 from GenGUIClass import FanzinesGridGen
 from GenLogDialogClass import LogDialog
@@ -70,6 +70,14 @@ def main():
     Log(Settings().Dump())
     Settings("FanzinesEditor positions.json").Load(os.path.join(homedir, "FanzinesEditor positions.json"), MustExist=True, SuppressMessageBox=True)
     Log(Settings("FanzinesEditor positions.json").Dump())
+
+    # Load the PDF page-header logo once. It is stamped onto uploaded PDFs' headers (see FanzineIndexPageEdit).
+    # A missing or unreadable file is non-fatal -- headers simply carry no logo.
+    try:
+        with open(PyiResourcePath("Fanac logo for pdf headers.jpg"), "rb") as f:
+            SetHeaderLogo(f.read())
+    except Exception as e:
+        Log(f"Main: could not load 'Fanac logo for pdf headers.jpg'; PDF headers will have no logo: {e}", isError=True)
 
     # Allow turning off of routine FTP logging
     FTP.g_dologging=Settings().Get("FTP Logging", False)
