@@ -7,11 +7,10 @@ import re
 import shutil
 from datetime import datetime
 from math import floor, ceil
-from tempfile import gettempdir
+import tempfile
 
 from bs4 import BeautifulSoup
 import bs4
-from pypdf import PdfWriter
 import pyperclip
 
 from FTPLog import FTPLog
@@ -37,7 +36,7 @@ from HelpersPackage import SearchAndReplace, RemoveAllHTMLLikeTags, TurnPythonLi
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, ExtractHTMLUsingFanacStartEndCommentPair, SplitListOfNamesOnPattern
 from HelpersPackage import  ExtractInvisibleTextInsideFanacComment, TimestampFilename, InsertInvisibleTextInsideFanacComment, ExtractHTMLUsingFanacTagCommentPair
 from HelpersPackage import RemoveAccents, ExtractTrailingSequenceNumber
-from PDFHelpers import GetPdfPageCount
+from PDFHelpers import GetPdfPageCount, AddStdMetadata
 from HtmlHelpersPackage import HtmlEscapesToUnicode, UnicodeToHtmlEscapes, ConvertHTMLEscapes
 from Log import Log, LogError
 from Settings import Settings
@@ -1174,7 +1173,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     assert delta.Row is not None
                     sourceFilename=delta.Row[0]     # Need to allow for edits in col 0 after add, but before upload
                     # Note that we pass in cfl and Row because the row is likely to have been updated after the DeltaAdd is created, and we want to capture those updates
-                    delta.Uploaded=self.UpdateAndUpload(delta.Row, sourceFilename, editors=cfl.Editors, mainName=cfl.Name.MainName, country=cfl.Country, pm=pm)
+                    delta.Uploaded=self.UpdateAndUpload(delta.Row, sourceFilename, editors=cfl.Editors, mainName=cfl.Name.MainName, country=cfl.Country,
+                                                        fanzineType=cfl.Type, clubname=cfl.Clubname, pm=pm)
                     if not delta.Uploaded:
                         if self._abortUploadRequested:
                             break       # The user answered No to "Continue uploading the remaining files?"
@@ -1314,16 +1314,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # The file is read from where it really is on disk (row.FileSourcePath) and uploaded under the row's current
     # filename. The two differ when the filename was edited after the file was added -- reading the file under
     # the edited name would fail, since nothing on disk has that name.
-    def UpdateAndUpload(self, row: FanzineIndexPageTableRow, serverfilename: str, editors: str="", mainName: str="", country: str="", pm: ProgressMessage2|None=None) -> bool:
+    def UpdateAndUpload(self, row: FanzineIndexPageTableRow, serverfilename: str, editors: str="", mainName: str="", country: str="",
+                        fanzineType: str="", clubname: str="", pm: ProgressMessage2|None=None) -> bool:
         # Note that we passed in Row because the row is likely to have been updated after the DeltaAdd is created, and we want to capture those updates
         localfile=row.FileSourcePath
         _, ext=os.path.splitext(localfile)
         isPdf=ext.lower() == ".pdf"
-        # If this is a PDF, we need to update the metadata
+        # If this is a PDF, we need to update the metadata. (SetPDFMetadata uses the row's own Editor, if it has one.)
         if isPdf:
-            if "Editor" in self.Datasource.ColDefs:  # Editor in the row overrides editors for the whole zine series
-                editors=row[self.Datasource.ColDefs.index("Editor")]
-            copyfilepath=SetPDFMetadata(localfile, row, self.Datasource.ColDefs, editors=editors, mainName=mainName, country=country)
+            copyfilepath=SetPDFMetadata(localfile, row, self.Datasource.ColDefs, editors=editors, mainName=mainName, country=country,
+                                        fanzineType=fanzineType, clubname=clubname)
             if copyfilepath == "":      # It couldn't be read (SetPDFMetadata has logged why)
                 return self.UploadFailed(f"{os.path.basename(localfile)} could not be read as a PDF -- it may be missing, "
                                          f"encrypted or damaged (the log has the details)")
@@ -3653,46 +3653,55 @@ class FanzineIndexPage(GridDataSource):
 
 
 
-def SetPDFMetadata(pdfPathFilename: str, row: FanzineIndexPageTableRow, colNames: ColDefinitionsList, editors: str="", mainName: str="", country: str="") -> str:
+# The PDF's title: "{fanzine}: {issue}" -- or just the issue's name when it already begins with the fanzine's name, e.g.
+# "Quandry 13" rather than "Quandry: Quandry 13". The names are compared as whole words, ignoring case, punctuation
+# and a leading (or trailing ", The") article.
+def PDFTitle(mainName: str, issueName: str) -> str:
+    def Words(s: str) -> str:
+        return " ".join(re.sub(r"[\W_]+", " ", RemoveArticles(s.strip()).casefold()).split())
+    series, issue=Words(mainName), Words(issueName)
+    if series == "":
+        return issueName.strip()
+    if issue == "":
+        return mainName.strip()
+    if issue == series or issue.startswith(series+" "):
+        return issueName.strip()
+    return f"{mainName.strip()}: {issueName.strip()}"
 
-    # Returns "" if the file can't be read or the copy can't be written (missing, encrypted, damaged...); the caller tells the user.
+
+# Make a copy of the PDF in the temporary directory, with fanac.org's metadata, for uploading.
+# Returns the copy's path, or "" if the file can't be read or the copy can't be written (missing, encrypted, damaged...);
+# the caller tells the user.
+def SetPDFMetadata(pdfPathFilename: str, row: FanzineIndexPageTableRow, colNames: ColDefinitionsList, editors: str="", mainName: str="",
+                   country: str="", fanzineType: str="", clubname: str="") -> str:
+    def Join(items: list[str], sep: str) -> str:
+        return sep.join(x.strip() for x in items if x.strip() != "")       # (Leaving out the empty ones)
+
+    issueName=row.Cells[colNames.index("Display Text")]
+
+    # The author is the issue's own editor(s) if the page has an Editor column, otherwise the fanzine's editor(s)
+    author=Join(re.split(r"<br\s*/?>|\n", Editors(row, colNames, editors), flags=re.IGNORECASE), ", ")
+    if author.lower() in ("(uncredited)", "uncredited"):
+        author=""
+    subject=Join(["Fanzine", mainName, fanzineType, clubname if fanzineType.lower() == "clubzine" else "", "fan history", "fanac.org"], "; ")
+    keywords=Join([mainName, DateFmt(row, colNames), ColSelect(row, colNames, "mailing"), country,
+                   "fanac.org", "fan history", "science fiction fanzine"], ", ")
+
+    # AddStdMetadata also removes any XMP metadata (e.g. a scanner's "Scan0001" title, which many viewers would show
+    # in preference to ours) and saves the file compacted
+    fd, newfilepath=tempfile.mkstemp(suffix=".pdf")
+    os.close(fd)
     try:
-        writer=PdfWriter(clone_from=pdfPathFilename)
+        shutil.copyfile(pdfPathFilename, newfilepath)
+        ok=AddStdMetadata(newfilepath, title=PDFTitle(mainName, issueName), author=author, subject=subject, keywords=keywords)
     except Exception as e:
-        LogError(f"SetPDFMetadata: Unable to open file {pdfPathFilename}: {type(e).__name__}: {e}")
-        return ""
-
-    # Title, issue, date, editors, country code, apa
-    metadata={"/Title": row.Cells[colNames.index("Display Text")], "/Author": editors.replace("<br>", ", ")}
-    if len(editors) > 0:
-        metadata["/Author"]=editors
-
-    keywords=[mainName]
-    if "Year" in colNames:
-        keywords.append(row.Cells[colNames.index('Year')])
-    if "Mailing" in colNames:
-        keywords.append(row.Cells[colNames.index('Mailing')])
-    keywords.append(country)
-    metadata["/Keywords"]=", ".join(k.strip() for k in keywords if k.strip() != "")      # (Leave out the empty ones)
-
-    # Add the metadata.
-    try:
-        writer.add_metadata(metadata)
-    except:
-        LogError(f"SetPDFMetadata().writer.add_metadata(metadata) with file {pdfPathFilename} threw an exception: Ignored")
-
-    # Use the temporary directory
-    tmpdirname=gettempdir()
-    Log(f"Temporary directory: {tmpdirname}")
-    filename=os.path.basename(pdfPathFilename)
-    Log(f"{filename=}")
-    newfilepath=os.path.join(tmpdirname, filename)
-    Log(f"{newfilepath=}")
-
-    try:
-        with open(newfilepath, 'wb') as fp:
-            writer.write(fp)
-    except Exception as e:
-        LogError(f"SetPDFMetadata: Unable to write {newfilepath}: {type(e).__name__}: {e}")
+        LogError(f"SetPDFMetadata: {pdfPathFilename}: {type(e).__name__}: {e}")
+        ok=False
+    if not ok:
+        LogError(f"SetPDFMetadata: Unable to add metadata to {pdfPathFilename}")
+        try:
+            os.remove(newfilepath)
+        except Exception:
+            pass
         return ""
     return newfilepath
