@@ -175,9 +175,9 @@ def ColSelect(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList, colnam
     if colname in coldefs:
         return row.Cells[coldefs.index(colname)]
 
-    for coldef in coldefs:
+    for i, coldef in enumerate(coldefs):
         if CanonicizeColumnHeaders(coldef.Name).lower() == colname.lower():
-            return row.Cells[coldefs.index(colname)]
+            return row.Cells[i]     # (Not coldefs.index(colname): that name isn't in the list, so it would raise)
 
     return ""
 
@@ -188,18 +188,18 @@ def Editors(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList, editor: 
         return issueEd
     return editor
 
-# Format a Month+Day+Year set of columns into a useable date
+# Format a Month+Day+Year set of columns into a useable date: "July 4, 1978", "July 1978" or "1978"
 def DateFmt(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList) -> str:
-    s=ColSelect(row, coldefs, "month")
+    s=ColSelect(row, coldefs, "month").strip()
+    d=""
     if len(s) > 0:
-        d=ColSelect(row, coldefs, "day")
+        d=ColSelect(row, coldefs, "day").strip()
         if len(d) > 0:
-            s+=", "+d
-    y=ColSelect(row, coldefs, "year")
-    if len(s) > 0 and s[-1] != " ":
-        s+=" "
-    s+=y
-    return s
+            s+=" "+d
+    y=ColSelect(row, coldefs, "year").strip()
+    if len(y) > 0:
+        s+=(", " if len(d) > 0 else " ")+y
+    return s.strip()
 
 def IssueNumber(row: FanzineIndexPageTableRow, coldefs: ColDefinitionsList) -> str:
     issue=ColSelect(row, coldefs, "whole")
@@ -3667,14 +3667,13 @@ def SetPDFMetadata(pdfPathFilename: str, row: FanzineIndexPageTableRow, colNames
     if len(editors) > 0:
         metadata["/Author"]=editors
 
-    keywords=f"{mainName}, "
+    keywords=[mainName]
     if "Year" in colNames:
-        keywords+=f", {row.Cells[colNames.index('Year')]}"
+        keywords.append(row.Cells[colNames.index('Year')])
     if "Mailing" in colNames:
-        keywords+=f", {row.Cells[colNames.index('Mailing')]}"
-    if len(country) > 0:
-        keywords+=f", {country}"
-    metadata["/Keywords"]=keywords
+        keywords.append(row.Cells[colNames.index('Mailing')])
+    keywords.append(country)
+    metadata["/Keywords"]=", ".join(k.strip() for k in keywords if k.strip() != "")      # (Leave out the empty ones)
 
     # Add the metadata.
     try:
