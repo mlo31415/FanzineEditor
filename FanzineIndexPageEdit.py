@@ -321,6 +321,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._allowManualEntryOfLocalDirectoryName=self.CreatingNewFanzineSeries
         self._manualEditOfLocalDirectoryNameBegun=False
         self._uploaded=False
+        # The fanzine's type as published on fanac.org: its PDFs' headers and metadata were made for it (None for a new fanzine)
+        self._publishedFanzineType: str|None=None
 
         # Used to communicate with the fanzine list editor.  It is set to None, but is filled in with a CFL when something is uploaded.
         self.CFL: ClassicFanzinesLine|None=None
@@ -414,6 +416,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if not self.Datasource.GetFanzineIndexPage(serverDir):
                     self.failure=True
                     return
+            self._publishedFanzineType=self.Datasource.FanzineType
 
             # Now load the fanzine issue data
             #self._dataGrid.HideRowLabels()
@@ -1180,6 +1183,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             localProblems: list[str]=[] # Uploaded files that couldn't be filed in the local directory
             deleteProblems: list[str]=[]
             self._headerProblems: list[str]=[]  # Uploaded PDFs whose page header couldn't be added (UpdateAndUpload fills it)
+            stalePdfs: list[str]=[]     # PDFs on fanac.org whose header and metadata were made for the type before a Collection change
             try:
                 # A rename away from a name which a new file is about to be uploaded under must be done first, or the
                 # upload would overwrite the file being renamed
@@ -1281,6 +1285,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
                 self.CFL=cfl
 
+                # A change of type to or from Collection decides whether the fanzine's name is in its PDFs' headers and
+                # metadata, so the PDFs already on fanac.org (all but the ones just uploaded) are now out of date
+                oldType, newType=self._publishedFanzineType, self.Datasource.FanzineType
+                if oldType is not None and IsCollection(oldType) != IsCollection(newType):
+                    justUploaded={d.Row[0].strip().lower() for d in uploads if d.Uploaded}
+                    stalePdfs=[f for f in (self.RowServerFilename(r) for r in self.Datasource.Rows)
+                               if f.lower().endswith(".pdf") and f.lower() not in justUploaded]
+                self._publishedFanzineType=newType
+
                 self._uploaded=True
                 self.MarkAsSaved()
 
@@ -1333,6 +1346,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                             "\n".join(self._headerProblems))
         if problems:
             wx.MessageBox("The page was uploaded, but:\n\n"+"\n\n".join(problems), "Upload finished with problems", wx.OK|wx.ICON_INFORMATION, parent=self)
+
+        if stalePdfs:
+            if IsCollection(oldType):
+                why=f"were made when it was a Collection, so they leave out the fanzine's name, '{self.Datasource.Name.MainName}'"
+            else:
+                why=f"were made when it was not a Collection, so they include the collection's name, '{self.Datasource.Name.MainName}'"
+            wx.MessageBox(f"This fanzine's type has changed from {oldType or '(none)'} to {newType or '(none)'}.\n\n"
+                          f"The page headers and metadata of the {Pluralize(len(stalePdfs), 'PDF')} already on fanac.org {why}.\n\n"
+                          f"To bring them up to date, select all the rows and use Regenerate PDF Header.",
+                          "Fanzine type changed", wx.OK|wx.ICON_INFORMATION, parent=self)
 
         # If someone (e.g. Move to Different Fanzine) registered work to be done after a successful upload, do it now
         if callable(self.PostUploadCallback):
@@ -3897,11 +3920,19 @@ def PDFHeader(mainName: str, issueName: str, serverDir: str, date: str) -> tuple
     return fmt, items
 
 
+# A Collection page gathers separate, unrelated fanzines (e.g. "1980s One Shots"), so its name is never part of an issue's
+# PDF title, header or metadata: Acrylic, in 1980s One Shots, is just "Acrylic".
+def IsCollection(fanzineType: str) -> bool:
+    return fanzineType.strip().lower() == "collection"
+
+
 # The issue's editors for its PDF's author and header, as "Ed 1, Ed 2" -- the issue's own editor(s) if the page has an Editor
-# column, otherwise the fanzine's editor(s); "" if uncredited
+# column, otherwise the fanzine's editor(s); "" if uncredited.
+# "various" anywhere (e.g. "various", "Various Editors", "Meade Frierson III; various") means the issues had different
+# editors, so it names nobody -- and a fanzine-level name beside it didn't edit every issue.
 def PDFEditors(row: FanzineIndexPageTableRow, colNames: ColDefinitionsList, editors: str) -> str:
     eds=", ".join(x.strip() for x in re.split(r"<br\s*/?>|\n", Editors(row, colNames, editors), flags=re.IGNORECASE) if x.strip() != "")
-    if eds.lower() in ("(uncredited)", "uncredited"):
+    if eds.lower() in ("(uncredited)", "uncredited") or re.search(r"\bvarious\b", eds, flags=re.IGNORECASE):
         return ""
     return eds
 
@@ -3931,7 +3962,7 @@ def PrepareIssuePdf(pdfPathFilename: str, row: FanzineIndexPageTableRow, colName
         Log(f"PrepareIssuePdf: {pdfPathFilename}'s first page is rotated {rotation} degrees, so it gets no header")
         return copyfilepath, f"its first page is rotated {rotation}°, which headers don't handle yet"
 
-    fmt, items=PDFHeader(mainName, row.Cells[colNames.index("Display Text")], serverDir, DateFmt(row, colNames))
+    fmt, items=PDFHeader("" if IsCollection(fanzineType) else mainName, row.Cells[colNames.index("Display Text")], serverDir, DateFmt(row, colNames))
     eds=PDFEditors(row, colNames, editors)
     try:
         AddPdfPageHeader(copyfilepath, fmt, items, logo=_g_headerLogo, subline=f"ed: {eds}" if eds != "" else None)
@@ -3950,6 +3981,8 @@ def SetPDFMetadata(pdfPathFilename: str, row: FanzineIndexPageTableRow, colNames
         return sep.join(x.strip() for x in items if x.strip() != "")       # (Leaving out the empty ones)
 
     issueName=row.Cells[colNames.index("Display Text")]
+    if IsCollection(fanzineType):       # Neither the collection's name nor "Collection" describes the fanzine itself
+        mainName, fanzineType="", ""
 
     author=PDFEditors(row, colNames, editors)
     subject=Join(["Fanzine", mainName, fanzineType, clubname if fanzineType.lower() == "clubzine" else "", "fan history", "fanac.org"], "; ")

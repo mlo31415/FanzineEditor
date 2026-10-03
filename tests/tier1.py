@@ -650,6 +650,72 @@ def TidyUps2() -> None:
     w.Destroy()
 
 
+def Collections() -> None:
+    R.Section("Collections: the collection's name is never in a PDF")
+    cd=ColDefinitionsList([ColDefinition(x) for x in ("Link", "Display Text", "Editor", "Month", "Day", "Year", "Mailing")])
+    src=Pdf("acrylic.pdf")
+
+    def Prepare(rowEditor: str, editors: str, fanzineType: str="Collection") -> dict:
+        row=FanzineIndexPageTableRow(cd, ["x.pdf", "Acrylic", rowEditor, "May", "", "1983", ""])
+        copy, problem=FIP.PrepareIssuePdf(src, row, cd, "1980s_One_Shots", editors=editors, mainName="1980s One Shots", country="UK", fanzineType=fanzineType)
+        f=PdfFacts(copy)
+        os.remove(copy)
+        f["problem"]=problem
+        f["eds"]=[s[5] for s in f["spans"] if s[0] == 9]
+        return f
+
+    f=Prepare("", "various")
+    md=f["metadata"]
+    R.Check(md["title"] == "Acrylic", "title: just the fanzine's own name", md["title"])
+    R.Check(f["problem"] == "" and f["header"].startswith("Acrylic (May 1983)") and "One Shots" not in f["header"], "header: just the fanzine's own name", f["header"])
+    R.Check(f["links"][:1] == ["https://www.fanac.org/fanzines/1980s_One_Shots/"], "which still links to the collection's page (where the PDF is listed)", str(f["links"]))
+    R.Check(md["subject"] == "Fanzine; fan history; fanac.org", "subject: neither the collection's name nor 'Collection'", md["subject"])
+    R.Check("One Shots" not in md["keywords"] and md["keywords"].startswith("May 1983"), "keywords: no collection name", md["keywords"])
+    R.Check(f["eds"] == [] and md["author"] == "", "the collection's editors are 'various' and the row has none: no editor line, no author", f"{f['eds']} {md['author']!r}")
+    f=Prepare("Jane Doe", "various")
+    R.Check(f["eds"] == ["ed: Jane Doe"] and f["metadata"]["author"] == "Jane Doe", "the row's own editor is used", str(f["eds"]))
+    f=Prepare("", "Bruce Gillespie<br>Elaine Cochrane")
+    R.Check(f["eds"] == ["ed: Bruce Gillespie, Elaine Cochrane"] and f["metadata"]["author"] == "Bruce Gillespie, Elaine Cochrane",
+            "a collection with common editors: they're used", str(f["eds"]))
+    f=Prepare("", "Meade Frierson III<br>various", fanzineType="Fanzine")
+    R.Check(f["eds"] == [] and f["metadata"]["author"] == "", "'various' among the fanzine's editors (any type): no editor line, no author", str(f["eds"]))
+    f=Prepare("", "Various Editors", fanzineType="Fanzine")
+    R.Check(f["eds"] == [], "'Various Editors' too", str(f["eds"]))
+    f=Prepare("", "various", fanzineType="Fanzine")
+    R.Check(f["metadata"]["title"] == "1980s One Shots: Acrylic" and f["header"].startswith("1980s One Shots: Acrylic"),
+            "not a Collection: the fanzine's name is there as before", f["header"])
+
+    R.Section("Changing a fanzine's type to or from Collection")
+    FreshServer()
+    w=OpenPage("Apollo")
+    oldType=w.Datasource.FanzineType
+    onSite=[f for f in (w.RowServerFilename(r) for r in w.Datasource.Rows) if f.lower().endswith(".pdf")]
+    AddRow(w, "Apollo99.pdf", Pdf("Apollo99.pdf"), "Acrylic 1")
+
+    def SetType(t: str) -> None:
+        w.chFanzineType.SetSelection(w.chFanzineType.Items.index(t))
+        w.OnFanzineTypeSelect(None)
+
+    SetType("Collection")
+    Upload(w)
+    R.Check(len(Dialogs.Messages) == 1 and "changed from" in Dialogs.Messages[0] and f"{len(onSite)} PDFs" in Dialogs.Messages[0]
+            and "include the collection's name, 'Apollo'" in Dialogs.Messages[0] and "Regenerate PDF Header" in Dialogs.Messages[0],
+            f"{oldType} -> Collection: says the {len(onSite)} PDFs already on the site need regenerating (not the one just uploaded)", str(Dialogs.Messages))
+    f=ServerPdf(f"/{T}/Apollo/Apollo99.pdf")
+    R.Check(f["header"].startswith("Acrylic 1") and f["metadata"]["title"] == "Acrylic 1", "the one just uploaded is already right", f["header"])
+    w.Datasource.Rows[-1][1]="Acrylic 1 (revised)"       # (Some change, so there's something to upload)
+    Upload(w)
+    R.Check(not any("changed from" in m for m in Dialogs.Messages), "uploading again: no warning", str(Dialogs.Messages))
+    SetType(oldType)
+    Upload(w)
+    R.Check(len(Dialogs.Messages) == 1 and "leave out the fanzine's name, 'Apollo'" in Dialogs.Messages[0] and f"{len(onSite)+1} PDFs" in Dialogs.Messages[0],
+            f"and back to {oldType}: says so again, for all {len(onSite)+1}", str(Dialogs.Messages))
+    SetType("Genzine" if oldType != "Genzine" else "Fanzine")
+    Upload(w)
+    R.Check(not any("changed from" in m for m in Dialogs.Messages), "a change between two types that aren't Collection: no warning", str(Dialogs.Messages))
+    w.Destroy()
+
+
 def WindowPlacement() -> None:
     R.Section("Windows open on a connected screen")
     FreshServer()
@@ -687,7 +753,7 @@ def WindowPlacement() -> None:
 
 
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, WindowPlacement):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, WindowPlacement):
     try:
         group()
     except Exception:
