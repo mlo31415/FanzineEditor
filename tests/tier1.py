@@ -518,8 +518,60 @@ def Safeguards() -> None:
     w.Destroy()
 
 
+def TidyUps() -> None:
+    R.Section("Updated only when something changed (FE-13)")
+    S=FreshServer()
+    w=OpenPage("Apollo")
+    Upload(w)
+    R.Check(w.CFL is not None and w.CFL._updated is None, "re-uploading a page unchanged leaves its Updated date unset")
+    unchanged=w.CFL
+    w.Datasource.Rows[0][1]=w.Datasource.Rows[0][1]+" (corrected)"
+    Upload(w)
+    R.Check(w.CFL._updated is not None and w.CFL.Updated.DaysAgo() == 0, "an upload that changes the page sets it to today")
+    changed=w.CFL
+    w.Destroy()
+    m=FE.FanzinesEditorWindow(None)
+    m.MergeCFLIntoList(unchanged)
+    m.OnUploadPressed(None)
+    entry={c.ServerDir: c for c in FE.GetClassicFanzinesList()}["Apollo"]
+    R.Check(str(entry.Updated) == str(ClassicFanzinesDate("March 3, 2020")), "on the Classic list, the unchanged upload keeps the old date (no 'Updated' flag)",
+            str(entry.Updated))
+    m.MergeCFLIntoList(changed)
+    m.OnUploadPressed(None)
+    entry={c.ServerDir: c for c in FE.GetClassicFanzinesList()}["Apollo"]
+    R.Check(entry.Updated.DaysAgo() == 0, "and the changed one is dated today", str(entry.Updated))
+    m.Destroy()
+
+    R.Section("No asserts in normal paths (FE-16)")
+    S=FreshServer()
+    S.Put("/fanzines/Classic_Fanzines.html", "<html><body>Not a list of fanzines</body></html>")
+    try:
+        got=FE.GetClassicFanzinesList()
+    except Exception as e:
+        got=f"raised {type(e).__name__}"
+    R.Check(got is None, "a list file with no table in it: reported as unreadable (was: AssertionError)", str(got))
+    FreshServer()
+    w=OpenPage("Apollo")
+    n=w.Datasource.NumRows
+    w._dataGrid.clickedRow=1
+    w.wxGrid.ClearSelection()
+    w.OnPopupDelRow(None)
+    R.Check(w.Datasource.NumRows == n-1 and [d.Verb for d in w.deltaTracker.Deltas] == ["delete"], "Delete Row(s) still works")
+    w.Destroy()
+
+    R.Section("A new Pages column goes before Notes (FE-19)")
+    w=OpenPage("Apollo")
+    w.Datasource.DeleteColumn(w.Datasource.ColHeaderIndex("pages"))
+    before=[h for h in w.Datasource.ColHeaders]
+    w.FillInPagesColumn()
+    after=w.Datasource.ColHeaders
+    R.Check(after.index("Pages") == after.index("Notes")-1 and [h for h in after if h != "Pages"] == before,
+            "inserted just before Notes; the other columns unchanged", str(after))
+    w.Destroy()
+
+
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps):
     try:
         group()
     except Exception:

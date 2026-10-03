@@ -187,7 +187,9 @@ def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
         return None
 
     rows=ReadClassicFanzinesTable(html)
-    assert rows is not None
+    if rows is None:        # (The file came back, but has no table of fanzines in it -- e.g. it was truncated)
+        LogError("GetClassicFanzinesList(): 'Classic_Fanzines.html' has no table of fanzines in it")
+        return None
 
     rowtable: list[list[str]]=[]
     for row in rows[1:]:    # row[0] is the column headers, and for this file the columns are hard-coded, so they can be ignored.
@@ -641,6 +643,9 @@ class FanzinesEditorWindow(FanzinesGridGen):
             # blank it -- it would be written back as "January 01, 1900", which also drops the "New" flag.
             if cfl._created is None:
                 cfl._created=self._fanzinesList[hits[0]]._created
+            # Likewise an upload which changed nothing leaves the Updated date unset: keep the entry's (FE-13)
+            if cfl._updated is None:
+                cfl._updated=self._fanzinesList[hits[0]]._updated
             self._fanzinesList[hits[0]]=cfl
         else:
             self._fanzinesList.append(cfl)
@@ -730,6 +735,8 @@ class FanzinesEditorWindow(FanzinesGridGen):
                 # The server's list is where creation dates live, so keep its date unless it's missing or was wiped (FE-1)
                 if fresh[hits[0]]._created is not None and fresh[hits[0]]._created.Date.year > 1900:
                     cfl._created=fresh[hits[0]]._created
+                if cfl._updated is None:        # (This session didn't change the fanzine: keep its Updated date)
+                    cfl._updated=fresh[hits[0]]._updated
                 fresh[hits[0]]=cfl
             else:
                 fresh.append(cfl)

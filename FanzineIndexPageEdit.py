@@ -896,7 +896,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if iNotes == -1:
                 LogError("We need to add a Pages column right before the Notes column, but can't find a Notes column, either. Will ignore, but you really ought to add a Pages column!")
                 return
-            self.Datasource.InsertColumn2(self.Datasource.NumCols, ColDefinition("Pages"))
+            self.Datasource.InsertColumn2(iNotes, ColDefinition("Pages"))      # (Before Notes, as on the site's pages)
             iPages=self.Datasource.ColHeaderIndex("pages")
         # Look through the rows and for each PDF which does not have a page count, add the page count
         for i, row in enumerate(self.Datasource.Rows):
@@ -1056,7 +1056,11 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         cfl.Type=self.chFanzineType.Items[self.chFanzineType.GetSelection()]
         cfl.Clubname=self.tClubname.GetValue()
         cfl.Complete=self.cbComplete.GetValue()
-        cfl.Updated=datetime.now()
+        # The fanzine is flagged Updated on the Classic list only if this upload changes something. Left unset, the list
+        # keeps the fanzine's previous Updated date (see MergeCFLIntoList), so re-uploading a page as it was doesn't
+        # mark it as updated for the next 90 days.
+        if self.CreatingNewFanzineSeries or self.NeedsSaving() or len(self.deltaTracker.Deltas) > 0:
+            cfl.Updated=datetime.now()
         if self.CreatingNewFanzineSeries:
             cfl.Created=datetime.now()      # We only update the created time when were actually creating something...
         cfl.TopComments=self.tTopComments.GetValue()
@@ -1189,7 +1193,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 # 1. Uploads
                 for delta in uploads if stopReason == "" else []:
                     # Add a new file to the server or Replace a file already on server.  (We ignore the old file. It gets overwritten if the filename is the same or just left otherwise.)
-                    assert delta.Row is not None
+                    if delta.Row is None:       # (Can't happen: an add or replace always has its row. Left pending, it stops the upload.)
+                        LogError(f"OnUpload: a pending {delta.Verb} has no row")
+                        continue
                     sourceFilename=delta.Row[0]     # Need to allow for edits in col 0 after add, but before upload
                     # Note that we pass in cfl and Row because the row is likely to have been updated after the DeltaAdd is created, and we want to capture those updates
                     delta.Uploaded=self.UpdateAndUpload(delta.Row, sourceFilename, editors=cfl.Editors, mainName=cfl.Name.MainName, country=cfl.Country,
@@ -2241,8 +2247,6 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         if top == -1 or bottom == -1:
             top=self._dataGrid.clickedRow
             bottom=self._dataGrid.clickedRow
-        urlCol=self.Datasource.ColHeaderIndex("Link")
-        assert urlCol != -1
         for irow in range(top, bottom+1):
             if self.Datasource.Rows[irow].IsNormalRow and not self.Datasource.Rows[irow].IsEmptyRow:
                 self.deltaTracker.Delete(serverDirName=self.ServerDir, row=self.Datasource.Rows[irow])
