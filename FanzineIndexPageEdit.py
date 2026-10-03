@@ -26,7 +26,7 @@ from FanzineIndexPageOrdering import AnalyzeOrdering as AnalyzeFIPOrdering, Pars
 from FTP import FTP
 
 from WxDataGrid import DataGrid, Color, GridDataSource, ColDefinition, ColDefinitionsList, IsEditable
-from WxHelpers import OnCloseHandling3, ProcessChar, GuardReentry, SetWindowIcon
+from WxHelpers import OnCloseHandling3, ProcessChar, GuardReentry, SetWindowIcon, RestoreWindowPlacement
 from WxHelpers import ModalDialogManager, ProgressMessage2
 from HelpersPackage import IsInt, Int0, Int, ZeroIfNone, RemoveTopLevelHTMLTags, RegularizeBRTags, Pluralize, PyiResourcePath
 from HelpersPackage import SortMessyNumber, SortTitle, SortPersonsName
@@ -383,13 +383,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.PDFSourcePath=Settings().Get("PDF Source Path", os.getcwd())
         #self.LocalDirectoryRoot=Settings().Get("Local Directory Root", ".")
 
-        # Position the window on the screen it was on before
+        # Position the window on the screen it was on before (or on a visible one, if that one's gone)
         tlwp=Settings("FanzinesEditor positions.json").Get("Index Page Window Position")
-        if tlwp:
-            self.SetPosition(tlwp)
         tlws=Settings("FanzinesEditor positions.json").Get("Index Page Window Size")
-        if tlws:
-            self.SetSize(tlws)
+        RestoreWindowPlacement(self, tlwp, tlws)
 
         self._savedSignature=0   # We need this member. MarkAsSaved() will initialize it
 

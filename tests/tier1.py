@@ -623,8 +623,44 @@ def TidyUps2() -> None:
     w.Destroy()
 
 
+def WindowPlacement() -> None:
+    R.Section("Windows open on a connected screen")
+    FreshServer()
+    areas=[wx.Display(i).GetClientArea() for i in range(wx.Display.GetCount())]
+    primary=next(wx.Display(i).GetClientArea() for i in range(wx.Display.GetCount()) if wx.Display(i).IsPrimary())
+
+    def OnScreen(win) -> bool:
+        r=win.GetRect()
+        bar=wx.Rect(r.x, r.y, r.width, 30)
+        return any(bar.Intersects(a) and bar.Intersect(a).width >= min(100, r.width) for a in areas)
+
+    saved=Settings("FanzinesEditor positions.json").Dict       # In memory only: this dictionary has no file
+    try:
+        saved["Index Page Window Position"]=(40000, 40000)        # Where a now-unplugged monitor was
+        saved["Index Page Window Size"]=(900, 600)
+        w=OpenPage("Apollo")
+        R.Check(OnScreen(w) and primary.Contains(w.GetRect().GetTopLeft()), "a fanzine page saved on a missing screen opens on the primary one",
+                str(w.GetRect()))
+        w.Destroy()
+        here=(primary.x+40, primary.y+40)
+        saved["Index Page Window Position"]=here
+        w=OpenPage("Apollo")
+        R.Check(tuple(w.GetPosition()) == here and tuple(w.GetSize()) == (900, 600), "one saved on a connected screen opens exactly where it was",
+                f"{tuple(w.GetPosition())} {tuple(w.GetSize())}")
+        w.Destroy()
+        saved["Top Level Window Position"]=(-40000, 5)
+        saved["Top Level Window Size"]=(50000, 50000)              # And far too big
+        m=FE.FanzinesEditorWindow(None)
+        r=m.GetRect()
+        R.Check(OnScreen(m) and r.width <= primary.width and r.height <= primary.height, "the main window too, shrunk to fit", str(r))
+        m.Destroy()
+    finally:
+        for k in ("Index Page Window Position", "Index Page Window Size", "Top Level Window Position", "Top Level Window Size"):
+            saved.pop(k, None)
+
+
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, WindowPlacement):
     try:
         group()
     except Exception:

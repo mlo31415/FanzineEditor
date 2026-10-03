@@ -11,7 +11,7 @@ from FTP import FTP, Lock
 
 from FTPLog import FTPLog
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
-from WxHelpers import OnCloseHandling3, ProgressMessage2, ModalDialogManager, GuardReentry, SetWindowIcon
+from WxHelpers import OnCloseHandling3, ProgressMessage2, ModalDialogManager, GuardReentry, SetWindowIcon, RestoreWindowPlacement
 from HelpersPackage import ExtractInvisibleTextInsideFanacComment, ConvertHTMLishCharacters, PyiResourcePath
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, UnicodeToHtml, StripSpecificTag, Int0, TimestampFilename
 from Log import LogOpen, LogClose, LogError
@@ -455,11 +455,8 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
         # Position the window on the screen it was on before at the size it was before
         tlwp=Settings("FanzinesEditor positions.json").Get("Top Level Window Position")
-        if tlwp:
-            self.SetPosition(tlwp)
         tlws=Settings("FanzinesEditor positions.json").Get("Top Level Window Size")
-        if tlws:
-            self.SetSize(tlws)
+        RestoreWindowPlacement(self, tlwp, tlws)        # (On a visible screen, even if that one's gone)
 
         # Load the server->local directory table
         s2LDir=Settings().Get("Server To Local Table Name")
