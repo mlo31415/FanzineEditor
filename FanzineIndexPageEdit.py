@@ -3897,6 +3897,15 @@ def PDFHeader(mainName: str, issueName: str, serverDir: str, date: str) -> tuple
     return fmt, items
 
 
+# The issue's editors for its PDF's author and header, as "Ed 1, Ed 2" -- the issue's own editor(s) if the page has an Editor
+# column, otherwise the fanzine's editor(s); "" if uncredited
+def PDFEditors(row: FanzineIndexPageTableRow, colNames: ColDefinitionsList, editors: str) -> str:
+    eds=", ".join(x.strip() for x in re.split(r"<br\s*/?>|\n", Editors(row, colNames, editors), flags=re.IGNORECASE) if x.strip() != "")
+    if eds.lower() in ("(uncredited)", "uncredited"):
+        return ""
+    return eds
+
+
 # Make the copy of an issue's PDF which gets uploaded: fanac.org's metadata and the page header linking back to the fanzine.
 # Returns (the copy's path, or "" if the PDF can't be read; why the header couldn't be added, or "").
 # A PDF whose header can't be added is still worth uploading, so that's for the caller to report rather than a failure.
@@ -3923,8 +3932,9 @@ def PrepareIssuePdf(pdfPathFilename: str, row: FanzineIndexPageTableRow, colName
         return copyfilepath, f"its first page is rotated {rotation}°, which headers don't handle yet"
 
     fmt, items=PDFHeader(mainName, row.Cells[colNames.index("Display Text")], serverDir, DateFmt(row, colNames))
+    eds=PDFEditors(row, colNames, editors)
     try:
-        AddPdfPageHeader(copyfilepath, fmt, items, logo=_g_headerLogo)
+        AddPdfPageHeader(copyfilepath, fmt, items, logo=_g_headerLogo, subline=f"ed: {eds}" if eds != "" else None)
     except Exception as e:
         LogError(f"PrepareIssuePdf: could not add the page header to {pdfPathFilename}: {type(e).__name__}: {e}")
         return copyfilepath, f"{type(e).__name__}: {e}"
@@ -3941,10 +3951,7 @@ def SetPDFMetadata(pdfPathFilename: str, row: FanzineIndexPageTableRow, colNames
 
     issueName=row.Cells[colNames.index("Display Text")]
 
-    # The author is the issue's own editor(s) if the page has an Editor column, otherwise the fanzine's editor(s)
-    author=Join(re.split(r"<br\s*/?>|\n", Editors(row, colNames, editors), flags=re.IGNORECASE), ", ")
-    if author.lower() in ("(uncredited)", "uncredited"):
-        author=""
+    author=PDFEditors(row, colNames, editors)
     subject=Join(["Fanzine", mainName, fanzineType, clubname if fanzineType.lower() == "clubzine" else "", "fan history", "fanac.org"], "; ")
     keywords=Join([mainName, DateFmt(row, colNames), ColSelect(row, colNames, "mailing"), country,
                    "fanac.org", "fan history", "science fiction fanzine"], ", ")

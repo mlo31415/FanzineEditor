@@ -157,13 +157,40 @@ def PdfWork() -> None:
     f=PdfFacts(copy)
     R.Check(problem == "" and f["hasHeader"] and "Rabanos 67 (January 27, 1966)" in f["header"], "header stamped on page 1", f["header"])
     R.Check(f["links"] == ["https://www.fanac.org/fanzines/Rabanos/", "https://www.fanac.org/fanzines/"], "header links", str(f["links"]))
+    srcHeight=PdfFacts(src)["height"]
+    title=[s for s in f["spans"] if s[0] == 11]
+    eds=[s for s in f["spans"] if s[0] == 9]
+    R.Check(len(eds) == 1 and eds[0][5] == "ed: Fred Patten" and abs(eds[0][1]-title[0][1]) < 0.1 and eds[0][2] >= title[0][4],
+            "editor line: 9 point, below the title, starting where the title starts", f"{eds} {title[:1]}")
+    R.Check(f["height"]-srcHeight == 33, "the editor line adds only 5 points to the header (28 -> 33)", f"{f['height']-srcHeight}")
     from PDFHelpers import AddPdfPageHeader
     AddPdfPageHeader(copy, "{}  --  from {}", ["https://www.fanac.org/fanzines/B/", "Replacement Header", "https://www.fanac.org/fanzines/", "fanac.org/fanzines"],
                      logo=FIP._g_headerLogo)
     f=PdfFacts(copy)
-    R.Check("Replacement Header" in f["header"] and "Rabanos" not in f["header"] and "\x00" not in f["header"],
-            "a replaced header is readable, and the old one's text is gone", f["header"])
+    R.Check("Replacement Header" in f["header"] and "Rabanos" not in f["header"] and "Fred" not in f["header"] and "\x00" not in f["header"],
+            "a replaced header is readable, and the old one's text (editor line too) is gone", f["header"])
+    R.Check(f["height"]-srcHeight == 28, "replacing it with a header without an editor line shrinks the page back to +28", f"{f['height']-srcHeight}")
     os.remove(copy)
+
+    many="Terry Carr\nDave Rike\nRon Ellik\nBob Pavlat\nBill Rotsler\nBjo Trimble\nTed White\nWalt Willis\nBob Shaw"
+    copy, problem=FIP.PrepareIssuePdf(src, row, cd, "Rabanos", editors=many, mainName="Rabanos")
+    f=PdfFacts(copy)
+    title=[s for s in f["spans"] if s[0] == 11]
+    eds=[s for s in f["spans"] if s[0] == 9]
+    R.Check(len(eds) == 1 and eds[0][5].startswith("ed: Terry Carr, Dave Rike") and eds[0][5].endswith("...") and eds[0][3] <= max(s[3] for s in title),
+            "a long editor list is cut short with '...' before the title line's right end", f"{eds} title ends {max(s[3] for s in title)}")
+    os.remove(copy)
+    rowEd=FanzineIndexPageTableRow(cd, ["x.pdf", "Rabanos 68", "Bruce Pelz", "February", "", "1966", ""])
+    copy, problem=FIP.PrepareIssuePdf(src, rowEd, cd, "Rabanos", editors="Fred Patten", mainName="Rabanos")
+    eds=[s[5] for s in PdfFacts(copy)["spans"] if s[0] == 9]
+    R.Check(eds == ["ed: Bruce Pelz"], "the issue's own Editor overrides the fanzine's", str(eds))
+    os.remove(copy)
+    for editors in ("", "(uncredited)"):
+        copy, problem=FIP.PrepareIssuePdf(src, row, cd, "Rabanos", editors=editors, mainName="Rabanos")
+        f=PdfFacts(copy)
+        R.Check(problem == "" and f["hasHeader"] and not [s for s in f["spans"] if s[0] == 9] and f["height"]-srcHeight == 28,
+                f"editors {editors!r}: no editor line, header as before (+28)", f"{f['spans']} {f['height']-srcHeight}")
+        os.remove(copy)
 
     for rotation in (90, 180, 270):
         copy, problem=FIP.PrepareIssuePdf(Pdf(f"rot{rotation}.pdf", rotation=rotation), row, cd, "Rabanos", mainName="Rabanos")

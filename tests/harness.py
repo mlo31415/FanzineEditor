@@ -243,14 +243,17 @@ def MakePdf(path: str, text: str="Test page", pages: int=1, rotation: int=0, xmp
 
 
 def PdfFacts(path: str) -> dict:
-    """What a test wants to know about a PDF: its metadata, page-1 header text and links, rotation, XMP."""
+    """What a test wants to know about a PDF: its metadata, page-1 header text, links and text spans (size, x0, y0, x1, y1, text),
+    page-1 height, rotation, XMP."""
     import fitz
     doc=fitz.open(path)
     page=doc[0]
-    facts=dict(metadata=doc.metadata, rotation=page.rotation, xmp=doc.get_xml_metadata(),
+    facts=dict(metadata=doc.metadata, rotation=page.rotation, xmp=doc.get_xml_metadata(), height=page.rect.height,
                links=[l.get("uri") for l in page.get_links() if l.get("uri")],
                words=[w[4] for w in page.get_text("words")],
-               header=page.get_text("text", clip=(0, 0, page.rect.width, 40)).replace("\n", " ").strip() if page.rotation == 0 else "")
+               header=page.get_text("text", clip=(0, 0, page.rect.width, 40)).replace("\n", " ").replace("\xa0", " ").strip() if page.rotation == 0 else "",
+               spans=[(round(s["size"]), *s["bbox"], s["text"].replace("\xa0", " ")) for b in page.get_text("dict", clip=(0, 0, page.rect.width, 50))["blocks"]
+                      for l in b.get("lines", []) for s in l["spans"]] if page.rotation == 0 else [])
     doc.close()
     facts["hasHeader"]="fanac.org/fanzines" in facts["words"]
     return facts
