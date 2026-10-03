@@ -570,8 +570,61 @@ def TidyUps() -> None:
     w.Destroy()
 
 
+def TidyUps2() -> None:
+    R.Section("Test mode read one way everywhere (FE-20)")
+    S=FreshServer()
+    S.Put(f"/{T}/Classic_Fanzines.html", S.Get("/fanzines/Classic_Fanzines.html").replace(b"Apollo</STRONG>", b"Apollo TEST ROOT</STRONG>"))
+    harness._SetSetting(Settings, "Test mode", "yes")       # IsTrue accepts yes as well as True
+    try:
+        names=[c.Name.MainName for c in FE.GetClassicFanzinesList()]
+    finally:
+        harness._SetSetting(Settings, "Test mode", "True")
+    R.Check("Apollo TEST ROOT" in names, "'Test mode=yes' reads the test root's list, like the rest of FE (was: the real one)", str(names))
+
+    R.Section("Copying a main-list row (FE-21)")
+    row=FE.FanzinesPageRow(["Apollo", "Innuendo"])
+    copy=row.Copy()
+    copy[0]="Changed"
+    R.Check(row[0] == "Apollo", "changing the copy leaves the original alone")
+
+    R.Section("Creating a fanzine in test mode (FE-29)")
+    FreshServer()
+    w=FIP.FanzineIndexPageWindow(None)
+    w.tFanzineName.SetValue("Brand New Zine")
+    w.tServerDirectory.ChangeValue("Brand_New_Zine")
+    w.tDates.SetValue("1990-1991")
+    AddRow(w, "bnz01.pdf", Pdf("bnz01.pdf"), "Brand New Zine 1")
+    Upload(w)
+    R.Check(not any("Attempt to copy" in x for x in Dialogs.Messages) and "bnz01.pdf" in Page("Brand_New_Zine") and w.CFL is not None,
+            "uploaded without the spurious 'Attempt to copy index.html ... failed' message", str(Dialogs.Messages))
+    w.Destroy()
+
+    R.Section("An empty local directory stays typeable after an upload (FE-30)")
+    harness.RemoveKey(Settings("ServerToLocal").Dict, "Innuendo")
+    w=OpenPage("Innuendo")
+    w.Datasource.Rows[0][1]+=" (corrected)"
+    Upload(w)
+    class Key:
+        def __init__(self, c): self.c=c
+        def GetKeyCode(self): return self.c
+        def Skip(self): pass
+    w.tLocalDirectory.SetInsertionPointEnd()
+    w.OnLocalDirectoryChar(Key(ord("X")))
+    R.Check(w.tLocalDirectory.GetValue() == "X", "typing still works (was: the box looked enabled but ignored keys)")
+    w.Destroy()
+
+    R.Section("Ticking Complete is a change (FE-32)")
+    w=OpenPage("Apollo")
+    w.cbComplete.SetValue(not w.cbComplete.GetValue())
+    w.OnCheckComplete(None)
+    R.Check(w.NeedsSaving() and w.GetTitle().rstrip().endswith("*"), "the page is marked as changed (was: no '*', no warning on closing)")
+    Upload(w)
+    R.Check(w.CFL is not None and w.CFL._updated is not None, "and its upload counts as a change (FE-13)")
+    w.Destroy()
+
+
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2):
     try:
         group()
     except Exception:

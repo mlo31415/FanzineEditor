@@ -1095,7 +1095,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # During the test phase, we have a bogus root directory and the fanzine's directory may noy yet have an index file to be backed up.
             # So, when we edit a new fanzine, we copy it from the true root to the bogus root, giving us an index file to back up.
             # This will go away when we dispense with the bogus root.
-            if self.RootDir.lower() != "fanzines":
+            # (A new fanzine has no page on the real root to copy)
+            if self.RootDir.lower() != "fanzines" and not self.CreatingNewFanzineSeries:
                 if not FTP().FileExists(f"/{self.RootDir}/{self.ServerDir}/index.html"):    # Check to see if the bogus root already has an index file
                     # If not, copy the existing index.htl file on /fanzines/ in to the test root.
                     # Note that this will create the server directory if it does not already exist.
@@ -1290,7 +1291,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 self.CreatingNewFanzineSeries=False
                 self._allowManualEditOfServerDirectoryName=False
                 self._manualEditOfServerDirectoryNameBegun=False
-                self._allowManualEntryOfLocalDirectoryName=False
+                # The local directory stays typeable as long as it's empty (it's locked once it has a name), as when the page was loaded
+                self._allowManualEntryOfLocalDirectoryName=self.tLocalDirectory.GetValue().strip() == ""
                 self._manualEditOfLocalDirectoryNameBegun=False
                 self._AllowFanzineNameEdit=False
 
@@ -3185,7 +3187,7 @@ class FanzineIndexPage(GridDataSource):
             s+=self._colDefs.Signature()
         s+=hash(f"{self._name};{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{self.TopComments.strip()};{self.Significance}")
-        s+=hash(f"{self.Name.MainName};{self.Editors};{self.Dates};{self.FanzineType};{self.Clubname};{self.Credits};{self.Ordering}")
+        s+=hash(f"{self.Name.MainName};{self.Editors};{self.Dates};{self.FanzineType};{self.Clubname};{self.Credits};{self.Ordering};{self.Complete}")
         s+=sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
         s+=hash(self._specialTextColor)
         return s
@@ -3283,7 +3285,7 @@ class FanzineIndexPage(GridDataSource):
         fanzineServerDir=""
         testRootDirectory=Settings().Get("Test Root directory")
         html=None
-        if Settings().Get("Test mode", "False") == "True":
+        if Settings().IsTrue("Test mode"):
             if testRootDirectory != "":
                 # If there is a test directory, try loading from there, first
                 fanzineServerDir=f"/{testRootDirectory}/{url}"
@@ -3711,7 +3713,7 @@ class FanzineIndexPage(GridDataSource):
         if not os.path.exists("Template - Fanzine Index Page.html"):
             LogError(f"PutFanzineIndexPage() can't find ';'Template - Fanzine Index Page.html' at {os.path.curdir}")
             return False
-        with open("Template - Fanzine Index Page.html") as f:
+        with open("Template - Fanzine Index Page.html", encoding="utf-8") as f:
             output=f.read()
 
         # Insert the <head> matter: <meta name="description"...> and <title>

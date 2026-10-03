@@ -172,7 +172,7 @@ def DecodeHtmlEntitiesFully(s: str) -> str:
 # Read the classic fanzine list on fanac.org and return a list of all *fanzine directory names*
 def GetClassicFanzinesList() -> list[ClassicFanzinesLine]|None:
     html=None
-    if Settings().Get("Test mode", "False") == "True":
+    if Settings().IsTrue("Test mode"):
         testRootDirectory=Settings().Get("Test Root directory")
         if testRootDirectory != "":
             testRootDirectory="/"+testRootDirectory
@@ -326,7 +326,7 @@ def PutClassicFanzineList(fanzinesList: list[ClassicFanzinesLine], rootDir: str)
     if not os.path.exists("Template - Classic_Fanzines.html"):
         LogError(f"PutFanzineIndexPage() can't find 'Template - Classic_Fanzines.html' at {os.path.curdir}")
         return False
-    with open("Template - Classic_Fanzines.html") as f:
+    with open("Template - Classic_Fanzines.html", encoding="utf-8") as f:
         output=f.read()
 
     # There is a single entry for each fanzine, including ones with multiple titles. We want to create an entry for each title.
@@ -814,7 +814,7 @@ class FanzinesPageRow(GridDataRowClass):
     # Make a deep copy of a FanzineTableRow
     def Copy(self) -> FanzinesPageRow:
         ftr=FanzinesPageRow([])
-        ftr._cells=self._cells
+        ftr._cells=list(self._cells)        # (A copy of the list: sharing it, a change to the copy changed the original)
         return ftr
 
     # We multiply the cell has by the cell index (+1) so that moves right and left also change the signature
