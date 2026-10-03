@@ -30,6 +30,9 @@ Log Errors.txt
 # Runtime / per-user state
 FanzinesEditor positions.json
 
+# Test results (tests/results/tier1.txt etc.) -- rewritten by every run
+tests/results/
+
 # Local working data and large test fixtures (kept locally, not committed)
 Local Directories/
 Files.zip
