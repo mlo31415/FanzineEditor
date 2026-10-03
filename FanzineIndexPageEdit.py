@@ -1352,6 +1352,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             if headerProblem != "":     # It's uploaded without the header, and reported at the end
                 self._headerProblems.append(f"{serverfilename} ({headerProblem})")
             if copyfilepath == "":      # It couldn't be read (SetPDFMetadata has logged why)
+                if PdfLibraryMissing():
+                    return self.UploadFailed(f"{os.path.basename(localfile)} could not be prepared for uploading: {PdfLibraryMissingMessage}")
                 return self.UploadFailed(f"{os.path.basename(localfile)} could not be read as a PDF -- it may be missing, "
                                          f"encrypted or damaged (the log has the details)")
         else:
@@ -2656,6 +2658,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 return f"{fname} could not be downloaded ({FTP().LastMessage})"
             copyfilepath, headerProblem=PrepareIssuePdf(localpath, row, self.Datasource.ColDefs, targetDir, **target.PdfFanzineInfo())
             if copyfilepath == "":
+                if PdfLibraryMissing():
+                    return f"{fname} could not be prepared: {PdfLibraryMissingMessage}"
                 return f"{fname} could not be read as a PDF (the log has the details)"
             if headerProblem != "":
                 headerProblems.append(f"{newname} ({headerProblem})")
@@ -3835,6 +3839,18 @@ class FanzineIndexPage(GridDataSource):
 
         return ret
 
+
+
+# Is PyMuPDF, the PDF library that the metadata and headers need, missing from this copy of FE? An exe built without it
+# can't upload PDFs at all -- and without this check every PDF would be reported as unreadable.
+def PdfLibraryMissing() -> bool:
+    try:
+        import fitz
+        return False
+    except ImportError:
+        return True
+
+PdfLibraryMissingMessage="this copy of FanzinesEditor is missing PyMuPDF, the PDF library it needs, and must be rebuilt"
 
 
 # Does the issue's name already begin with the fanzine's name? (E.g. "Quandry 13" for Quandry.) The names are compared

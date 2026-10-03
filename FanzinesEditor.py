@@ -19,7 +19,7 @@ from Log import Log as RealLog
 from Settings import Settings
 from FanacFanzinesHelpers import ReadClassicFanzinesTable
 
-from FanzineIndexPageEdit import FanzineIndexPageWindow, ClassicFanzinesDate, Tagit, SetHeaderLogo
+from FanzineIndexPageEdit import FanzineIndexPageWindow, ClassicFanzinesDate, Tagit, SetHeaderLogo, PdfLibraryMissing, PdfLibraryMissingMessage
 from FanzineNames import FanzineNames
 from GenGUIClass import FanzinesGridGen
 from GenLogDialogClass import LogDialog
@@ -79,6 +79,12 @@ def main():
     except Exception as e:
         Log(f"Main: could not load 'Fanac logo for pdf headers.jpg'; PDF headers will have no logo: {e}", isError=True)
 
+    # Uploading PDFs needs PyMuPDF. If this copy of FE was built without it, say so now rather than at the first upload.
+    if PdfLibraryMissing():
+        Log(f"Main: {PdfLibraryMissingMessage}", isError=True)
+        wx.MessageBox(f"PDFs cannot be uploaded: {PdfLibraryMissingMessage}. Everything else will work.",
+                      "FanzinesEditor", wx.OK|wx.ICON_WARNING)
+
     # Allow turning off of routine FTP logging
     FTP.g_dologging=Settings().Get("FTP Logging", False)
 
@@ -124,10 +130,13 @@ def main():
 
     if lockEstablished:
         # Initialize the GUI
-        FanzinesEditorWindow(None)
+        window=FanzinesEditorWindow(None)
 
-        # Run the event loop
-        app.MainLoop()
+        # Run the event loop -- unless the window couldn't be set up (it has said why), when we just close down
+        if window.failure:
+            window.Destroy()
+        else:
+            app.MainLoop()
 
     Lock().ReleaseLock(rootDir, id)
 
@@ -434,6 +443,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
         SetWindowIcon(self, PyiResourcePath("FanzinesEditor.ico"))   # Bundled into the exe; harmless no-op if missing or bad
 
+        self.failure=False      # Set if the window couldn't be set up (the list of fanzines couldn't be downloaded)
         self._dataGrid: DataGrid=DataGrid(self.wxGrid)
         self.Datasource=FanzinesPage()      # Note that this is an empty instance
         self._fanzinesList: list[ClassicFanzinesLine]=[]        # This holds the linear list of fanzines that gets folded into the rectangular grid
@@ -466,11 +476,17 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
         with ModalDialogManager(ProgressMessage2, "Downloading main fanzine page", parent=self):
                 cfllist=GetClassicFanzinesList()
-                if cfllist is None or len(cfllist) == 0:
-                    return
-                cfllist.sort(key=lambda cfl: cfl.ServerDir.casefold())
-                self._fanzinesList=cfllist      # Update the linear list of fanzines
-                self.Datasource.FanzineList=self._fanzinesList      # Update the rectangular grid of fanzine server directories
+        if cfllist is None or len(cfllist) == 0:
+            # Without the list there is nothing to edit. Say so, and let main() close down -- rather than carry on with
+            # a window that is never shown, leaving FE running invisibly (and holding the lock) with no way to quit it.
+            wx.MessageBox("The list of fanzines (Classic_Fanzines.html) could not be downloaded from the server, so "
+                          "FanzinesEditor cannot start. Check the connection and try again; the log has the details.",
+                          "FanzinesEditor", wx.OK|wx.ICON_ERROR)
+            self.failure=True
+            return
+        cfllist.sort(key=lambda cfl: cfl.ServerDir.casefold())
+        self._fanzinesList=cfllist      # Update the linear list of fanzines
+        self.Datasource.FanzineList=self._fanzinesList      # Update the rectangular grid of fanzine server directories
 
         self._dataGrid.HideRowLabels()
         self._dataGrid.HideColLabels()
@@ -692,6 +708,18 @@ class FanzinesEditorWindow(FanzinesGridGen):
         if fresh is None or len(fresh) == 0:
             wx.MessageBox("The list of fanzines could not be read from the server, so it was not uploaded. Your changes "
                           "are still pending: try the upload again later.", "Upload failed", wx.OK|wx.ICON_WARNING, parent=self)
+            return
+        # The upload writes back the whole list as just read, so a list which wasn't read completely would lose the
+        # fanzines missing from it. Other sessions may have deleted a few, but not this many: stop rather than risk it.
+        allowance=max(10, len(self._fanzinesList)//20)
+        if len(fresh) < len(self._fanzinesList)-allowance:
+            Log(f"OnUploadPressed: the list read from the server has {len(fresh)} fanzines, but this session has "
+                f"{len(self._fanzinesList)}; not uploading", isError=True)
+            wx.MessageBox(f"The list of fanzines just read from the server has only {len(fresh)} fanzines, but this session "
+                          f"has {len(self._fanzinesList)} -- far fewer than other sessions' deletions could explain, so it "
+                          f"probably wasn't read completely. To be safe, nothing was uploaded, and your changes are still "
+                          f"pending. Try the upload again later; if this keeps happening, check Classic_Fanzines.html on "
+                          f"the server.", "Upload stopped", wx.OK|wx.ICON_WARNING, parent=self)
             return
         for serverDir, cfl in self._listChanges.items():
             hits=[i for i, x in enumerate(fresh) if x.ServerDir.lower() == serverDir]

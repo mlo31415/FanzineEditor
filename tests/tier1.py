@@ -48,21 +48,28 @@ def FreshServer() -> fakeftp.FakeServer:
         S.Put(f"/fanzines/{d}/index.html", html)
         for name in set(re.findall(r'href="([^"/:#?]+\.pdf)"', html, flags=re.IGNORECASE)):
             S.Put(f"/fanzines/{d}/{name}", open(MakePdf(os.path.join(TMP, "seed.pdf"), f"{d} {name}"), "rb").read())
-    cfls=[]
-    for d, name in FIXTURE_DIRS.items():
-        c=ClassicFanzinesLine()
-        c.ServerDir=d
-        c.Name=FanzineNames(name, "")
-        c.Editors="Someone"
-        c.Dates="1943-1946"
-        c.Type="Genzine"
-        c.Issues="3"
-        c.Created=ClassicFanzinesDate("March 3, 2020")
-        c.Updated=ClassicFanzinesDate("March 3, 2020")
-        cfls.append(c)
-    FE.PutClassicFanzineList(cfls, "fanzines")
+    PutClassicList(0)
     Dialogs.Clear()
     return S
+
+
+def MakeCfl(serverDir: str, name: str) -> ClassicFanzinesLine:
+    c=ClassicFanzinesLine()
+    c.ServerDir=serverDir
+    c.Name=FanzineNames(name, "")
+    c.Editors="Someone"
+    c.Dates="1943-1946"
+    c.Type="Genzine"
+    c.Issues="3"
+    c.Created=ClassicFanzinesDate("March 3, 2020")
+    c.Updated=ClassicFanzinesDate("March 3, 2020")
+    return c
+
+
+def PutClassicList(extra: int, root: str="fanzines") -> None:
+    """Write a Classic list with the fixture fanzines plus 'extra' made-up ones, using FE's own writer."""
+    cfls=[MakeCfl(d, name) for d, name in FIXTURE_DIRS.items()]+[MakeCfl(f"Extra_{i:03}", f"Extra {i:03}") for i in range(extra)]
+    FE.PutClassicFanzineList(cfls, root)
 
 
 from harness import OpenPage, AddRow, EditFilename, Upload, MoveRows, Regenerate as RegenerateRow
@@ -463,8 +470,56 @@ def MainWindow() -> None:
     B.Destroy()
 
 
+def Safeguards() -> None:
+    R.Section("Startup without the list (FE-10)")
+    S=FreshServer()
+    S.Files.pop("/fanzines/Classic_Fanzines.html")
+    m=FE.FanzinesEditorWindow(None)
+    R.Check(m.failure and any("could not be downloaded" in x for x in Dialogs.Messages),
+            "the window says why and reports failure, so main() closes FE (was: an invisible window holding the lock)")
+    m.Destroy()
+
+    R.Section("A list that wasn't read completely (FE-28)")
+    S=FreshServer()
+    PutClassicList(40)
+    m=FE.FanzinesEditorWindow(None)
+    c=[x for x in m._fanzinesList if x.ServerDir == "Apollo"][0].Deepcopy()
+    c.Editors="SHOULD NOT BE WRITTEN"
+    m.MergeCFLIntoList(c)
+    PutClassicList(2)       # What a partial read would look like: 5 entries where this session has 43
+    before=S.Get("/fanzines/Classic_Fanzines.html")
+    Dialogs.Clear()
+    m.OnUploadPressed(None)
+    R.Check(not S.Exists(f"/{T}/Classic_Fanzines.html") and S.Get("/fanzines/Classic_Fanzines.html") == before and m.NeedsSaving(),
+            "nothing written; the change is still pending")
+    R.Check(any("probably wasn't read completely" in x for x in Dialogs.Messages), "and the user is told why")
+    PutClassicList(36)      # Seven fewer than this session has: other sessions' deletions, which is fine
+    Dialogs.Clear()
+    m.OnUploadPressed(None)
+    back={x.ServerDir: x for x in FE.GetClassicFanzinesList()}
+    R.Check(back["Apollo"].Editors == "SHOULD NOT BE WRITTEN" and not m.NeedsSaving() and not Dialogs.Messages,
+            "a few fewer (other sessions' deletions) is fine: uploaded")
+    m.Destroy()
+
+    R.Section("No PDF library in the exe (FE-27)")
+    FreshServer()
+    w=OpenPage("Apollo")
+    AddRow(w, "t_lib.pdf", Pdf("t_lib.pdf"), "Apollo 91")
+    saved=sys.modules.get("fitz")
+    sys.modules["fitz"]=None            # What an exe built without PyMuPDF looks like
+    try:
+        missing=FIP.PdfLibraryMissing()
+        Upload(w)
+    finally:
+        sys.modules["fitz"]=saved
+    R.Check(missing and any("missing PyMuPDF" in q for q in Dialogs.Questions), "the upload says the library is missing (was: 'could not be read as a PDF')",
+            str(Dialogs.Questions[-1:]))
+    R.Check(not FIP.PdfLibraryMissing(), "(and it's found again afterwards)")
+    w.Destroy()
+
+
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards):
     try:
         group()
     except Exception:
