@@ -3926,13 +3926,26 @@ def IsCollection(fanzineType: str) -> bool:
     return fanzineType.strip().lower() == "collection"
 
 
-# The issue's editors for its PDF's author and header, as "Ed 1, Ed 2" -- the issue's own editor(s) if the page has an Editor
-# column, otherwise the fanzine's editor(s); "" if uncredited.
-# "various" anywhere (e.g. "various", "Various Editors", "Meade Frierson III; various") means the issues had different
-# editors, so it names nobody -- and a fanzine-level name beside it didn't edit every issue.
+# The fanzine issue's editors for its PDF's author and header, as "Ed 1, Ed 2": the people in the issue's own Editor cell
+# if it has any, otherwise the fanzine series' editors; "" if uncredited.
+# Names are separated by "/" (as in Editor cells: "Avedon Carol / Rob Hansen"), <br> or a new line.
+# "various" (e.g. "various", "Various Editors") names nobody. In an issue's own cell it's just dropped, leaving any named
+# people. Among the series' editors it means they didn't all edit every issue, so none of them is used.
 def PDFEditors(row: FanzineIndexPageTableRow, colNames: ColDefinitionsList, editors: str) -> str:
-    eds=", ".join(x.strip() for x in re.split(r"<br\s*/?>|\n", Editors(row, colNames, editors), flags=re.IGNORECASE) if x.strip() != "")
-    if eds.lower() in ("(uncredited)", "uncredited") or re.search(r"\bvarious\b", eds, flags=re.IGNORECASE):
+    def Names(s: str) -> list[str]:
+        return [" ".join(x.split()) for x in re.split(r"<br\s*/?>|\n|/", s, flags=re.IGNORECASE) if x.strip() != ""]
+    def Various(name: str) -> bool:
+        return re.search(r"\bvarious\b", name, flags=re.IGNORECASE) is not None
+
+    names=Names(ColSelect(row, colNames, "editor"))
+    if names:
+        names=[x for x in names if not Various(x)]
+    else:
+        names=Names(editors)
+        if any(Various(x) for x in names):
+            names=[]
+    eds=", ".join(names)
+    if eds.lower() in ("(uncredited)", "uncredited"):     # (An issue marked uncredited doesn't get the series' editors either)
         return ""
     return eds
 

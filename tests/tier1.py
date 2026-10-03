@@ -681,6 +681,15 @@ def Collections() -> None:
     R.Check(f["eds"] == [] and f["metadata"]["author"] == "", "'various' among the fanzine's editors (any type): no editor line, no author", str(f["eds"]))
     f=Prepare("", "Various Editors", fanzineType="Fanzine")
     R.Check(f["eds"] == [], "'Various Editors' too", str(f["eds"]))
+    for cell, want in (("Avedon Carol / Rob Hansen", "Avedon Carol, Rob Hansen"), ("Alan Dorey  / Joseph Nicholas", "Alan Dorey, Joseph Nicholas"),
+                       ("Diane  Goldman / Dana Siegel / David Singer", "Diane Goldman, Dana Siegel, David Singer"),
+                       ("Len and June Moffatt", "Len and June Moffatt"), ("John Smith / various", "John Smith")):
+        f=Prepare(cell, "Fred Patten", fanzineType="Fanzine")
+        R.Check(f["eds"] == [f"ed: {want}"] and f["metadata"]["author"] == want, f"the issue's Editor cell {cell!r} -> {want!r}", f"{f['eds']} {f['metadata']['author']!r}")
+    for cell in ("various", "uncredited", "(uncredited)"):
+        f=Prepare(cell, "Fred Patten", fanzineType="Fanzine")
+        R.Check(f["eds"] == [] and f["metadata"]["author"] == "", f"the issue's Editor cell {cell!r}: no editor, and not the series' editors instead",
+                f"{f['eds']} {f['metadata']['author']!r}")
     f=Prepare("", "various", fanzineType="Fanzine")
     R.Check(f["metadata"]["title"] == "1980s One Shots: Acrylic" and f["header"].startswith("1980s One Shots: Acrylic"),
             "not a Collection: the fanzine's name is there as before", f["header"])
