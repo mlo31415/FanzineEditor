@@ -51,6 +51,15 @@ def SetHeaderLogo(data: bytes|None) -> None:
     global _g_headerLogo
     _g_headerLogo=data
 
+
+# What Move to Different Fanzine's MoveRowFilesOnServer did, so the move can afterwards be finished (FinishMovedFiles,
+# once the source page no longer links the originals) or undone (UndoMovedFiles)
+class MovedFiles:
+    def __init__(self) -> None:
+        self.Copied: list[str]=[]                   # Files put into the target directory
+        self.Originals: list[str]=[]                # Their originals in this fanzine's directory, to be deleted at the end
+        self.Moves: list[tuple[str, str]]=[]        # (from, to) of each file, for the log
+
 # Background color for rows that are out of order (a valid ordering exists, but the rows aren't in it)
 gColorMisordered=wx.Colour(255, 255, 200)   # Light yellow
 
@@ -1303,8 +1312,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 msg+=("\n\nAlso, these uploaded files could not be filed in the local directory and are still where they "
                       "were:\n"+"\n".join(localProblems))
             if self._headerProblems:
-                msg+=("\n\nAlso, these files were uploaded without their page header (Regenerate PDF Header can add it "
-                      "later):\n"+"\n".join(self._headerProblems))
+                msg+=("\n\nAlso, these files were uploaded without their page header:\n"+"\n".join(self._headerProblems))
             wx.MessageBox(msg, "Upload stopped", wx.OK|wx.ICON_WARNING, parent=self)
             return
 
@@ -1316,8 +1324,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             problems.append("These uploaded files could not be filed in the local directory and are still where they "
                             "were:\n"+"\n".join(localProblems))
         if self._headerProblems:
-            problems.append("These files were uploaded without their page header (the log has the details; Regenerate "
-                            "PDF Header can add it later):\n"+"\n".join(self._headerProblems))
+            problems.append("These files were uploaded without their page header (the log has the details):\n"+
+                            "\n".join(self._headerProblems))
         if problems:
             wx.MessageBox("The page was uploaded, but:\n\n"+"\n\n".join(problems), "Upload finished with problems", wx.OK|wx.ICON_INFORMATION, parent=self)
 
@@ -2421,18 +2429,28 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             self.CopyRowsIntoTarget(fipw, movedRows, renames)
             fipw.RefreshWindow()        # Make the appended rows visible in the target dialog
 
-            if not self.MoveRowFilesOnServer(movedRows, targetDir, renames, fipw):
-                fipw.Destroy()
-                return      # File move failed; message already shown. No index pages have been changed.
-
-            fipw.OnUpload(None)
-            if not fipw._uploaded:
-                wx.MessageBox(f"The upload of {targetDir} failed. The moved files are in {targetDir}'s directory on the "
-                              f"server, but neither index page has been updated.", "Move to Different Fanzine", parent=self)
+            moved, why=self.MoveRowFilesOnServer(movedRows, targetDir, renames, fipw)
+            if moved is None:
+                wx.MessageBox(f"The move was stopped because {why}. Any files already copied to {targetDir} have been removed, "
+                              f"so nothing has been changed.", "Move to Different Fanzine", parent=self)
                 fipw.Destroy()
                 return
 
-            self.RemoveMovedRowsAndUploadSource(movedRows)
+            fipw.OnUpload(None)
+            if not fipw._uploaded:
+                self.UndoMovedFiles(moved)
+                wx.MessageBox(f"The upload of {targetDir} failed, so the move has been undone (the files copied there have "
+                              f"been removed). Neither index page has been changed.", "Move to Different Fanzine", parent=self)
+                fipw.Destroy()
+                return
+
+            if self.RemoveMovedRowsAndUploadSource(movedRows):
+                self.FinishMovedFiles(moved)
+            else:
+                wx.MessageBox(f"The issues have been added to {targetDir}, but this page could not be uploaded, so it still lists "
+                              f"them too. Their files are in both places, so both pages' links work; upload this page again to "
+                              f"finish (the original files will then be left unused on the server).",
+                              "Move to Different Fanzine", parent=self)
 
             fipw.ShowModal()        # Leave the target dialog open for further editing
             if fipw.CFL is not None:
@@ -2453,9 +2471,21 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             def FinishMove() -> None:
                 fipw.PostUploadCallback=None                        # Run only once
                 actualTarget=fipw.ServerDir                         # The user may have edited the directory name
-                if not self.MoveRowFilesOnServer(movedRows, actualTarget, {}, fipw):
+                moved, why=self.MoveRowFilesOnServer(movedRows, actualTarget, {}, fipw)
+                if moved is None:
+                    # (The new fanzine's page has already been uploaded, listing the moved issues)
+                    wx.MessageBox(f"{actualTarget} has been created, but the move was stopped because {why}, and the files "
+                                  f"already copied there have been removed. So {actualTarget}'s page lists issues whose files "
+                                  f"aren't there; this page is unchanged. Delete those rows from {actualTarget}, or fix the "
+                                  f"problem and move them again.", "Move to Different Fanzine", parent=fipw)
                     return
-                self.RemoveMovedRowsAndUploadSource(movedRows)
+                if self.RemoveMovedRowsAndUploadSource(movedRows):
+                    self.FinishMovedFiles(moved)
+                else:
+                    wx.MessageBox(f"The issues have been added to {actualTarget}, but this page could not be uploaded, so it "
+                                  f"still lists them too. Their files are in both places, so both pages' links work; upload "
+                                  f"this page again to finish (the original files will then be left unused on the server).",
+                                  "Move to Different Fanzine", parent=fipw)
             fipw.PostUploadCallback=FinishMove
 
             fipw.ShowModal()
@@ -2644,15 +2674,18 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                     Log(f"RestampPdfOnServer: could not delete temporary file {f}: {e}")
 
 
-    # Move the moved rows' files on the server from this fanzine's directory into the target's.
-    # A PDF is re-done for the target fanzine on the way (its metadata and page header name the fanzine it's in): it's
-    # downloaded, re-stamped and uploaded to the target, and then the original is deleted. Other files are just moved.
-    # In test mode a file may exist only under the real root; in that case it is COPIED from the real root into
-    # the test target (the real root is never modified). Returns False (after telling the user) on any failure.
-    def MoveRowFilesOnServer(self, movedRows: list[FanzineIndexPageTableRow], targetDir: str, renames: dict, target: FanzineIndexPageWindow) -> bool:
+    # Copy the moved rows' files on the server from this fanzine's directory into the target's. A PDF is re-done for the
+    # target fanzine on the way (its metadata and page header name the fanzine it's in); if that can't be done, it's copied
+    # as it is, and listed as having an out-of-date header. Nothing is deleted here: the originals stay until this page has
+    # been uploaded without them (FinishMovedFiles), so both live pages always link files that exist.
+    # In test mode a file may exist only under the real root; it is then copied from there (the real root is never changed).
+    # Returns (what was done, "") -- or, if a file couldn't be copied, (None, why) after removing the copies already made.
+    def MoveRowFilesOnServer(self, movedRows: list[FanzineIndexPageTableRow], targetDir: str, renames: dict,
+                             target: FanzineIndexPageWindow) -> tuple[MovedFiles|None, str]:
         realRoot=Settings().Get("Root directory", "fanzines")
-        allok=True
+        moved=MovedFiles()
         headerProblems: list[str]=[]
+        why=""
         with ModalDialogManager(ProgressMessage2, f"Moving files to {targetDir}", parent=self) as pm:
             for row in movedRows:
                 fname=self.RowServerFilename(row)
@@ -2662,46 +2695,67 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 src=f"/{self.RootDir}/{self.ServerDir}/{fname}"
                 dst=f"/{self.RootDir}/{targetDir}/{newname}"
                 pm.Update(f"Moving {fname}")
+                srcHere=FTP().FileExists(src)
+                if not srcHere and self.RootDir.lower() == realRoot.lower():
+                    why=f"{fname} is not on the server"
+                    break
+                copied=False
                 if fname.lower().endswith(".pdf"):
-                    why=self.RestampPdfOnServer(row, fname, target, targetDir, newname, headerProblems)
-                    ok=why == ""
-                    if not ok:
-                        Log(f"MoveRowFilesOnServer: {why}", isError=True)
-                    elif FTP().FileExists(src) and not FTP().DeleteFile(src):
-                        # The move itself worked, so this isn't a failure: the page no longer links the original
-                        Log(f"MoveRowFilesOnServer: moved {fname}, but could not delete the original {src}: {FTP().LastMessage}", isError=True)
-                elif FTP().FileExists(src):
-                    ok=FTP().Rename(src, dst)
-                elif self.RootDir.lower() != realRoot.lower():
-                    # Test mode and the file was never uploaded to the test root: copy it from the real directory
-                    ok=FTP().CopyFile(f"/{realRoot}/{self.ServerDir}", f"/{self.RootDir}/{targetDir}", fname, Create=True)
-                    if ok and newname != fname:
-                        ok=FTP().Rename(f"/{self.RootDir}/{targetDir}/{fname}", f"/{self.RootDir}/{targetDir}/{newname}")
-                else:
-                    ok=False
-                if ok:
-                    FTPLog().AppendItemVerb("move file", f"{Tagit('From', src)} {Tagit('To', dst)}", Flush=True)
-                else:
-                    Log(f"MoveRowFilesOnServer: failed to move {src} to {dst} because {FTP().LastMessage}", isError=True)
-                    allok=False
-        if not allok:
-            wx.MessageBox("One or more files could not be moved (see the log). The move has been stopped; "
-                          "no index pages have been changed.", "Move to Different Fanzine", parent=self)
-        elif headerProblems:
+                    problem=self.RestampPdfOnServer(row, fname, target, targetDir, newname, headerProblems)
+                    copied=problem == ""
+                    if not copied:
+                        Log(f"MoveRowFilesOnServer: {problem}; copying {fname} without updating it", isError=True)
+                        headerProblems.append(f"{newname} ({problem})")
+                if not copied:
+                    fromDir=f"/{self.RootDir}/{self.ServerDir}" if srcHere else f"/{realRoot}/{self.ServerDir}"
+                    copied=FTP().CopyAndRenameFile(fromDir, fname, f"/{self.RootDir}/{targetDir}", newname, Create=True)
+                if not copied:
+                    why=f"{fname} could not be copied to {targetDir} ({FTP().LastMessage})"
+                    break
+                moved.Copied.append(dst)
+                if srcHere:
+                    moved.Originals.append(src)
+                moved.Moves.append((src, dst))
+
+            if why != "":
+                Log(f"MoveRowFilesOnServer: {why}", isError=True)
+                self.UndoMovedFiles(moved)
+                return None, why
+
+        if headerProblems:
             wx.MessageBox("The files were moved, but the page headers of these PDFs could not be updated for their new fanzine "
-                          "(the log has the details; Regenerate PDF Header can do it later):\n\n"+"\n".join(headerProblems),
+                          "(the log has the details):\n\n"+"\n".join(headerProblems),
                           "Move to Different Fanzine", wx.OK|wx.ICON_INFORMATION, parent=self)
-        return allok
+        return moved, ""
+
+
+    # Undo MoveRowFilesOnServer: delete the copies it made in the target directory (whose page doesn't link them)
+    def UndoMovedFiles(self, moved: MovedFiles) -> None:
+        for dst in moved.Copied:
+            if not FTP().DeleteFile(dst):
+                Log(f"UndoMovedFiles: could not delete the copy {dst} (it's unused): {FTP().LastMessage}", isError=True)
+        moved.Copied=[]
+
+
+    # Finish a move once this page has been uploaded without the moved rows: delete the originals, which nothing links now
+    def FinishMovedFiles(self, moved: MovedFiles) -> None:
+        for src in moved.Originals:
+            if not FTP().DeleteFile(src):
+                Log(f"FinishMovedFiles: could not delete {src} (it's no longer linked, so it's just unused): {FTP().LastMessage}", isError=True)
+        for src, dst in moved.Moves:
+            FTPLog().AppendItemVerb("move file", f"{Tagit('From', src)} {Tagit('To', dst)}", Flush=True)
 
 
     # Remove the moved rows from this page and upload it. Note that no delete-deltas are queued: the files were
-    # moved to the target's directory, not deleted.
-    def RemoveMovedRowsAndUploadSource(self, movedRows: list[FanzineIndexPageTableRow]) -> None:
+    # copied to the target's directory, and the originals are deleted by FinishMovedFiles once this succeeds.
+    # Returns True if the page was uploaded.
+    def RemoveMovedRowsAndUploadSource(self, movedRows: list[FanzineIndexPageTableRow]) -> bool:
         movedIds={id(r) for r in movedRows}
         self.Datasource.Rows=[r for r in self.Datasource.Rows if id(r) not in movedIds]
         self.RefreshWindow()
         self.OnUpload(None)
         self.RefreshWindow()
+        return not self.NeedsSaving()       # (A successful upload marks the page as saved)
 
 
     # Clear links in the selected row
@@ -3833,6 +3887,22 @@ def PrepareIssuePdf(pdfPathFilename: str, row: FanzineIndexPageTableRow, colName
                                 fanzineType=fanzineType, clubname=clubname)
     if copyfilepath == "":
         return "", ""
+
+    # The header code doesn't yet place things correctly on a rotated page: it puts the links (and, upside down, the logo)
+    # in the wrong place, and when replacing a header it paints over part of the scan. So until it does, a PDF whose first
+    # page is rotated gets its metadata but no header.
+    try:
+        import fitz
+        doc=fitz.open(copyfilepath)
+        rotation=doc[0].rotation if doc.page_count > 0 else 0
+        doc.close()
+    except Exception as e:
+        LogError(f"PrepareIssuePdf: could not read the first page's rotation of {pdfPathFilename}: {type(e).__name__}: {e}")
+        return copyfilepath, "its first page could not be checked"
+    if rotation % 360 != 0:
+        Log(f"PrepareIssuePdf: {pdfPathFilename}'s first page is rotated {rotation} degrees, so it gets no header")
+        return copyfilepath, f"its first page is rotated {rotation}°, which headers don't handle yet"
+
     fmt, items=PDFHeader(mainName, row.Cells[colNames.index("Display Text")], serverDir, DateFmt(row, colNames))
     try:
         AddPdfPageHeader(copyfilepath, fmt, items, logo=_g_headerLogo)
