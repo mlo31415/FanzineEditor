@@ -440,7 +440,8 @@ def PageWindow() -> None:
     harness._SetSetting(Settings, "Local Directory Root Path", harness.TMP)
     w=OpenPage("Innuendo")
     w.EndModal=lambda *a, **k: None
-    R.Check(not w.bUpload.IsEnabled() and w.tUploadNote.GetLabel().strip() == "Upload needs a Local Directory", "with one: Upload waits for it, and says so")
+    R.Check(not w.bUpload.IsEnabled() and w.tUploadNote.GetLabel().strip() == f"Upload needs a Local Directory -- type the name of this fanzine's folder in {harness.TMP}",
+            "with one: Upload waits for it, and says what to type", w.tUploadNote.GetLabel())
     class Key:
         def __init__(self, c): self.c=c
         def GetKeyCode(self): return self.c
@@ -725,6 +726,54 @@ def Collections() -> None:
     w.Destroy()
 
 
+def NewComputer() -> None:
+    R.Section("On a new computer: missing local folders and table")
+    S=FreshServer()
+    table=Settings().Get("Server To Local Table Name")
+    saved=open(table, encoding="utf-8").read()
+    try:
+        for what, content in (("missing", None), ("empty", "# nothing here yet\n")):
+            if os.path.exists(table):
+                os.remove(table)
+            if content is not None:
+                open(table, "w", encoding="utf-8").write(content)
+            Dialogs.Clear()
+            try:
+                m=FE.FanzinesEditorWindow(None)
+                got=m.failure
+                m.Destroy()
+            except BaseException as e:      # (SystemExit too: an empty table used to exit quietly)
+                got=f"raised {type(e).__name__}"
+            R.Check(got is True and len(Dialogs.Messages) == 1 and os.path.abspath(table) in Dialogs.Messages[0] and "copy" in Dialogs.Messages[0],
+                    f"the server-to-local table {what}: FE says which file to copy over, and stops cleanly", f"{got} {Dialogs.Messages}")
+    finally:
+        open(table, "w", encoding="utf-8").write(saved)
+
+    missingRoot=os.path.join(harness.TMP, "No such folder")
+    harness._SetSetting(Settings, "Local Directory Root Path", missingRoot)
+    try:
+        Dialogs.Clear()
+        m=FE.FanzinesEditorWindow(None)
+        R.Check(not m.failure and len(Dialogs.Messages) == 1 and missingRoot in Dialogs.Messages[0] and "doesn't exist" in Dialogs.Messages[0]
+                and "Local Directory Root Path" in Dialogs.Messages[0], "the local root folder missing: FE starts, and says which folder and how to fix it", str(Dialogs.Messages))
+        m.Destroy()
+
+        w=OpenPage("Apollo")
+        w.tLocalDirectory.ChangeValue("APOLLO")
+        AddRow(w, "Apollo98.pdf", Pdf("Apollo98.pdf"), "Apollo 98")
+        before=S.Files.copy()
+        Upload(w)
+        R.Check(S.Files == before and len(Dialogs.Messages) == 1 and missingRoot in Dialogs.Messages[0] and "Nothing has been uploaded" in Dialogs.Messages[0]
+                and w.NeedsSaving(), "and Upload stops before changing anything, saying why", str(Dialogs.Messages))
+        os.makedirs(missingRoot)
+        Upload(w)
+        R.Check("Apollo98.pdf" in Files("Apollo") and os.path.exists(os.path.join(missingRoot, "APOLLO", "Apollo98.pdf")),
+                "once the folder is created: uploaded, and filed in the fanzine's folder (created)", str(Dialogs.Messages))
+        w.Destroy()
+    finally:
+        harness._SetSetting(Settings, "Local Directory Root Path", "")
+
+
 def WindowPlacement() -> None:
     R.Section("Windows open on a connected screen")
     FreshServer()
@@ -762,7 +811,7 @@ def WindowPlacement() -> None:
 
 
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, WindowPlacement):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, WindowPlacement):
     try:
         group()
     except Exception:

@@ -13,13 +13,14 @@ from FTPLog import FTPLog
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
 from WxHelpers import OnCloseHandling3, ProgressMessage2, ModalDialogManager, GuardReentry, SetWindowIcon, RestoreWindowPlacement
 from HelpersPackage import ExtractInvisibleTextInsideFanacComment, ConvertHTMLishCharacters, PyiResourcePath
-from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, UnicodeToHtml, StripSpecificTag, Int0, TimestampFilename
+from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, UnicodeToHtml, StripSpecificTag, Int0, TimestampFilename, ReadList
 from Log import LogOpen, LogClose, LogError
 from Log import Log as RealLog
 from Settings import Settings
 from FanacFanzinesHelpers import ReadClassicFanzinesTable
 
 from FanzineIndexPageEdit import FanzineIndexPageWindow, ClassicFanzinesDate, Tagit, SetHeaderLogo, PdfLibraryMissing, PdfLibraryMissingMessage
+from FanzineIndexPageEdit import LocalRootMissing, LocalRootMissingMessage
 from FanzineNames import FanzineNames
 from GenGUIClass import FanzinesGridGen
 from GenLogDialogClass import LogDialog
@@ -464,9 +465,25 @@ class FanzinesEditorWindow(FanzinesGridGen):
             s2LDir="ServerToLocalTable.txt"
             Settings().Put("Server To Local Table Name", s2LDir)
 
+        # It's what fills in each fanzine's Local Directory, so on a new computer it must be copied over from the old one.
+        # (Missing, it used to crash FE; empty, it quietly exited.)
+        if len(ReadList(s2LDir)) == 0:
+            LogError(f"The server-to-local table {os.path.abspath(s2LDir)} is missing or empty")
+            wx.MessageBox(f"FanzinesEditor can't start: its table of each fanzine's local folder name,\n\n    {os.path.abspath(s2LDir)}\n\n"
+                          f"is missing or empty.\n\nIf this is a new computer, copy {os.path.basename(s2LDir)} there from the "
+                          f"FanzinesEditor folder on the old computer, then start FanzinesEditor again.",
+                          "FanzinesEditor", wx.OK|wx.ICON_ERROR)
+            self.failure=True
+            return
         if not Settings("ServerToLocal").Load(s2LDir):
             LogError(f"Can't open/read {os.getcwd()}/{s2LDir}")
             exit(999)
+
+        # Uploaded files are filed in folders under the local root folder. Say now if it's missing (Upload refuses until it's there).
+        root=LocalRootMissing()
+        if root != "":
+            LogError(f"The Local Directory Root Path {root} is not a folder on this computer")
+            wx.MessageBox(LocalRootMissingMessage(root)+"\n\nUntil then, fanzines can be edited but not uploaded.", "FanzinesEditor", wx.OK|wx.ICON_WARNING)
 
         # Figure out the server directory
         self.RootDir="fanzines"

@@ -458,6 +458,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             # saved in the server-to-local table when the page is closed
             self._allowManualEntryOfLocalDirectoryName=(self.localDir or "").strip() == ""
 
+        if self.LocalDirectoryRequired:
+            self.tLocalDirectory.SetToolTip(f"The name of this fanzine's folder in {Settings().Get('Local Directory Root Path', default='')}. "
+                                            f"Uploaded PDFs are moved into it, and the folder is created if it's not there yet.")
+
         self.MarkAsSaved()
         self.RefreshWindow()        # This does the (single) full grid load: analyses + RefreshWxGridFromDatasource
         self.Raise()        # Bring the window to the top
@@ -1008,6 +1012,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     def OnUpload(self, event):
         Log("OnUpload pressed")
 
+        # Uploaded files are filed under the local root folder, so it must exist (on a new computer it may not yet)
+        root=LocalRootMissing()
+        if root != "":
+            wx.MessageBox(LocalRootMissingMessage(root)+"\n\nNothing has been uploaded.", "Upload stopped", wx.OK|wx.ICON_WARNING, parent=self)
+            return
+
         # A NEW fanzine must never overwrite an existing directory's index page. The pink warning in the
         # dialog is advisory only, and it only knows the fanzines list (which may be search-filtered, and
         # doesn't include directories that aren't on the Classic list) -- so ask the server itself.
@@ -1544,6 +1554,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         note=""
         if missing:
             note="      Upload needs "+(missing[0] if len(missing) == 1 else ", ".join(missing[:-1])+" and "+missing[-1])
+            if "a Local Directory" in missing:
+                note+=f" -- type the name of this fanzine's folder in {Settings().Get('Local Directory Root Path', default='')}"
         if note != self.tUploadNote.GetLabel():
             self.tUploadNote.SetLabel(note)
             self.m_toolBarTop.Realize()     # Re-lay out the toolbar to fit the new text
@@ -3877,6 +3889,19 @@ def PdfLibraryMissing() -> bool:
         return True
 
 PdfLibraryMissingMessage="this copy of FanzinesEditor is missing PyMuPDF, the PDF library it needs, and must be rebuilt"
+
+
+# The folder that uploaded files are filed under ("Local Directory Root Path"), if it's set but isn't a folder on this
+# computer -- e.g. on a new computer it hasn't been created yet. Otherwise "".
+def LocalRootMissing() -> str:
+    root=Settings().Get("Local Directory Root Path", default="")
+    return root if root != "" and not os.path.isdir(root) else ""
+
+def LocalRootMissingMessage(root: str) -> str:
+    return (f"FanzinesEditor files each uploaded PDF in its fanzine's folder inside\n\n    {root}\n\nbut that folder doesn't exist "
+            f"on this computer.\n\nIf this is a new computer, create that folder and copy your fanzine folders into it from the old "
+            f"computer. Or, if they're somewhere else on this computer, change \"Local Directory Root Path\" in\n\n    {Settings().Dictpath}\n\n"
+            f"to that folder and restart FanzinesEditor.")
 
 
 # Does the issue's name already begin with the fanzine's name? (E.g. "Quandry 13" for Quandry.) The names are compared
