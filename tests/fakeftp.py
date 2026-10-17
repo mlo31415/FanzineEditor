@@ -150,6 +150,8 @@ def Install() -> FakeServer:
     ftpmodule.FTP.g_curdirpath="/"
     ftpmodule.FTP.g_credentials={"ID": "test", "PW": ""}
     ftpmodule.FTP._lastMessage=""
+    if not hasattr(ftpmodule.FTP, "RealReconnect"):
+        ftpmodule.FTP.RealReconnect=ftpmodule.FTP.Reconnect     # (Kept, so a test can try the real one)
     ftpmodule.FTP.Reconnect=lambda self: True
     ftpmodule.FTP.OpenConnection=lambda self, credentialsFilePath: True
     return server

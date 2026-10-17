@@ -27,6 +27,18 @@ from GenLogDialogClass import LogDialog
 from ClassicFanzinesLine import ClassicFanzinesLine
 
 
+# The logs are started afresh each time FE starts, so keep the last session's as "... (previous).txt". After a problem
+# that needed a restart, they're the only record of what happened.
+def KeepPreviousLogs(homedir: str) -> None:
+    for name in ("Log -- FanzinesEditor.txt", "Log (Errors) -- FanzinesEditor.txt"):
+        path=os.path.join(homedir, name)
+        if os.path.exists(path):
+            try:
+                os.replace(path, os.path.join(homedir, name.replace(".txt", " (previous).txt")))
+            except OSError:
+                pass        # (E.g. another copy of FE has it open: then it's simply overwritten, as it always was)
+
+
 def main():
 
     # Initialize wx
@@ -43,6 +55,7 @@ def main():
     #     g_LogDialog=None
 
     homedir=os.getcwd()
+    KeepPreviousLogs(homedir)
     LogOpen(os.path.join(homedir, "Log -- FanzinesEditor.txt"), os.path.join(homedir, "Log (Errors) -- FanzinesEditor.txt"))
 
     # Uncaught exceptions in event handlers would otherwise be printed to stderr -- which is lost in the

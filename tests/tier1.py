@@ -774,6 +774,55 @@ def NewComputer() -> None:
         harness._SetSetting(Settings, "Local Directory Root Path", "")
 
 
+def FtpFailures() -> None:
+    R.Section("FTP failures can't hide a message box behind FE's windows")
+    import ftplib
+    import FTP as ftpmodule
+    S=FreshServer()
+    shown=[]
+    stub=wx.MessageBox
+    wx.MessageBox=lambda message, caption="", style=0, parent=None, *a, **k: shown.append((message, style, parent))
+    realTls=ftplib.FTP_TLS
+    def Refused(*a, **k):
+        raise OSError("[WinError 10060] the connection attempt failed")
+    ftplib.FTP_TLS=Refused
+    m=FE.FanzinesEditorWindow(None)
+    try:
+        ftpmodule.FTP.g_credentials={"ID": "test", "PW": "", "host": "ftp.example.org"}
+        ok=ftpmodule.FTP.RealReconnect(ftpmodule.FTP())
+        R.Check(not ok and len(shown) == 1 and "Could not connect" in shown[0][0] and shown[0][2] is wx.GetApp().GetTopWindow()
+                and shown[0][1] & wx.STAY_ON_TOP, "can't reconnect: the box has FE's window as its parent and stays on top (was: no parent)",
+                str([(s[1], s[2]) for s in shown]))
+    finally:
+        ftplib.FTP_TLS=realTls
+        wx.MessageBox=stub
+        m.Destroy()
+
+    S=FreshServer()
+    def Dropped(*a):
+        raise EOFError("connection dropped")
+    S.nlst=Dropped
+    try:
+        ftpmodule.FTP().FileExists(f"/{T}/Apollo/index.html")
+        got="no exception"
+    except ConnectionError as e:
+        got=str(e)
+    R.Check("Lost the connection" in got and len(Dialogs.Messages) == 0,
+            "a check for a file fails twice: stops with a clear error, no parentless box (was: 'Exiting program' box, then NotImplementedError)", got)
+
+    R.Section("The previous session's logs are kept")
+    d=os.path.join(TMP, "logs")
+    os.makedirs(d, exist_ok=True)
+    for name in ("Log -- FanzinesEditor.txt", "Log (Errors) -- FanzinesEditor.txt"):
+        open(os.path.join(d, name), "w", encoding="utf-8").write("last session "+name)
+    FE.KeepPreviousLogs(d)
+    kept=[open(os.path.join(d, n.replace(".txt", " (previous).txt")), encoding="utf-8").read() for n in ("Log -- FanzinesEditor.txt", "Log (Errors) -- FanzinesEditor.txt")]
+    R.Check(kept == ["last session Log -- FanzinesEditor.txt", "last session Log (Errors) -- FanzinesEditor.txt"]
+            and not os.path.exists(os.path.join(d, "Log -- FanzinesEditor.txt")), "both are kept as '(previous)' for the new session to start afresh", str(kept))
+    FE.KeepPreviousLogs(d)
+    R.Check(os.path.exists(os.path.join(d, "Log -- FanzinesEditor (previous).txt")), "and with no logs to keep, the previous ones are left alone")
+
+
 def WindowPlacement() -> None:
     R.Section("Windows open on a connected screen")
     FreshServer()
@@ -811,7 +860,7 @@ def WindowPlacement() -> None:
 
 
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, WindowPlacement):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, WindowPlacement):
     try:
         group()
     except Exception:
