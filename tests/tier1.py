@@ -793,14 +793,54 @@ def FtpFailures() -> None:
         R.Check(not ok and len(shown) == 1 and "Could not connect" in shown[0][0] and shown[0][2] is wx.GetApp().GetTopWindow()
                 and shown[0][1] & wx.STAY_ON_TOP, "can't reconnect: the box has FE's window as its parent and stays on top (was: no parent)",
                 str([(s[1], s[2]) for s in shown]))
+        for kind, err in (("421 too many connections", ftplib.error_temp("421 Too many connections (8) from this IP")),
+                          ("530 login refused", ftplib.error_perm("530 Login authentication failed")),
+                          ("hangs up during login", EOFError("connection closed by the server"))):
+            def Refuse(*a, **k):
+                raise err
+            ftplib.FTP_TLS=Refuse
+            shown.clear()
+            try:
+                ok=ftpmodule.FTP.RealReconnect(ftpmodule.FTP())
+            except Exception as e:
+                ok=f"raised {type(e).__name__}"
+            R.Check(ok is False and len(shown) == 1 and "Could not connect" in shown[0][0] and str(err) in shown[0][0],
+                    f"the server refuses ({kind}): reported clearly, reconnect fails (was: escaped as an internal error)", f"{ok} {[s[0][:60] for s in shown]}")
+
+        calls=[]
+        class Old:              # The dead connection being replaced
+            def close(self): calls.append("close")
+            def quit(self): calls.append("quit")
+        class New:              # A working new one
+            def __init__(self, *a, **k): calls.append("connect")
+            def prot_p(self): pass
+            def cwd(self, d): return "250 OK. Current directory is /"
+        ftpmodule.FTP.g_ftp=Old()
+        ftpmodule.FTP.g_curdirpath="/"
+        ftplib.FTP_TLS=New
+        shown.clear()
+        ok=ftpmodule.FTP.RealReconnect(ftpmodule.FTP())
+        R.Check(ok is True and calls == ["close", "connect"] and isinstance(ftpmodule.FTP.g_ftp, New) and not shown,
+                "a successful reconnect: the old connection is closed (not quit(), which waits out the timeout on a dead one)", str(calls))
     finally:
         ftplib.FTP_TLS=realTls
         wx.MessageBox=stub
         m.Destroy()
 
-    S=FreshServer()
     def Dropped(*a):
         raise EOFError("connection dropped")
+    S=FreshServer()
+    S.nlst=Dropped
+    ftpmodule.FTP.Reconnect=lambda self: False     # (FreshServer puts the fake one back)
+    try:
+        got=f"answered {ftpmodule.FTP().FileExists(f'/{T}/Apollo/index.html')}"
+    except ConnectionError as e:
+        got=str(e)
+    except Exception as e:
+        got=f"{type(e).__name__}: {e}"
+    R.Check("Lost the connection" in got, "a check for a file, and the reconnect fails: stops with the error (was: answered 'no, it doesn't exist')", got)
+
+    S=FreshServer()
     S.nlst=Dropped
     try:
         ftpmodule.FTP().FileExists(f"/{T}/Apollo/index.html")

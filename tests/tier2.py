@@ -55,6 +55,16 @@ R.Write(f"(test root before: {SRC} {'present' if snapshot[SRC][0] else 'absent'}
         f"Classic list {'present' if classic0 else 'absent'})")
 
 try:
+    R.Section("Reconnecting after the server drops the connection")
+    import socket
+    old=FTP.g_ftp
+    old.sock.shutdown(socket.SHUT_RDWR)     # What an idle connection the server has dropped looks like from here
+    Dialogs.Clear()
+    w=OpenPage(SRC)
+    R.Check(FTP.g_ftp is not old and w.Datasource.NumRows > 0 and not Dialogs.Messages,
+            "the page opens over a new connection, with no messages", f"{w.Datasource.NumRows} rows {Dialogs.Messages}")
+    w.Destroy()
+
     R.Section("Upload, with header and metadata, to the real test root")
     w=OpenPage(SRC)
     a=AddRow(w, "t2_a.pdf", Pdf("t2_a.pdf"), "Apollo 91")
