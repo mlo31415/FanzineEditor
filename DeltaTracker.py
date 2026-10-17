@@ -173,6 +173,12 @@ class DeltaTracker:
 
 
 
+    # The row now links somewhere else rather than to a file of its own: drop its pending upload or rename, which would
+    # otherwise go to wherever the link points. (A file already on the server is left there, under its old name.)
+    def Forget(self, row: FanzineIndexPageTableRow) -> None:
+        self._deltas=[d for d in self._deltas if not (d.Row is row and d.Verb in ("add", "replace", "rename"))]
+
+
     @property
     def Num(self) -> int:
         return len(self._deltas)

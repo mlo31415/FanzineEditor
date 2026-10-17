@@ -863,6 +863,93 @@ def FtpFailures() -> None:
     R.Check(os.path.exists(os.path.join(d, "Log -- FanzinesEditor (previous).txt")), "and with no logs to keep, the previous ones are left alone")
 
 
+def ReplaceURL() -> None:
+    R.Section("Replace URL: links to fanac.org are stored relative to the page")
+    for url, want in (("https://fanac.org/fanzines/Innuendo/Innuendo01.pdf", "../Innuendo/Innuendo01.pdf"),
+                      ("https://www.fanac.org/fanzines/Other/Fanac%20%233.pdf", "../Other/Fanac #3.pdf"),
+                      ("http://fanac.org/Fanac_Fan_History/x.html", "../../Fanac_Fan_History/x.html"),
+                      ("//fanac.org/fanzines/Other/x.php?id=5", "../Other/x.php?id=5"),
+                      ("https://fanac.org/fanzines/Other/", "../Other/"),
+                      ("https://fanac.org/fanzines/Apollo/Apollo03.pdf", "Apollo03.pdf"),
+                      ("https://example.org/zines/x.pdf", "https://example.org/zines/x.pdf"),
+                      ("https://fanac.org.example.com/x.pdf", "https://fanac.org.example.com/x.pdf"),
+                      ("../Other/x.pdf", "../Other/x.pdf")):
+        got=FIP.RelativeFanacLink(url, "Apollo")
+        R.Check(got == want, f"{url!r} -> {want!r}", f"got {got!r}")
+    for url, want in (("", "https://fanac.org/fanzines/"), ("https://example.org/x", "https://example.org/x"),
+                      ("../Other/Fanac #3.pdf", "https://fanac.org/fanzines/Other/Fanac %233.pdf")):
+        got=FIP.BrowseTarget(url, "Apollo")
+        R.Check(got == want, f"Browse opens {want!r} for {url!r}", f"got {got!r}")
+    R.Check([FIP.IsLocalFilename(x) for x in ("Apollo03.pdf", "Fanac #3.pdf", "../Other/x.pdf", "https://x.org/y.pdf", "")] == [True, True, False, False, False],
+            "only a plain filename is one of this fanzine's own files")
+
+    opened=[]
+    realOpen=FIP.webbrowser.open
+    FIP.webbrowser.open=lambda u, *a, **k: opened.append(u)
+    try:
+        d=FIP.ReplaceURLDialog(None, "../Innuendo/Innuendo01.pdf", "Apollo")
+        d.OnBrowse(None)
+        d.Destroy()
+    finally:
+        FIP.webbrowser.open=realOpen
+    R.Check(opened == ["https://fanac.org/fanzines/Innuendo/Innuendo01.pdf"], "the dialog's Browse opens the web browser there", str(opened))
+
+    R.Section("Replace URL on a page")
+    S=FreshServer()
+    w=OpenPage("Apollo")
+    items=[m.GetItemLabelText() for m in w.m_GridPopup.GetMenuItems()]
+    R.Check("Replace URL" in items and items.index("Replace URL") == items.index("Replace w/new PDF")+1, "the menu item follows 'Replace w/new PDF'", str(items))
+
+    answer=[]
+    realShow, realValue=FIP.ReplaceURLDialog.ShowModal, FIP.ReplaceURLDialog.GetValue
+    FIP.ReplaceURLDialog.ShowModal=lambda self: wx.ID_OK if answer else wx.ID_CANCEL
+    FIP.ReplaceURLDialog.GetValue=lambda self: answer[0]
+    def Replace(row, url: str|None) -> None:
+        answer[:]=[url] if url is not None else []
+        w._dataGrid.clickedRow=w.Datasource.Rows.index(row)
+        Dialogs.Clear()
+        w.OnPopupReplaceURL(None)
+    try:
+        row=[r for r in w.Datasource.Rows if r[0] == "Apollo03.pdf"][0]
+        Replace(row, None)
+        R.Check(row[0] == "Apollo03.pdf", "Cancel: nothing changes")
+        Replace(row, "https://fanac.org/fanzines/Innuendo/Innuendo01.pdf")
+        R.Check(row[0] == "../Innuendo/Innuendo01.pdf" and w.deltaTracker.Deltas == [] and w.NeedsSaving(), "OK: the row links there, nothing queued for the server", row[0])
+        R.Check(w.RowServerFilename(row) == "" and "../innuendo/innuendo01.pdf" not in w.FilenamesInUse(),
+                "and it isn't treated as one of this fanzine's files (no Regenerate PDF Header, Rename PDF or Move of it)")
+        Upload(w)
+        R.Check('href="../Innuendo/Innuendo01.pdf"' in Page("Apollo") and "Apollo03.pdf" in Files("Apollo", "fanzines") and not Dialogs.Messages,
+                "uploaded: the page links there, and Apollo03.pdf is left on the server", str(Dialogs.Messages))
+
+        other=[r for r in w.Datasource.Rows if r[0] == "Apollo04.pdf"][0]
+        Replace(other, "https://fanac.org/fanzines/Apollo/Apollo05.pdf")
+        R.Check(other[0] == "Apollo04.pdf" and Dialogs.Messages and "already the file of another issue" in Dialogs.Messages[0],
+                "a link to a file another row already has: refused", str(Dialogs.Messages))
+
+        new=AddRow(w, "Apollo98.pdf", Pdf("Apollo98.pdf"), "Apollo 98")
+        Replace(new, "https://fanac.org/fanzines/Innuendo/Innuendo02.pdf")
+        R.Check(new[0] == "../Innuendo/Innuendo02.pdf" and not any(d.Row is new for d in w.deltaTracker.Deltas) and new.FileSourcePath == "",
+                "a row whose PDF was still to be uploaded: it no longer is (or it would go to Innuendo's folder)", str([str(d) for d in w.deltaTracker.Deltas]))
+        Upload(w)
+        R.Check("Apollo98.pdf" not in Files("Apollo") and not any("Innuendo02" in f for f in S.Files if "/Innuendo/" in f and T in f), "nothing uploaded for it")
+
+        Dialogs.Clear()
+        w._dataGrid.clickedRow=w.Datasource.Rows.index(row)
+        w.wxGrid.ClearSelection()
+        w.OnPopupDelRow(None)
+        R.Check(not any(d.Verb == "delete" for d in w.deltaTracker.Deltas), "deleting a row that links elsewhere queues no server delete (was: of '../Innuendo/...')",
+                str([str(d) for d in w.deltaTracker.Deltas]))
+        Upload(w)
+
+        five=[r for r in w.Datasource.Rows if r[0] == "Apollo05.pdf"][0]
+        EditFilename(w, five, "../Innuendo/Innuendo03.pdf")
+        R.Check(not any(d.Verb == "rename" for d in w.deltaTracker.Deltas), "typing a link over a filename queues no server rename (was: moving the file into Innuendo's folder)",
+                str([str(d) for d in w.deltaTracker.Deltas]))
+    finally:
+        FIP.ReplaceURLDialog.ShowModal, FIP.ReplaceURLDialog.GetValue=realShow, realValue
+        w.Destroy()
+
+
 def WindowPlacement() -> None:
     R.Section("Windows open on a connected screen")
     FreshServer()
@@ -900,7 +987,7 @@ def WindowPlacement() -> None:
 
 
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, WindowPlacement):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, WindowPlacement):
     try:
         group()
     except Exception:

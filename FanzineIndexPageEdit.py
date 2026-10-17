@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import os
+import posixpath
 import wx
 import wx.grid
 import re
 import shutil
+import webbrowser
 from datetime import datetime
 from math import floor, ceil
 import tempfile
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 
 from bs4 import BeautifulSoup
 import bs4
@@ -284,6 +286,13 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.tUploadNote=wx.StaticText(self.m_toolBarTop, wx.ID_ANY, "")
         self.m_toolBarTop.InsertControl(self.m_toolBarTop.GetToolPos(self.bClose.GetId())+1, self.tUploadNote)
         self.m_toolBarTop.Realize()
+
+        # "Replace URL" goes after "Replace w/new PDF" in the grid's popup menu. (Added here, like the note above, rather than
+        # in the wxFormBuilder project.)
+        _, pos=self.m_GridPopup.FindChildItem(self.m_menuItemPopupReplace.GetId())
+        self.m_menuItemPopupReplaceURL=self.m_GridPopup.Insert(pos+1, wx.ID_ANY, "Replace URL",
+                                                               "Link this row to a page or file somewhere else, instead of to a PDF of its own.")
+        self.Bind(wx.EVT_MENU, self.OnPopupReplaceURL, self.m_menuItemPopupReplaceURL)
 
         self.failure=True
 
@@ -570,7 +579,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # silently overwrites the other (and only index.html is backed up). Compared case-insensitively: names that
     # differ only in case are almost certainly a mistake, and couldn't both live in one Windows folder anyway.
     def FilenamesInUse(self, exceptRow: FanzineIndexPageTableRow|None=None) -> set[str]:
-        return {r[0].strip().lower() for r in self.Datasource.Rows if r is not exceptRow and r.IsNormalRow and r[0].strip() != ""}
+        return {r[0].strip().lower() for r in self.Datasource.Rows if r is not exceptRow and r.IsNormalRow and IsLocalFilename(r[0])}
 
 
     # Split files about to be added into those whose names are free and those that clash with an issue already on
@@ -2024,9 +2033,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # If needed, queue the Delta
         if icol == 0 and self.Datasource.Rows[irow].IsNormalRow:
             # If we are changing the cell's text from one filename to another, we do a rename of the file on the server.
-            # But if we are inserting an external URL, there is no need to create a rename on the old contents
+            # But if we are inserting a link to somewhere else, the old file is left where it is, and isn't uploaded
             newurl=self.Datasource.Rows[irow][icol]
-            if "http:" not in newurl.lower() and "//" not in newurl:
+            if IsLocalFilename(newurl):
                 # Two issues can't share a filename -- they would share one file on the server -- so put the old one back
                 if newurl.strip().lower() in self.FilenamesInUse(exceptRow=self.Datasource.Rows[irow]):
                     self.Datasource.Rows[irow][icol]=oldURL
@@ -2036,7 +2045,10 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                  f"change was undone: two issues sharing a filename would share one file on the server.",
                                  "Filename already in use", wx.OK|wx.ICON_INFORMATION, parent=self)
                     return
-                self.deltaTracker.Rename(oldURL, newurl, serverDirName=self.ServerDir, row=self.Datasource.Rows[irow])
+                if IsLocalFilename(oldURL):
+                    self.deltaTracker.Rename(oldURL, newurl, serverDirName=self.ServerDir, row=self.Datasource.Rows[irow])
+            else:
+                self.deltaTracker.Forget(self.Datasource.Rows[irow])
 
         if event.GetCol() == 0:    # If the Filename changes, we may need to update the PDF and the Pages columns
             self.FillInPDFColumn()
@@ -2111,8 +2123,12 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if self.Datasource.Rows[irow].IsNormalRow:
                     Enable("Replace w/new PDF")
                 # If cell 0 contains a PDF, allow it to be renamed
-                if len(self.Datasource.Rows[irow][0]) > 0 and ".pdf" in self.Datasource.Rows[irow][0].lower():
+                if IsLocalFilename(self.Datasource.Rows[irow][0]) and ".pdf" in self.Datasource.Rows[irow][0].lower():
                     Enable("Rename PDF on Server")
+
+        # Any issue row can be linked to somewhere else (clicked anywhere in the row)
+        if self.Datasource.Rows[self._dataGrid.clickedRow].IsNormalRow:
+            Enable("Replace URL")
 
         # A row whose file is a PDF can have its PDF's metadata and header regenerated (clicked anywhere in the row)
         if self.RowServerFilename(self.Datasource.Rows[self._dataGrid.clickedRow]).lower().endswith(".pdf"):
@@ -2282,7 +2298,8 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             top=self._dataGrid.clickedRow
             bottom=self._dataGrid.clickedRow
         for irow in range(top, bottom+1):
-            if self.Datasource.Rows[irow].IsNormalRow and not self.Datasource.Rows[irow].IsEmptyRow:
+            # (Only a file of this fanzine's own is deleted with its row: not what a link points to)
+            if self.Datasource.Rows[irow].IsNormalRow and not self.Datasource.Rows[irow].IsEmptyRow and IsLocalFilename(self.Datasource.Rows[irow][0]):
                 self.deltaTracker.Delete(serverDirName=self.ServerDir, row=self.Datasource.Rows[irow])
 
         self._dataGrid.DeleteSelectedRows() # Pass event to WxDataGrid to handle
@@ -2375,6 +2392,31 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindow()
 
         event.Skip()
+
+
+    # Link the row to a page or file somewhere else. A link to fanac.org is stored relative to this page ("../Other/x.pdf").
+    # A file of the row's own that's already on the server is left there; one still waiting to be uploaded isn't uploaded.
+    def OnPopupReplaceURL(self, event):
+        self.wxGrid.SaveEditControlValue()
+        irow=self._dataGrid.clickedRow
+        if irow < 0 or irow >= self.Datasource.NumRows or not self.Datasource.Rows[irow].IsNormalRow:
+            return
+        row=self.Datasource.Rows[irow]
+        with ReplaceURLDialog(self, row[0], self.ServerDir) as dlg:
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            url=RelativeFanacLink(dlg.GetValue(), self.ServerDir)
+        if url == "" or url == row[0].strip():
+            return
+        # (A fanac.org link to a file in this fanzine's own folder comes back as its plain filename)
+        if IsLocalFilename(url) and url.lower() in self.FilenamesInUse(exceptRow=row):
+            wx.MessageBox(f"'{url}' is already the file of another issue on this page.", "URL not replaced", wx.OK|wx.ICON_INFORMATION, parent=self)
+            return
+        self.deltaTracker.Forget(row)
+        row[0]=url
+        row.FileSourcePath=""
+        self.FillInPDFColumn()
+        self.RefreshWindow()
 
 
     # Rename the PDF on the server. This does not change its name locally
@@ -2537,12 +2579,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
     # The server filename a row points to, or "" if it has none (text rows, link rows, external URLs, empty)
     @staticmethod
     def RowServerFilename(row: FanzineIndexPageTableRow) -> str:
-        if not row.IsNormalRow:
+        if not row.IsNormalRow or not IsLocalFilename(row.Cells[0]):
             return ""
-        fname=row.Cells[0].strip()
-        if fname == "" or "//" in fname or "http" in fname.lower():
-            return ""
-        return fname
+        return row.Cells[0].strip()
 
 
     # Check each moved row's file for a name collision in the target directory, offering an Explorer-style
@@ -3902,6 +3941,71 @@ def LocalRootMissingMessage(root: str) -> str:
             f"on this computer.\n\nIf this is a new computer, create that folder and copy your fanzine folders into it from the old "
             f"computer. Or, if they're somewhere else on this computer, change \"Local Directory Root Path\" in\n\n    {Settings().Dictpath}\n\n"
             f"to that folder and restart FanzinesEditor.")
+
+
+# Does a row's Link cell name one of this fanzine's own files? Only a plain filename does (a filename can't contain "/" or
+# ":"). Anything else -- "../Other/x.pdf", "https://..." -- links elsewhere, and must never be renamed, deleted, moved or
+# re-stamped as if it were in this fanzine's folder: "../Other/x.pdf" would reach into another fanzine's.
+def IsLocalFilename(link: str) -> bool:
+    link=link.strip()
+    return link != "" and "/" not in link and ":" not in link
+
+
+# A link to somewhere on fanac.org, as the relative link it's stored as on a fanzine's page: from the page for serverDir,
+# "https://fanac.org/fanzines/Other/x.pdf" is "../Other/x.pdf". Other links are returned as they are. Escapes are decoded
+# as reading a page decodes them, so the cell shows what it will be once the page has been uploaded and reloaded.
+def RelativeFanacLink(url: str, serverDir: str) -> str:
+    url=HtmlEscapesToUnicode(url.strip(), isURL=True)
+    m=re.match(r"^(?:https?:)?//(?:www\.)?fanac\.org(?=[/?#]|$)(/[^?#]*)?(.*)$", url, flags=re.IGNORECASE)
+    if m is None:
+        return url
+    path=m.group(1) or "/"
+    rel=posixpath.relpath(path, f"/fanzines/{serverDir}")
+    if path.endswith("/"):
+        rel="./" if rel == "." else rel+"/"
+    return rel+m.group(2)
+
+
+# Where Replace URL's Browse button opens the web browser: at the link in the box (a relative one is resolved against the
+# fanzine's page on fanac.org), or, with nothing in the box, at fanac.org's fanzines.
+def BrowseTarget(url: str, serverDir: str) -> str:
+    url=url.strip()
+    if url == "":
+        return "https://fanac.org/fanzines/"
+    if re.match(r"^https?:", url, flags=re.IGNORECASE):
+        return url
+    if url.startswith("//"):
+        return "https:"+url
+    return urljoin(f"https://fanac.org/fanzines/{serverDir}/", url.replace("#", "%23").replace("&", "%26"))     # (Escaped as the page writes it)
+
+
+# The Replace URL dialog:  New URL: <box> <Browse>   <OK> <Cancel>
+class ReplaceURLDialog(wx.Dialog):
+    def __init__(self, parent, url: str, serverDir: str) -> None:
+        wx.Dialog.__init__(self, parent, title="Replace URL")
+        self._serverDir=serverDir
+        self.tURL=wx.TextCtrl(self, value=url, size=(520, -1))
+        bBrowse=wx.Button(self, label="Browse...")
+        bBrowse.SetToolTip("Open the URL in the box -- or, if it's empty, fanac.org's fanzines -- in your web browser, "
+                           "to find the page you want and copy its address into the box")
+        bBrowse.Bind(wx.EVT_BUTTON, self.OnBrowse)
+        line=wx.BoxSizer(wx.HORIZONTAL)
+        line.Add(wx.StaticText(self, label="New URL:"), 0, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 8)
+        line.Add(self.tURL, 1, wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 8)
+        line.Add(bBrowse, 0, wx.ALIGN_CENTER_VERTICAL)
+        sizer=wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(line, 0, wx.EXPAND|wx.ALL, 12)
+        sizer.Add(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL), 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 12)
+        self.SetSizerAndFit(sizer)
+        self.CentreOnParent()
+        self.tURL.SetFocus()
+        self.tURL.SelectAll()
+
+    def GetValue(self) -> str:
+        return self.tURL.GetValue().strip()
+
+    def OnBrowse(self, event) -> None:
+        webbrowser.open(BrowseTarget(self.GetValue(), self._serverDir))
 
 
 # Does the issue's name already begin with the fanzine's name? (E.g. "Quandry 13" for Quandry.) The names are compared
