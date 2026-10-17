@@ -2048,7 +2048,17 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 if IsLocalFilename(oldURL):
                     self.deltaTracker.Rename(oldURL, newurl, serverDirName=self.ServerDir, row=self.Datasource.Rows[irow])
             else:
-                self.deltaTracker.Forget(self.Datasource.Rows[irow])
+                row=self.Datasource.Rows[irow]
+                pending=self.PendingUploadName(row)
+                if pending != "":
+                    # Its PDF hasn't been uploaded yet: put the filename back until the user has decided (asked once this
+                    # handler has returned, as above)
+                    row[icol]=oldURL
+                    self._dataGrid.RefreshWxGridFromDatasource(StartRow=irow, EndRow=irow)
+                    wx.CallAfter(self.LinkRowAfterAsking, row, newurl, pending)
+                    return
+                self.deltaTracker.Forget(row)
+                row.FileSourcePath=""
 
         if event.GetCol() == 0:    # If the Filename changes, we may need to update the PDF and the Pages columns
             self.FillInPDFColumn()
@@ -2394,8 +2404,35 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         event.Skip()
 
 
+    # The name of the row's own file that's still waiting to be uploaded (just added, or a replacement), or "" if there's none
+    def PendingUploadName(self, row: FanzineIndexPageTableRow) -> str:
+        if any(d.Row is row and d.Verb in ("add", "replace") for d in self.deltaTracker.Deltas):
+            return os.path.basename(row.FileSourcePath) or row[0].strip()
+        return ""
+
+
+    # A link was typed over the filename of a row whose PDF hasn't been uploaded yet: if the user agrees, make the change
+    def LinkRowAfterAsking(self, row: FanzineIndexPageTableRow, url: str, name: str) -> None:
+        if not any(r is row for r in self.Datasource.Rows) or not self.OKToDropPendingUpload(name):
+            return
+        self.deltaTracker.Forget(row)
+        row[0]=url
+        row.FileSourcePath=""
+        self.FillInPDFColumn()
+        self.RefreshWindow()
+
+
+    # The row is about to link somewhere else, but its own PDF hasn't been uploaded yet -- and then won't be. Ask the user.
+    def OKToDropPendingUpload(self, name: str) -> bool:
+        with wx.MessageDialog(self, f"This row's PDF, '{name}', hasn't been uploaded yet.\n\nIf the row links somewhere else instead, "
+                                    f"that PDF won't be uploaded. (The file on your computer is left as it is.)\n\nLink the row there anyway?",
+                              "PDF not yet uploaded", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_WARNING) as dlg:
+            return dlg.ShowModal() == wx.ID_YES
+
+
     # Link the row to a page or file somewhere else. A link to fanac.org is stored relative to this page ("../Other/x.pdf").
-    # A file of the row's own that's already on the server is left there; one still waiting to be uploaded isn't uploaded.
+    # A file of the row's own that's already on the server is left there; one still waiting to be uploaded isn't uploaded
+    # (the user is asked first).
     def OnPopupReplaceURL(self, event):
         self.wxGrid.SaveEditControlValue()
         irow=self._dataGrid.clickedRow
@@ -2411,6 +2448,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # (A fanac.org link to a file in this fanzine's own folder comes back as its plain filename)
         if IsLocalFilename(url) and url.lower() in self.FilenamesInUse(exceptRow=row):
             wx.MessageBox(f"'{url}' is already the file of another issue on this page.", "URL not replaced", wx.OK|wx.ICON_INFORMATION, parent=self)
+            return
+        pending=self.PendingUploadName(row)
+        if pending != "" and not self.OKToDropPendingUpload(pending):
             return
         self.deltaTracker.Forget(row)
         row[0]=url

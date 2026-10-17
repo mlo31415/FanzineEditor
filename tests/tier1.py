@@ -927,11 +927,37 @@ def ReplaceURL() -> None:
                 "a link to a file another row already has: refused", str(Dialogs.Messages))
 
         new=AddRow(w, "Apollo98.pdf", Pdf("Apollo98.pdf"), "Apollo 98")
-        Replace(new, "https://fanac.org/fanzines/Innuendo/Innuendo02.pdf")
-        R.Check(new[0] == "../Innuendo/Innuendo02.pdf" and not any(d.Row is new for d in w.deltaTracker.Deltas) and new.FileSourcePath == "",
-                "a row whose PDF was still to be uploaded: it no longer is (or it would go to Innuendo's folder)", str([str(d) for d in w.deltaTracker.Deltas]))
+        try:
+            Dialogs.Answer=wx.ID_NO
+            Replace(new, "https://fanac.org/fanzines/Innuendo/Innuendo02.pdf")
+            R.Check(len(Dialogs.Questions) == 1 and "'Apollo98.pdf', hasn't been uploaded yet" in Dialogs.Questions[0] and new[0] == "Apollo98.pdf"
+                    and any(d.Row is new and d.Verb == "add" for d in w.deltaTracker.Deltas),
+                    "a row whose PDF is still to be uploaded: asked first; No leaves it as it was", str(Dialogs.Questions))
+            Dialogs.Answer=wx.ID_YES
+            Replace(new, "https://fanac.org/fanzines/Innuendo/Innuendo02.pdf")
+            R.Check(len(Dialogs.Questions) == 1 and new[0] == "../Innuendo/Innuendo02.pdf" and not any(d.Row is new for d in w.deltaTracker.Deltas)
+                    and new.FileSourcePath == "", "Yes: it links there, and its PDF won't be uploaded (it would go to Innuendo's folder)",
+                    str([str(d) for d in w.deltaTracker.Deltas]))
+            Upload(w)
+            R.Check("Apollo98.pdf" not in Files("Apollo") and not any("Innuendo02" in f for f in S.Files if "/Innuendo/" in f and T in f), "nothing uploaded for it")
+
+            typed=AddRow(w, "Apollo97.pdf", Pdf("Apollo97.pdf"), "Apollo 97")
+            Dialogs.Clear()
+            Dialogs.Answer=wx.ID_NO
+            EditFilename(w, typed, "../Innuendo/Innuendo04.pdf")
+            R.Check(typed[0] == "Apollo97.pdf", "typing a link over such a row's filename: put back while the user decides", typed[0])
+            wx.Yield()
+            R.Check(len(Dialogs.Questions) == 1 and typed[0] == "Apollo97.pdf" and any(d.Row is typed and d.Verb == "add" for d in w.deltaTracker.Deltas),
+                    "asked; No leaves it as it was", str(Dialogs.Questions))
+            Dialogs.Clear()
+            Dialogs.Answer=wx.ID_YES
+            EditFilename(w, typed, "../Innuendo/Innuendo04.pdf")
+            wx.Yield()
+            R.Check(len(Dialogs.Questions) == 1 and typed[0] == "../Innuendo/Innuendo04.pdf" and not any(d.Row is typed for d in w.deltaTracker.Deltas),
+                    "Yes: it links there, and its PDF won't be uploaded", f"{typed[0]} {[str(d) for d in w.deltaTracker.Deltas]}")
+        finally:
+            Dialogs.Answer=wx.ID_YES
         Upload(w)
-        R.Check("Apollo98.pdf" not in Files("Apollo") and not any("Innuendo02" in f for f in S.Files if "/Innuendo/" in f and T in f), "nothing uploaded for it")
 
         Dialogs.Clear()
         w._dataGrid.clickedRow=w.Datasource.Rows.index(row)
