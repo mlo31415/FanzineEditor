@@ -2442,7 +2442,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         with ReplaceURLDialog(self, row[0], self.ServerDir) as dlg:
             if dlg.ShowModal() != wx.ID_OK:
                 return
-            url=RelativeFanacLink(dlg.GetValue(), self.ServerDir)
+            url, _=LinkFromPaste(dlg.GetValue(), self.ServerDir)
         if url == "" or url == row[0].strip():
             return
         # (A fanac.org link to a file in this fanzine's own folder comes back as its plain filename)
@@ -2900,15 +2900,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
             return
 
         # Ask before inserting anything, so that Cancel leaves the page as it was
-        with wx.TextEntryDialog(self, 'Enter the URL to be used (just the URL, no HTML): ', 'Insert a Link line') as dlg:     # (with: destroyed on Cancel, too)
+        with wx.TextEntryDialog(self, 'URL:', 'Insert a Link line') as dlg:     # (with: destroyed on Cancel, too)
             if dlg.ShowModal() != wx.ID_OK:
                 event.Skip()
                 return
-            url=dlg.GetValue().strip()
+            # Any form of link is accepted -- even a pasted HTML link, whose text is then offered as the text to show
+            url, linktext=LinkFromPaste(dlg.GetValue(), self.ServerDir, decode=False)
         if url == "":
             event.Skip()
             return
-        with wx.TextEntryDialog(self, 'Enter the text to be shown for the link: ', 'Insert a Link line', value=url) as dlg:
+        with wx.TextEntryDialog(self, 'Enter the text to be shown for the link: ', 'Insert a Link line', value=linktext or url) as dlg:
             if dlg.ShowModal() != wx.ID_OK:
                 event.Skip()
                 return
@@ -3992,10 +3993,11 @@ def IsLocalFilename(link: str) -> bool:
 
 
 # A link to somewhere on fanac.org, as the relative link it's stored as on a fanzine's page: from the page for serverDir,
-# "https://fanac.org/fanzines/Other/x.pdf" is "../Other/x.pdf". Other links are returned as they are. Escapes are decoded
-# as reading a page decodes them, so the cell shows what it will be once the page has been uploaded and reloaded.
-def RelativeFanacLink(url: str, serverDir: str) -> str:
-    url=HtmlEscapesToUnicode(url.strip(), isURL=True)
+# "https://fanac.org/fanzines/Other/x.pdf" is "../Other/x.pdf". Other links are returned as they are. For an issue row,
+# escapes are decoded as reading a page decodes them, so the cell shows what it will be once the page has been uploaded and
+# reloaded; a link line's link is read and written exactly as it is, so it's left encoded (decode=False).
+def RelativeFanacLink(url: str, serverDir: str, decode: bool=True) -> str:
+    url=HtmlEscapesToUnicode(url.strip(), isURL=True) if decode else url.strip()
     m=re.match(r"^(?:https?:)?//(?:www\.)?fanac\.org(?=[/?#]|$)(/[^?#]*)?(.*)$", url, flags=re.IGNORECASE)
     if m is None:
         return url
@@ -4004,6 +4006,23 @@ def RelativeFanacLink(url: str, serverDir: str) -> str:
     if path.endswith("/"):
         rel="./" if rel == "." else rel+"/"
     return rel+m.group(2)
+
+
+# Whatever the user pasted as a link -- a URL, one missing its "https://" ("www.x.org/...", "fanac.org/..."), or an HTML link
+# '<a href="URL">text</a>' -- as (the link to store, the link's text if it came with any). Links to fanac.org are made
+# relative, as RelativeFanacLink does.
+def LinkFromPaste(pasted: str, serverDir: str, decode: bool=True) -> tuple[str, str]:
+    pasted=pasted.strip()
+    url, text=pasted, ""
+    m=re.search(r"""href\s*=\s*(["'])(.*?)\1""", pasted, flags=re.IGNORECASE|re.DOTALL) or re.search(r"""href\s*=\s*([^\s>"']+)""", pasted, flags=re.IGNORECASE)
+    if m is not None:
+        url=m.groups()[-1].replace("&amp;", "&").strip()        # (In HTML, an href's "&" is written "&amp;")
+        t=re.search(r"<a\b[^>]*>(.*?)</a>", pasted, flags=re.IGNORECASE|re.DOTALL)
+        if t is not None:
+            text=HtmlEscapesToUnicode(RemoveAllHTMLLikeTags(t.group(1))).strip()
+    if re.match(r"^(?:www\.|(?:www\.)?fanac\.org(?:[/?#]|$))", url, flags=re.IGNORECASE):
+        url="https://"+url
+    return RelativeFanacLink(url, serverDir, decode=decode), text
 
 
 # Where Replace URL's Browse button opens the web browser: at the link in the box (a relative one is resolved against the

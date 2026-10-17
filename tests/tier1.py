@@ -427,6 +427,22 @@ def PageWindow() -> None:
     w.OnPopupInsertLinkLine(Evt())
     r=w.Datasource.Rows[2]
     R.Check(r.IsLinkRow and r[0] == "https://example.org/x.html" and r[1] == "Some notes", "Insert a Link line: URL and text in the link's own cells (FE-9)", str(r.Cells[:3]))
+
+    for pasted, want in (("https://fanac.org/fanzines/Innuendo/Fanac%20%233.pdf", ("../Innuendo/Fanac%20%233.pdf", "")),
+                         ('<a href="https://fanac.org/fanzines/Innuendo/">Innuendo &amp; more</a>', ("../Innuendo/", "Innuendo & more")),
+                         ("<A HREF='https://example.org/x.php?a=1&amp;b=2'><b>X</b></A>", ("https://example.org/x.php?a=1&b=2", "X")),
+                         ("www.example.org/x.html", ("https://www.example.org/x.html", "")),
+                         ("fanac.org/fanzines/Innuendo/x.pdf", ("../Innuendo/x.pdf", "")),
+                         ("  ../Other/x.pdf  ", ("../Other/x.pdf", ""))):
+        got=FIP.LinkFromPaste(pasted, "Apollo", decode=False)
+        R.Check(got == want, f"a link line accepts {pasted!r} -> {want!r}", f"got {got!r}")
+
+    Dialogs.TextAnswers.extend(['<a href="https://fanac.org/fanzines/Innuendo/Fanac%20%233.pdf">Fanac 3</a>', "Fanac 3"])
+    w.OnPopupInsertLinkLine(Evt())
+    r=w.Datasource.Rows[2]
+    R.Check(r.IsLinkRow and r[0] == "../Innuendo/Fanac%20%233.pdf" and r[1] == "Fanac 3", "a pasted HTML link: its URL, made relative and left encoded", str(r.Cells[:2]))
+    Upload(w)
+    R.Check('<a href="../Innuendo/Fanac%20%233.pdf">Fanac 3</a>' in Page("Apollo"), "and written to the page so (a link line's link isn't re-escaped)")
     w.Destroy()
 
     R.Section("Local directory (FE-7, FE-12)")
