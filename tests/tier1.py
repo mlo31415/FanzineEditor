@@ -992,6 +992,59 @@ def ReplaceURL() -> None:
         w.Destroy()
 
 
+def ListRedrawFailure() -> None:
+    R.Section("The list of fanzines survives a failed redraw (Edie, 2026-10-19)")
+    FreshServer()
+    m=FE.FanzinesEditorWindow(None)
+    g=m.wxGrid
+    realEndBatch=g.EndBatch
+    failures=[1]
+    def EndBatch():             # As wx did for Edie: the rebuild's EndBatch raises an assertion
+        realEndBatch()
+        if failures:
+            failures.pop()
+            raise wx.wxAssertionError('C++ assertion "idx >= 0 && idx < m_numRows" failed in GetRowPos(): invalid row index')
+    g.EndBatch=EndBatch
+    logged=[]
+    realLogError=FE.LogError
+    FE.LogError=lambda s, *a, **k: logged.append(s)
+    try:
+        try:
+            m.tSearch.SetValue("Apol")
+            got="no error escaped"
+        except Exception as e:
+            got=f"{type(e).__name__} escaped"
+        R.Check(got == "no error escaped" and not g.IsFrozen() and g.GetBatchCount() == 0, "a keystroke whose redraw fails: no error escapes, and the grid isn't left frozen",
+                f"{got} frozen={g.IsFrozen()} batch={g.GetBatchCount()}")
+        R.Check(len(m.Datasource.FanzineList) == 1 and g.GetCellValue(0, 0) == "Apollo", "the list is redrawn, filtered", g.GetCellValue(0, 0))
+        R.Check(len(logged) == 1 and "search='Apol'" in logged[0] and "grid rows=" in logged[0] and "cursor=" in logged[0],
+                "the details needed to find the cause are logged", logged[0][:160] if logged else "")
+        m.tSearch.SetValue("")
+        m.tSearch.SetValue("Innu")
+        R.Check(g.GetCellValue(0, 0) == "Innuendo" and not g.IsFrozen(), "and the next keystrokes work", g.GetCellValue(0, 0))
+    finally:
+        FE.LogError=realLogError
+        m.Destroy()
+
+    R.Section("A failed rebuild never leaves a grid frozen (shared WxDataGrid)")
+    m=FE.FanzinesEditorWindow(None)
+    g=m.wxGrid
+    realEndBatch=g.EndBatch
+    def Raise():
+        realEndBatch()
+        raise wx.wxAssertionError("test")
+    g.EndBatch=Raise
+    frozenBefore=g.IsFrozen()
+    try:
+        m._dataGrid.RefreshWxGridFromDatasource()
+        got="no error"
+    except wx.wxAssertionError:
+        got="raised"
+    R.Check(got == "raised" and not g.IsFrozen() and g.GetBatchCount() == 0, "the error still reaches the caller, but the grid is thawed (was: frozen for good)",
+            f"{got} frozen={g.IsFrozen()} (before: {frozenBefore}) batch={g.GetBatchCount()}")
+    m.Destroy()
+
+
 def WindowPlacement() -> None:
     R.Section("Windows open on a connected screen")
     FreshServer()
@@ -1029,7 +1082,7 @@ def WindowPlacement() -> None:
 
 
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, WindowPlacement):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, ListRedrawFailure, WindowPlacement):
     try:
         group()
     except Exception:

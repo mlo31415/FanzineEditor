@@ -580,10 +580,29 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self.SetTitle(s)
 
 
-    def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:       
+    def RefreshWindow(self, DontRefreshGrid: bool=False)-> None:
         self.UpdateNeedsSavingFlag()
         if not DontRefreshGrid:
-            self._dataGrid.RefreshWxGridFromDatasource()
+            try:
+                self._dataGrid.RefreshWxGridFromDatasource()
+            except Exception as e:
+                # Redrawing the list can fail inside wx: Edie, 2026-10-19, typing in the search box, got "GetRowPos(): invalid
+                # row index", and the list then never redrew. Log what's needed to find why, then redraw it afresh -- without
+                # the old cursor and selection, which may point at rows the new list doesn't have. If even that fails, the
+                # error goes on to the internal-error message as before.
+                g=self.wxGrid
+                blocks=[(tl.Row, br.Row) for tl, br in zip(g.GetSelectionBlockTopLeft(), g.GetSelectionBlockBottomRight())]
+                LogError(f"RefreshWindow: the list of fanzines could not be redrawn: {type(e).__name__}: {e}\n"
+                         f"    search={self.tSearch.GetValue()!r}  fanzines shown={len(self.Datasource.FanzineList)}  "
+                         f"datasource rows={self.Datasource.NumRows}  grid rows={g.GetNumberRows()}  "
+                         f"cursor=({g.GetGridCursorRow()},{g.GetGridCursorCol()})  selected rows={list(g.GetSelectedRows())}  "
+                         f"selected blocks={blocks}  batch={g.GetBatchCount()}  frozen={g.IsFrozen()}")
+                while g.GetBatchCount() > 0:
+                    g.EndBatch()
+                while g.IsFrozen():
+                    g.Thaw()
+                g.ClearSelection()
+                self._dataGrid.RefreshWxGridFromDatasource(RetainSelection=False, RetainCursorPos=False)
 
 
     # ----------------------------------------------
