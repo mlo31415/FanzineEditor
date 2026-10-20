@@ -867,6 +867,33 @@ def FtpFailures() -> None:
     R.Check("Lost the connection" in got and len(Dialogs.Messages) == 0,
             "a check for a file fails twice: stops with a clear error, no parentless box (was: 'Exiting program' box, then NotImplementedError)", got)
 
+    # (Nlst first moves into the folder, which lists its parent through FileExists; drop only the listing made in the folder)
+    S=FreshServer()
+    realNlst=S.nlst
+    drops=[1]
+    def DropsInApollo(*a):
+        if S._cwd == "/fanzines/Apollo" and drops:
+            drops.pop()
+            raise EOFError("connection dropped")
+        return realNlst(*a)
+    S.nlst=DropsInApollo
+    try:
+        got=sorted(ftpmodule.FTP().Nlst("/fanzines/Apollo"))
+    except Exception as e:
+        got=f"{type(e).__name__}: {e}"
+    R.Check(isinstance(got, list) and "index.html" in got and not drops, "a folder listing whose connection drops: retried after reconnecting (was: EOFError)", str(got)[:120])
+    drops.extend([1, 1, 1])
+    ftpmodule.FTP.Reconnect=lambda self: False     # (FreshServer puts the fake one back)
+    try:
+        got=f"answered {ftpmodule.FTP().Nlst('/fanzines/Apollo')}"
+    except ConnectionError as e:
+        got=str(e)
+    except Exception as e:
+        got=f"{type(e).__name__}: {e}"
+    R.Check("Lost the connection" in got and "listing" in got,
+            "and if reconnecting fails: stops with a clear error, not an empty list (callers copy or delete what's listed)", got)
+    FreshServer()
+
     R.Section("The previous session's logs are kept")
     d=os.path.join(TMP, "logs")
     os.makedirs(d, exist_ok=True)

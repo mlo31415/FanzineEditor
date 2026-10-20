@@ -117,19 +117,39 @@ except Exception:
 
 finally:
     # ---------------------------------------------------------------- put the test root back
+    # Each step is retried after a reconnect: on 2026-10-20 the server dropped the connection mid-listing, the whole
+    # clean-up stopped, and the test root had to be put back by hand. A step that still fails doesn't stop the others.
+    notDone: list[str]=[]
+    def Step(label: str, fn):
+        for attempt in range(3):
+            try:
+                return fn()
+            except Exception as e:
+                R.Write(f"(clean-up: {label}: {type(e).__name__}: {e} -- {'retrying' if attempt < 2 else 'giving up'})")
+                try:
+                    FTP().Reconnect()
+                except Exception:
+                    pass
+        notDone.append(label)
+        return None
+
     for d, (existed, page) in snapshot.items():
-        for n in [x for x in Files(d) if x.startswith("t2_")]:
-            FTP().DeleteFile(f"/{T}/{d}/{n}")
+        for n in Step(f"list {d}", lambda: [x for x in Files(d) if x.startswith("t2_")]) or []:
+            Step(f"delete {d}/{n}", lambda: FTP().DeleteFile(f"/{T}/{d}/{n}"))
         if existed:
-            FTP().PutFileAsString(f"/{T}/{d}", "index.html", page)
-        elif FTP().PathExists(f"/{T}/{d}"):
-            for n in Files(d):
-                FTP().DeleteFile(f"/{T}/{d}/{n}")
-            FTP().DeleteDir(f"/{T}/{d}")
+            Step(f"put back {d}'s page", lambda: FTP().PutFileAsString(f"/{T}/{d}", "index.html", page))
+        elif Step(f"check for {d}", lambda: FTP().PathExists(f"/{T}/{d}")):
+            for n in Step(f"list {d}", lambda: Files(d)) or []:
+                Step(f"delete {d}/{n}", lambda: FTP().DeleteFile(f"/{T}/{d}/{n}"))
+            Step(f"remove {d}", lambda: FTP().DeleteDir(f"/{T}/{d}"))
     if classic0 is not None:
-        FTP().PutFileAsString(f"/{T}", "Classic_Fanzines.html", classic0)
-    restored=all((Page(d) == page) if existed else not FTP().PathExists(f"/{T}/{d}") for d, (existed, page) in snapshot.items())
-    restored=restored and (classic0 is None or FTP().GetFileAsString(f"/{T}", "Classic_Fanzines.html") == classic0)
-    R.Write(f"(test root put back as it was: {restored})")
+        Step("put back the Classic list", lambda: FTP().PutFileAsString(f"/{T}", "Classic_Fanzines.html", classic0))
+    restored=Step("check the test root", lambda: all((Page(d) == page) if existed else not FTP().PathExists(f"/{T}/{d}") for d, (existed, page) in snapshot.items())
+                  and (classic0 is None or FTP().GetFileAsString(f"/{T}", "Classic_Fanzines.html") == classic0))
+    R.Write(f"(test root put back as it was: {bool(restored)})")
+    if not restored:
+        R.failed.append("the test root was not put back"+(f" (not done: {', '.join(notDone)})" if notDone else "")+
+                        " -- restore it from this run's backups on the server: Apollo's first 'index - <date> <time>.html', the "
+                        "Classic list's 'Classic_Fanzines - <date> <time>.html'; and remove Innuendo if it wasn't there before")
 
 sys.exit(R.Finish())
