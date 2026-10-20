@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import harness
@@ -1045,6 +1046,61 @@ def ListRedrawFailure() -> None:
     m.Destroy()
 
 
+def SearchAndWatchdog() -> None:
+    R.Section("Search box: emptying it shows every fanzine again")
+    FreshServer()
+    m=FE.FanzinesEditorWindow(None)
+    everything=len(m._fanzinesList)
+    for text in ("A", "Ap", "A", ""):
+        m.tSearch.SetValue(text)
+    R.Check(len(m.Datasource.FanzineList) == everything, "backspacing to an empty box: the whole list (was: still the last search's)",
+            f"{len(m.Datasource.FanzineList)} of {everything}")
+    m.Destroy()
+
+    R.Section("Hang watchdog")
+    import threading
+    logged=[]
+    lock=threading.Lock()
+    def Capture(s, *a, **k):
+        with lock:
+            logged.append(s)
+    realLogError=FE.LogError
+    FE.LogError=Capture
+    m=FE.FanzinesEditorWindow(None)
+    w=FE.HangWatchdog(m, limit=0.5, beat=0.1, poll=0.1, maxDumps=2)
+    R.Check(w._timer.IsRunning() and w._timer.GetInterval() == 100, "the heartbeat timer is running", str(w._timer.GetInterval()))
+    def Pump(seconds: float) -> None:      # FE responding for a while: as FE's MainLoop delivers the timer's beats (the tests run no MainLoop)
+        end=time.monotonic()+seconds
+        while time.monotonic() < end:
+            w._Beat(None)
+            time.sleep(0.05)
+    def StuckInHere(seconds: float) -> None:
+        time.sleep(seconds)
+    try:
+        Pump(0.6)
+        R.Check(not logged, "responding: nothing logged", str(logged[:1]))
+        StuckInHere(1.4)        # The main thread doesn't respond
+        Pump(0.6)
+        dumps=[s for s in logged if "hasn't responded" in s]
+        R.Check(len(dumps) == 2 and "StuckInHere" in dumps[0] and "--- thread MainThread" in dumps[0],
+                "not responding: what each thread is doing is logged, the main thread's stack included (at most maxDumps times)",
+                f"{len(dumps)} dumps: {dumps[0][:200] if dumps else ''}")
+        R.Check(any("responding again" in s for s in logged), "and when it responds again, that's logged too")
+        logged.clear()
+        FE.ProgressMessage._progressMessageDlg=object()     # A progress message is up: FE is visibly busy
+        try:
+            StuckInHere(1.0)
+            Pump(0.3)
+        finally:
+            FE.ProgressMessage._progressMessageDlg=None
+        R.Check(not any("hasn't responded" in s for s in logged), "busy behind a progress message (e.g. a big upload): nothing logged", str(logged[:1]))
+    finally:
+        w.Stop()
+        Pump(0.3)
+        FE.LogError=realLogError
+        m.Destroy()
+
+
 def WindowPlacement() -> None:
     R.Section("Windows open on a connected screen")
     FreshServer()
@@ -1082,7 +1138,7 @@ def WindowPlacement() -> None:
 
 
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, ListRedrawFailure, WindowPlacement):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, ListRedrawFailure, SearchAndWatchdog, WindowPlacement):
     try:
         group()
     except Exception:

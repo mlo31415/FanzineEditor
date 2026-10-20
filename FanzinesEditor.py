@@ -6,12 +6,15 @@ import wx.grid
 import sys
 import re
 import html
+import threading
+import time
+import traceback
 
 from FTP import FTP, Lock
 
 from FTPLog import FTPLog
 from WxDataGrid import DataGrid, GridDataSource, ColDefinitionsList, GridDataRowClass, ColDefinition, IsEditable
-from WxHelpers import OnCloseHandling3, ProgressMessage2, ModalDialogManager, GuardReentry, SetWindowIcon, RestoreWindowPlacement
+from WxHelpers import OnCloseHandling3, ProgressMessage2, ProgressMessage, ModalDialogManager, GuardReentry, SetWindowIcon, RestoreWindowPlacement
 from HelpersPackage import ExtractInvisibleTextInsideFanacComment, ConvertHTMLishCharacters, PyiResourcePath
 from HelpersPackage import InsertHTMLUsingFanacStartEndCommentPair, UnicodeToHtml, StripSpecificTag, Int0, TimestampFilename, ReadList
 from Log import LogOpen, LogClose, LogError
@@ -37,6 +40,59 @@ def KeepPreviousLogs(homedir: str) -> None:
                 os.replace(path, os.path.join(homedir, name.replace(".txt", " (previous).txt")))
             except OSError:
                 pass        # (E.g. another copy of FE has it open: then it's simply overwritten, as it always was)
+
+
+# If FE stops responding -- Edie, 2026-10-19: "it's cycling", with nothing in the logs -- write what every thread is doing
+# to the logs, so we can see where it's stuck or looping. A timer on the main window marks it as responding every second;
+# a background thread checks. Nothing is written while a progress message is up: uploading a big PDF keeps FE busy, too.
+class HangWatchdog:
+    def __init__(self, owner: wx.Window, limit: float=10.0, beat: float=1.0, poll: float=2.0, maxDumps: int=6) -> None:
+        self._limit, self._poll, self._maxDumps=limit, poll, maxDumps
+        self._lastBeat=time.monotonic()
+        self._stopped=False
+        self._timer=wx.Timer(owner)
+        owner.Bind(wx.EVT_TIMER, self._Beat, self._timer)
+        self._timer.Start(int(beat*1000))
+        threading.Thread(target=self._Watch, name="HangWatchdog", daemon=True).start()
+
+    def Stop(self) -> None:
+        self._stopped=True
+        try:
+            self._timer.Stop()
+        except Exception:
+            pass        # (Its window may already be gone)
+
+    def _Beat(self, event) -> None:
+        self._lastBeat=time.monotonic()
+
+    def _Watch(self) -> None:
+        hungSince=None
+        dumps=0
+        lastDump=0.0
+        while not self._stopped:
+            time.sleep(self._poll)
+            now=time.monotonic()
+            if now-self._lastBeat < self._limit:
+                if hungSince is not None:
+                    LogError(f"Watchdog: FanzinesEditor is responding again, after {now-hungSince:.0f} s")
+                    hungSince=None
+                    dumps=0
+                continue
+            if self._stopped or ProgressMessage._progressMessageDlg is not None:
+                continue
+            if hungSince is None:
+                hungSince=self._lastBeat
+            if dumps < self._maxDumps and now-lastDump >= self._limit:
+                dumps+=1
+                lastDump=now
+                LogError(f"Watchdog: FanzinesEditor hasn't responded for {now-hungSince:.0f} s. What each thread is doing:\n"+self.Stacks())
+
+    # Every thread's call stack, the main thread's first
+    @staticmethod
+    def Stacks() -> str:
+        names={t.ident: t.name for t in threading.enumerate()}
+        frames=sorted(sys._current_frames().items(), key=lambda x: x[0] != threading.main_thread().ident)
+        return "\n".join(f"--- thread {names.get(ident, ident)}:\n"+"".join(traceback.format_stack(frame)) for ident, frame in frames)
 
 
 def main():
@@ -150,7 +206,9 @@ def main():
         if window.failure:
             window.Destroy()
         else:
+            watchdog=HangWatchdog(window)
             app.MainLoop()
+            watchdog.Stop()
 
     Lock().ReleaseLock(rootDir, id)
 
@@ -638,10 +696,11 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
     def SearchFanzineList(self):       
         searchtext=self.tSearch.GetValue()
+        fanzinelist=self._fanzinesList      # An empty search box shows them all (it used to leave the last search's list)
         if searchtext != "":
             fanzinelist=[x for x in self._fanzinesList if searchtext.casefold().replace("_", " ") in x.ServerDir.casefold().replace("_", " ") or searchtext.casefold() in x.Name.MainName.casefold()]
-            self.Datasource.FanzineList=fanzinelist
-            self.RefreshWindow()
+        self.Datasource.FanzineList=fanzinelist
+        self.RefreshWindow()
 
 
     def OnClearSearch( self, event ):       
