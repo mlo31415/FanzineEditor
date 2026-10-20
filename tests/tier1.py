@@ -1101,6 +1101,49 @@ def SearchAndWatchdog() -> None:
         m.Destroy()
 
 
+def SelectionKeptOnce() -> None:
+    R.Section("A selection is kept once, not doubled with every redraw (Edie, 2026-10-19)")
+    import WxDataGrid
+    FreshServer()
+    m=FE.FanzinesEditorWindow(None)
+    g=m.wxGrid
+    g.SelectBlock(1, 1, 1, 1)
+    start=time.perf_counter()
+    for text in ["A", "Ap", "A", "Ap", "A", "Ap", "A", "Ap", "A", "Ap", "A", "Ap", "A", "Ap"]:
+        m.tSearch.SetValue(text)
+    took=time.perf_counter()-start
+    R.Check(len(list(g.GetSelectedBlocks())) == 0 and took < 2, "the main list: a search clears the selection (was: doubled per keystroke -- 4,096 after 12, 9 s each)",
+            f"{len(list(g.GetSelectedBlocks()))} blocks, {took:.2f} s")
+    m.Destroy()
+
+    w=OpenPage("Apollo")
+    g=w.wxGrid
+    g.SelectBlock(2, 1, 2, 1)
+    for _ in range(14):
+        w._dataGrid.RefreshWxGridFromDatasource()
+    blocks=[(b.TopRow, b.LeftCol, b.BottomRow, b.RightCol) for b in g.GetSelectedBlocks()]
+    R.Check(blocks == [(2, 1, 2, 1)], "a page's grid: one selected cell is still one after 14 redraws (was: 16,384)", str(blocks[:3])+f" ({len(blocks)})")
+    g.ClearSelection()
+    g.SelectBlock(3, 0, 6, 2)
+    g.SelectBlock(3, 0, 6, 2, addToSelected=True)
+    sel=WxDataGrid.Selection(g)
+    R.Check(sel.selectedBlocks == [(3, 0, 6, 2)], "the same block selected twice is kept once", str(sel.selectedBlocks))
+
+    n=g.GetNumberRows()
+    g.ClearSelection()
+    g.SelectBlock(n-3, 0, n-1, 1)       # Partly past the end once the grid is shorter
+    g.SelectBlock(n-1, 2, n-1, 2, addToSelected=True)     # Wholly past it
+    sel=WxDataGrid.Selection(g)
+    g.DeleteRows(n-2, 2)
+    try:
+        sel.Restore(g)
+        blocks=[(b.TopRow, b.LeftCol, b.BottomRow, b.RightCol) for b in g.GetSelectedBlocks()]
+    except Exception as e:
+        blocks=f"{type(e).__name__}: {e}"
+    R.Check(blocks == [(n-3, 0, n-3, 1)], "restored onto a shorter grid: cut short, or dropped (was: rows the grid no longer has)", str(blocks))
+    w.Destroy()
+
+
 def WindowPlacement() -> None:
     R.Section("Windows open on a connected screen")
     FreshServer()
@@ -1138,7 +1181,7 @@ def WindowPlacement() -> None:
 
 
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, ListRedrawFailure, SearchAndWatchdog, WindowPlacement):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, ListRedrawFailure, SearchAndWatchdog, SelectionKeptOnce, WindowPlacement):
     try:
         group()
     except Exception:

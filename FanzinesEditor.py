@@ -642,7 +642,10 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self.UpdateNeedsSavingFlag()
         if not DontRefreshGrid:
             try:
-                self._dataGrid.RefreshWxGridFromDatasource()
+                # Not the old selection: a search changes which fanzine is where, so it would mark some other fanzine (or a
+                # cell past the end of a shorter list -- Edie's "invalid row index", 2026-10-19)
+                self.wxGrid.ClearSelection()
+                self._dataGrid.RefreshWxGridFromDatasource(RetainSelection=False)
             except Exception as e:
                 # Redrawing the list can fail inside wx: Edie, 2026-10-19, typing in the search box, got "GetRowPos(): invalid
                 # row index", and the list then never redrew. Log what's needed to find why, then redraw it afresh -- without
