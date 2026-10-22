@@ -3887,6 +3887,7 @@ class FanzineIndexPage(GridDataSource):
         # Now the rows:
         # Accumulate the table lines in <insert>
         insert=""
+        namelessFiles=[]        # Rows which have a file but no Display Text.  See the warning after the loop.
         for row in self.Rows:
 
             if row.IsEmptyRow:
@@ -3915,6 +3916,11 @@ class FanzineIndexPage(GridDataSource):
             insert+=f"\n<TR>"
             href=row.Cells[0].replace("#", "%23").replace("&", "%26").strip()
             if href != "":
+                # A row with a file but no Display Text writes <a href="xxx.pdf"></A> -- a link with nothing to click
+                # on.  We don't invent a name for it (that would silently put made-up text on the website), but we do
+                # say which rows need one, because downstream readers can't tell such a row from a broken page.
+                if row.Cells[1].strip() == "":
+                    namelessFiles.append(row.Cells[0].strip())
                 insert+=f'\n<TD><a href="{href}">{UnicodeToHtmlEscapes(row.Cells[1])}</A></TD>\n'
             else:
                 insert+=f'\n<TD>{UnicodeToHtmlEscapes(row.Cells[1])}</TD>\n'
@@ -3931,6 +3937,10 @@ class FanzineIndexPage(GridDataSource):
                 row.UpdatedComment=f"<!-- Up: {datetime.now():%Y-%m-%d}-->"
             insert+=row.UpdatedComment+"\n"
             insert+=f"</TR>\n"
+
+        if len(namelessFiles) > 0:
+            LogError(f"PutFanzineIndexPage({url}): {Pluralize(len(namelessFiles), 'row')} with a file but no Display Text:"
+                     f" {', '.join(namelessFiles)}.  The page will show a link with nothing to click on.")
 
         # Insert the accumulated table lines into the template
         temp=InsertHTMLUsingFanacStartEndCommentPair(output, "table-rows", insert)

@@ -326,6 +326,32 @@ def Uploads() -> None:
     w.Destroy()
 
 
+def NamelessFiles() -> None:
+    """A row with a file but no Display Text writes <a href="x.pdf"></A> -- a link with nothing to click on.  Pages
+    like that are on the live site (FanacAnalyzer read their raw HTML as the issue's name), so FE must say which rows
+    they are rather than publish them silently or invent a name for them."""
+    R.Section("A file with no Display Text is reported, not published silently")
+    FreshServer()
+    w=OpenPage("Apollo")
+    AddRow(w, "t_n1.pdf", Pdf("t_n1.pdf", "nameless"), "")
+    AddRow(w, "t_n2.pdf", Pdf("t_n2.pdf", "also nameless"), "   ")
+    AddRow(w, "t_n3.pdf", Pdf("t_n3.pdf", "named"), "Apollo 99")
+    logged=[]
+    realLogError=FIP.LogError
+    FIP.LogError=lambda s, *a, **k: logged.append(s)
+    try:
+        Upload(w)
+    finally:
+        FIP.LogError=realLogError
+    page=Page("Apollo")
+    said=[s for s in logged if "no Display Text" in s]
+    R.Check(len(said) == 1 and "t_n1.pdf" in said[0] and "t_n2.pdf" in said[0] and "t_n3.pdf" not in said[0],
+            "both rows are named in one logged error; the row which has a name isn't", said[0][:200] if said else str(logged))
+    R.Check('<a href="t_n1.pdf"></A>' in page, "the row is written as it stands: no name is invented for it")
+    R.Check('<a href="t_n3.pdf">Apollo 99</A>' in page, "and a row which has a Display Text is unaffected")
+    w.Destroy()
+
+
 def Regenerate() -> None:
     R.Section("Regenerate PDF Header")
     S=FreshServer()
@@ -1208,7 +1234,7 @@ def WindowPlacement() -> None:
 
 
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, ListRedrawFailure, SearchAndWatchdog, SelectionKeptOnce, WindowPlacement):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, NamelessFiles, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, ListRedrawFailure, SearchAndWatchdog, SelectionKeptOnce, WindowPlacement):
     try:
         group()
     except Exception:
