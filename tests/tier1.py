@@ -110,6 +110,21 @@ def PureFunctions() -> None:
         got=f"{type(e).__name__}"
     R.Check(got == "July", "ColSelect finds a column only by its canonical name ('Mo.' for month)", f"got {got!r}")
 
+    # Only column 0 holds the link's display text.  A later column named Issue or Title belongs to the page, and
+    # renaming it here would publish the new name (Spectator has a published column headed "Display Text").
+    for headers, wantNames, wantLabels, why in (
+            (["Issue", "Editor", "Year"], ["Display Text", "Editor", "Year"], ["Display Text", "Editor", "Year"],
+             "column 0 named Issue is the display text"),
+            (["Title", "Editor", "Year"], ["Display Text", "Editor", "Year"], ["Display Text", "Editor", "Year"],
+             "so is column 0 named Title, as on the old pages"),
+            (["Issue", "Title", "Editor"], ["Display Text", "Title", "Editor"], ["Display Text", "Title", "Editor"],
+             "but a later Title column keeps its name, and isn't labelled Display Text either"),
+            (["Issue", "Vol", "Notes"], ["Display Text", "Volume", "Notes"], ["Display Text", "Vol", "Notes"],
+             "other columns are still canonicized (Vol -> Volume, shown as 'Vol')")):
+        cds=FIP.ColNamesToColDefs(headers)
+        got=([c.Name for c in cds], [c.Preferred for c in cds])
+        R.Check(got == (wantNames, wantLabels), why, f"got {got}")
+
     for series, issue, want in (("Quandry", "Quandry 13", "Quandry 13"), ("Quandry", "Q 13", "Quandry: Q 13"),
                                 ("The Fantasy Rotator", "Fantasy Rotator 312", "Fantasy Rotator 312"),
                                 ("MT VOID", "MT_VOID 1234", "MT_VOID 1234"), ("Fan", "Fanac 3", "Fan: Fanac 3"), ("Apollo", "", "Apollo")):

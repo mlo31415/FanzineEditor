@@ -156,7 +156,7 @@ gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
     ColDefinition("Display Text", Type="str"),
     ColDefinition("Link", Type="url"),
     ColDefinition("Text", Type="required str"),
-    ColDefinition("Title", Type="str", Preferred="Display Text"),
+    ColDefinition("Title", Type="str"),     # Only column 0 is the display text, and it's named that outright
     ColDefinition("Whole", Type="int", Width=75),
     ColDefinition("WholeNum", Type="int", Width=75, Preferred="Whole"),
     ColDefinition("Vol", Type="int", Width=50),
@@ -3213,13 +3213,15 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 # Take a list of column names and generate a list of ColDefs
 def ColNamesToColDefs(headers: list[str]) -> ColDefinitionsList:
     colDefs: ColDefinitionsList=ColDefinitionsList([])
-    for header in headers:
+    for i, header in enumerate(headers):
         # First cannonicize the header
-        if header.lower() == "issue":
-            header="Display Text"   # Display text is unique to Fanzines Index Page??
-        elif header.lower() == "title":
-            header="Display Text"   # But a few pages usne "Title"
-        else:
+        # Only the first column holds the link's display text: it's the column the row's <a href=...>text</a> gets
+        # split out of.  A later column called "Issue" or "Title" is an ordinary column of the page's own, and
+        # renaming it here would publish the new name to the website -- which is how Spectator came by a second
+        # column headed "Display Text".  So leave those alone.
+        if i == 0 and header.lower() in ("issue", "title"):
+            header="Display Text"   # Display text is unique to Fanzines Index Page??  (A few pages use "Title")
+        elif header.lower() not in ("issue", "title"):
             header=CanonicizeColumnHeaders(header)
 
         if header in gStdColHeaders:
