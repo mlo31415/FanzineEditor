@@ -156,7 +156,11 @@ gStdColHeaders: ColDefinitionsList=ColDefinitionsList([
     ColDefinition("Display Text", Type="str"),
     ColDefinition("Link", Type="url"),
     ColDefinition("Text", Type="required str"),
-    ColDefinition("Title", Type="str"),     # Only column 0 is the display text, and it's named that outright
+    # Only column 0 is the display text, and it's named that outright.  "Issue" and "Title" are here so that a
+    # *later* column of either name keeps it: without an entry they fall through to the "(unrecognized)" default
+    # below, and ColNamesToColDefs would publish the page's own column as "(Issue)".
+    ColDefinition("Issue", Type="str"),
+    ColDefinition("Title", Type="str"),
     ColDefinition("Whole", Type="int", Width=75),
     ColDefinition("WholeNum", Type="int", Width=75, Preferred="Whole"),
     ColDefinition("Vol", Type="int", Width=50),

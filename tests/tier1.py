@@ -119,6 +119,8 @@ def PureFunctions() -> None:
              "so is column 0 named Title, as on the old pages"),
             (["Issue", "Title", "Editor"], ["Display Text", "Title", "Editor"], ["Display Text", "Title", "Editor"],
              "but a later Title column keeps its name, and isn't labelled Display Text either"),
+            (["Issue", "Issue", "Editor"], ["Display Text", "Issue", "Editor"], ["Display Text", "Issue", "Editor"],
+             "a later Issue column keeps its name too (it was renamed '(Issue)' and published that way)"),
             (["Issue", "Vol", "Notes"], ["Display Text", "Volume", "Notes"], ["Display Text", "Vol", "Notes"],
              "other columns are still canonicized (Vol -> Volume, shown as 'Vol')")):
         cds=FIP.ColNamesToColDefs(headers)
