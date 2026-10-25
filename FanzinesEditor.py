@@ -727,6 +727,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
                 self.MergeCFLIntoList(cfl)
                 changed=True
 
+            reconnected=""
             if fsw._uploaded:
                 FTPLog().AppendItemVerb("New Fanzine", f"{Tagit("FanzineName", fsw.CFL.Name.MainName)}", Flush=True)
                 # A new fanzine has been added.
@@ -737,6 +738,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
                 FTPLog().AppendItemVerb("Reconnect Fanzine", f"{Tagit("FanzineName", fsw.CFL.Name.MainName)} {Tagit("ServerDir", fsw.CFL.ServerDir)}", Flush=True)
                 self.MergeCFLIntoList(fsw.CFL)
                 changed=True
+                reconnected=fsw.CFL.ServerDir
 
         if not changed:
             return
@@ -744,6 +746,10 @@ class FanzinesEditorWindow(FanzinesGridGen):
         self.Datasource.FanzineList=self._fanzinesList
         self.SearchFanzineList()
         self.RefreshWindow()
+
+        # A fanzine put back on the list is opened for editing, as though it had been chosen from the list
+        if reconnected != "":
+            self.OpenFanzine(reconnected)
 
 
     # Update the list entry for this CFL's server directory, or add it if it isn't in the list (e.g. a fanzine
@@ -788,8 +794,11 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
     @GuardReentry
     def OpenClickedCell(self, icol: int, irow: int):
+        self.OpenFanzine(self._Datasource.Rows[irow][icol])
 
-        serverDir=self._Datasource.Rows[irow][icol]
+
+    # Open a fanzine's index page for editing, and update the list from whatever was uploaded there
+    def OpenFanzine(self, serverDir: str) -> None:
         with FanzineIndexPageWindow(None, serverDir=serverDir) as fipw:
             if fipw.failure:
                 wx.MessageBox(f"Unable to load {serverDir}", caption="Loading Fanzine Index page", parent=self)

@@ -1253,7 +1253,11 @@ def ReconnectLostPage() -> None:
 
     m=FE.FanzinesEditorWindow(None)
     realShowModal=FIP.FanzineIndexPageWindow.ShowModal
+    opened=[]
     def FillInAndUpload(self):       # As the user does in the new-fanzine window: fill it in, press Upload
+        if not self.CreatingNewFanzineSeries:       # (An existing fanzine's page, opened for editing)
+            opened.append((self.ServerDir, self.Datasource.NumRows))
+            return wx.ID_OK
         self.EndModal=lambda *a, **k: None
         self.tFanzineName.SetValue("Lost Zine")
         self.tServerDirectory.ChangeValue("Lost_Zine")
@@ -1276,6 +1280,8 @@ def ReconnectLostPage() -> None:
             f"{entry.Name.MainName if entry else None} {entry.Issues if entry else ''} {entry.Dates if entry else ''}")
     R.Check(S.Get("/fanzines/Lost_Zine/index.html") == pageBefore and not S.Exists(f"/{T}/Lost_Zine/index.html") and not S.Exists(f"/{T}/Lost_Zine/lz01.pdf"),
             "and nothing entered in the new-fanzine window was uploaded; the existing page is untouched")
+    R.Check(len(opened) == 1 and opened[0][0] == "Lost_Zine" and opened[0][1] == page.NumRows,
+            "and then the reconnected fanzine's page is opened for editing", str(opened))
     m.OnUploadPressed(None)
     R.Check("Lost_Zine" in {c.ServerDir for c in FE.GetClassicFanzinesList()}, "uploading the list makes it permanent")
     m.Destroy()

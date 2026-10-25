@@ -1036,7 +1036,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
     # The new fanzine's directory already holds a readable index page that isn't on the list of fanzines. Offer to put that
     # fanzine back on the list instead: if the user agrees, what was entered here is set aside and the window closes, and
-    # the main window adds the existing fanzine to the list (self.CFL, with self._reconnected set).
+    # the main window adds the existing fanzine to the list (self.CFL, with self._reconnected set) and opens its page.
     def ConnectExistingPage(self, page: FanzineIndexPage) -> None:
         cfl=CFLFromPage(page, self.ServerDir)
         issues=sum(1 for row in page.Rows if row.IsNormalRow and row[0].strip() != "")
@@ -1044,8 +1044,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                                     "ed. "+page.Editors.replace("\n", ", ") if page.Editors.strip() else "") if x)
         with wx.MessageDialog(self, f"There is already a directory named '{self.ServerDir}' on the server. It holds the index page "
                                     f"of a fanzine that isn't on the list of fanzines:\n\n    {page.Name.MainName}  ({about})\n\n"
-                                    f"Put that fanzine back on the list instead? Nothing you've entered here would be uploaded, and "
-                                    f"this window would close. (Upload the list of fanzines afterwards to make it permanent.)",
+                                    f"Put that fanzine back on the list instead? Nothing you've entered here would be uploaded: "
+                                    f"this window would close, and that fanzine's page would open for editing. (Upload the list "
+                                    f"of fanzines afterwards to make it permanent.)",
                               "Fanzine already on the server", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION) as dlg:
             dlg.SetYesNoLabels("Put it on the list", "Choose another name")
             if dlg.ShowModal() != wx.ID_YES:
