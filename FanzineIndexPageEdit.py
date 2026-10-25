@@ -334,6 +334,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self._allowManualEntryOfLocalDirectoryName=self.CreatingNewFanzineSeries
         self._manualEditOfLocalDirectoryNameBegun=False
         self._uploaded=False
+        self._reconnected=False     # Set if, instead of creating a new fanzine, an existing page is to go back on the list (self.CFL)
         # The fanzine's type as published on fanac.org: its PDFs' headers and metadata were made for it (None for a new fanzine)
         self._publishedFanzineType: str|None=None
 
@@ -1009,14 +1010,51 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
 
     #------------------
-    # Does a directory of this name already exist on the server? (Checked under the active root, and under
-    # the real root as well when running in test mode.)  Used to keep a new fanzine from silently
-    # overwriting an existing directory's index page.
-    def ServerDirExistsOnServer(self, dirname: str) -> bool:
-        if FTP().FileExists(f"/{self.RootDir}/{dirname}/index.html"):
-            return True
+    # Is there already a directory of this name on the server? (Checked under the active root, and under the real root as
+    # well when running in test mode.) Used to keep a new fanzine from being uploaded over an existing directory.
+    # Returns (it exists, its index page if that can be put on the list of fanzines, else why not).
+    def ExistingServerDir(self, dirname: str) -> tuple[bool, FanzineIndexPage|None, str]:
         realRoot=Settings().Get("Root directory", "fanzines")
-        return self.RootDir.lower() != realRoot.lower() and FTP().FileExists(f"/{realRoot}/{dirname}/index.html")
+        roots=[self.RootDir]+([realRoot] if self.RootDir.lower() != realRoot.lower() else [])
+        found=[r for r in roots if FTP().PathExists(f"/{r}/{dirname}")]
+        if not found:
+            return False, None, ""
+        if dirname.lower() in self._existingFanzinesServerDirsLowerCase:
+            return True, None, "it's already on the list of fanzines (open it from there to add to it)"
+        if not any(FTP().FileExists(f"/{r}/{dirname}/index.html") for r in found):
+            return True, None, "it has no index page (index.html), so there's no fanzine there to put on the list"
+        page=FanzineIndexPage()
+        try:
+            readable=page.GetFanzineIndexPage(dirname)
+        except Exception as e:      # (A garbled page can make the parser raise rather than fail)
+            LogError(f"ExistingServerDir: reading /{dirname}/index.html raised {type(e).__name__}: {e}")
+            readable=False
+        if not readable:
+            return True, None, "its index page (index.html) couldn't be read, so it can't be put on the list"
+        return True, page, ""
+
+
+    # The new fanzine's directory already holds a readable index page that isn't on the list of fanzines. Offer to put that
+    # fanzine back on the list instead: if the user agrees, what was entered here is set aside and the window closes, and
+    # the main window adds the existing fanzine to the list (self.CFL, with self._reconnected set).
+    def ConnectExistingPage(self, page: FanzineIndexPage) -> None:
+        cfl=CFLFromPage(page, self.ServerDir)
+        issues=sum(1 for row in page.Rows if row.IsNormalRow and row[0].strip() != "")
+        about=", ".join(x for x in (page.Dates.strip(), Pluralize(issues, "issue"),
+                                    "ed. "+page.Editors.replace("\n", ", ") if page.Editors.strip() else "") if x)
+        with wx.MessageDialog(self, f"There is already a directory named '{self.ServerDir}' on the server. It holds the index page "
+                                    f"of a fanzine that isn't on the list of fanzines:\n\n    {page.Name.MainName}  ({about})\n\n"
+                                    f"Put that fanzine back on the list instead? Nothing you've entered here would be uploaded, and "
+                                    f"this window would close. (Upload the list of fanzines afterwards to make it permanent.)",
+                              "Fanzine already on the server", wx.YES_NO|wx.NO_DEFAULT|wx.ICON_QUESTION) as dlg:
+            dlg.SetYesNoLabels("Put it on the list", "Choose another name")
+            if dlg.ShowModal() != wx.ID_YES:
+                return
+        Log(f"ConnectExistingPage: '{self.ServerDir}' ({page.Name.MainName}) is to go back on the list; this window's entries are set aside")
+        self.CFL=cfl
+        self._reconnected=True
+        self.MarkAsSaved()
+        self.EndModal(wx.OK)
 
 
     #------------------
@@ -1034,13 +1072,18 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         # A NEW fanzine must never overwrite an existing directory's index page. The pink warning in the
         # dialog is advisory only, and it only knows the fanzines list (which may be search-filtered, and
         # doesn't include directories that aren't on the Classic list) -- so ask the server itself.
+        # A directory that's there already may hold a fanzine's page which has dropped off the list: offer to put that back
+        # on the list instead.
         if self.CreatingNewFanzineSeries:
             with ModalDialogManager(ProgressMessage2, f"Checking the server for '{self.ServerDir}'", parent=self):
-                exists=self.ServerDirExistsOnServer(self.ServerDir)
+                exists, page, problem=self.ExistingServerDir(self.ServerDir)
             if exists:
-                wx.MessageBox(f"There is already a directory named '{self.ServerDir}' on the server. "
-                              f"Please select another name.", "Cannot create fanzine", parent=self)
-                Log(f"OnUpload: blocked creation of new fanzine over existing directory '{self.ServerDir}'")
+                Log(f"OnUpload: blocked creation of new fanzine over existing directory '{self.ServerDir}' ({problem or 'a readable page'})")
+                if problem != "":
+                    wx.MessageBox(f"There is already a directory named '{self.ServerDir}' on the server, but {problem}.\n\n"
+                                  f"Please select another name.", "Cannot create fanzine", parent=self)
+                    return
+                self.ConnectExistingPage(page)
                 return
 
         # Check the dates to make sure that the dated issues all fall into the date range given for the fanzine
@@ -3998,6 +4041,30 @@ def LocalRootMissingMessage(root: str) -> str:
             f"on this computer.\n\nIf this is a new computer, create that folder and copy your fanzine folders into it from the old "
             f"computer. Or, if they're somewhere else on this computer, change \"Local Directory Root Path\" in\n\n    {Settings().Dictpath}\n\n"
             f"to that folder and restart FanzinesEditor.")
+
+
+# A fanzine's entry for the Classic list, made from its index page as it is on the server: used to put a page that has
+# dropped off the list back on it. Counted and filled in as an upload fills them in from the dialog.
+def CFLFromPage(page: FanzineIndexPage, serverDir: str) -> ClassicFanzinesLine:
+    cfl=ClassicFanzinesLine()
+    cfl.Issues=sum(1 for row in page.Rows if row.IsNormalRow and row[0].strip() != "")
+    cfl.Editors=page.Editors.replace("\n", "<br>")
+    cfl.ServerDir=serverDir
+    cfl.Name=page.Name
+    cfl.Dates=page.Dates
+    cfl.Type=page.FanzineType
+    cfl.Clubname=page.Clubname
+    cfl.Complete=page.Complete
+    cfl.TopComments=page.TopComments
+    cfl.Country=page.LocaleAsText
+    # The page's own dates, if it has them (older pages don't: then the list shows neither "New" nor "Updated")
+    def Known(d: ClassicFanzinesDate) -> bool:
+        return isinstance(d.Date, datetime) and d.Date.year > 1900
+    if Known(page.Created):
+        cfl.Created=page.Created
+    if Known(page.Updated):
+        cfl.Updated=page.Updated
+    return cfl
 
 
 # Does a row's Link cell name one of this fanzine's own files? Only a plain filename does (a filename can't contain "/" or

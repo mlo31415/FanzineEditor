@@ -1214,6 +1214,73 @@ def SelectionKeptOnce() -> None:
     w.Destroy()
 
 
+def ReconnectLostPage() -> None:
+    R.Section("A new fanzine whose directory already exists: put an existing page back on the list")
+    S=FreshServer()
+    apollo=S.Get("/fanzines/Apollo/index.html")
+    S.Put("/fanzines/Lost_Zine/index.html", apollo)          # A fanzine's page on the server, but not on the list
+    S.Put("/fanzines/Lost_Zine/Apollo03.pdf", b"%PDF-1.4 x")
+    S.Put("/fanzines/No_Page/scan.pdf", b"%PDF-1.4 x")         # A directory with no page
+    S.Put("/fanzines/Bad_Page/index.html", "<html>garbled")   # One whose page can't be read
+    pageBefore=S.Get("/fanzines/Lost_Zine/index.html")
+
+    def NewFanzine(serverDir: str):
+        w=FIP.FanzineIndexPageWindow(None, ExistingFanzinesServerDirs=list(FIXTURE_DIRS))
+        w.EndModal=lambda *a, **k: None
+        w.tFanzineName.SetValue("Lost Zine")
+        w.tServerDirectory.ChangeValue(serverDir)
+        w.tDates.SetValue("1990-1991")
+        AddRow(w, "lz01.pdf", Pdf("lz01.pdf"), "Lost Zine 1")
+        return w
+
+    for d, want in (("No_Page", "it has no index page"), ("Bad_Page", "couldn't be read"), ("Apollo", "already on the list")):
+        w=NewFanzine(d)
+        Upload(w)
+        R.Check(len(Dialogs.Messages) == 1 and want in Dialogs.Messages[0] and not Dialogs.Questions and w.CFL is None and not w._reconnected,
+                f"'{d}': refused, saying {want!r}, with nothing offered", str(Dialogs.Messages))
+        w.Destroy()
+
+    w=NewFanzine("Lost_Zine")
+    Dialogs.Answer=wx.ID_NO
+    try:
+        Upload(w)
+    finally:
+        Dialogs.Answer=wx.ID_YES
+    R.Check(len(Dialogs.Questions) == 1 and "isn't on the list" in Dialogs.Questions[0] and "Apollo" in Dialogs.Questions[0] and "issue" in Dialogs.Questions[0]
+            and w.CFL is None and not w._reconnected and S.Get("/fanzines/Lost_Zine/index.html") == pageBefore and not S.Exists(f"/{T}/Lost_Zine/lz01.pdf"),
+            "a readable page that isn't on the list: offered (with its name and issues); 'Choose another name' changes nothing", str(Dialogs.Questions)[:200])
+    w.Destroy()
+
+    m=FE.FanzinesEditorWindow(None)
+    realShowModal=FIP.FanzineIndexPageWindow.ShowModal
+    def FillInAndUpload(self):       # As the user does in the new-fanzine window: fill it in, press Upload
+        self.EndModal=lambda *a, **k: None
+        self.tFanzineName.SetValue("Lost Zine")
+        self.tServerDirectory.ChangeValue("Lost_Zine")
+        self.tDates.SetValue("1990-1991")
+        AddRow(self, "lz01.pdf", Pdf("lz01.pdf"), "Lost Zine 1")
+        Dialogs.Clear()
+        self.OnUpload(None)
+        return wx.ID_OK
+    FIP.FanzineIndexPageWindow.ShowModal=FillInAndUpload
+    try:
+        m.OnAddNewFanzine(None)
+    finally:
+        FIP.FanzineIndexPageWindow.ShowModal=realShowModal
+    entry={c.ServerDir: c for c in m._fanzinesList}.get("Lost_Zine")
+    page=FIP.FanzineIndexPage()
+    page.GetFanzineIndexPage("Apollo")
+    issues=sum(1 for r in page.Rows if r.IsNormalRow and r[0].strip() != "")
+    R.Check(entry is not None and entry.Name.MainName == page.Name.MainName and str(entry.Issues) == str(issues) and entry.Dates == page.Dates and m.NeedsSaving(),
+            "'Put it on the list': the existing fanzine joins the list, as its page describes it; the list is to be uploaded",
+            f"{entry.Name.MainName if entry else None} {entry.Issues if entry else ''} {entry.Dates if entry else ''}")
+    R.Check(S.Get("/fanzines/Lost_Zine/index.html") == pageBefore and not S.Exists(f"/{T}/Lost_Zine/index.html") and not S.Exists(f"/{T}/Lost_Zine/lz01.pdf"),
+            "and nothing entered in the new-fanzine window was uploaded; the existing page is untouched")
+    m.OnUploadPressed(None)
+    R.Check("Lost_Zine" in {c.ServerDir for c in FE.GetClassicFanzinesList()}, "uploading the list makes it permanent")
+    m.Destroy()
+
+
 def WindowPlacement() -> None:
     R.Section("Windows open on a connected screen")
     FreshServer()
@@ -1251,7 +1318,7 @@ def WindowPlacement() -> None:
 
 
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, NamelessFiles, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, ListRedrawFailure, SearchAndWatchdog, SelectionKeptOnce, WindowPlacement):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, NamelessFiles, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, ListRedrawFailure, SearchAndWatchdog, SelectionKeptOnce, ReconnectLostPage, WindowPlacement):
     try:
         group()
     except Exception:

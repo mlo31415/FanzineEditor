@@ -732,6 +732,11 @@ class FanzinesEditorWindow(FanzinesGridGen):
                 # A new fanzine has been added.
                 self.MergeCFLIntoList(fsw.CFL)
                 changed=True
+            elif fsw._reconnected:
+                # Instead, a fanzine already on the server, but missing from the list, goes back on it
+                FTPLog().AppendItemVerb("Reconnect Fanzine", f"{Tagit("FanzineName", fsw.CFL.Name.MainName)} {Tagit("ServerDir", fsw.CFL.ServerDir)}", Flush=True)
+                self.MergeCFLIntoList(fsw.CFL)
+                changed=True
 
         if not changed:
             return
