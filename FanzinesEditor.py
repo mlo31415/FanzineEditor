@@ -585,12 +585,11 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
 
         self.MarkAsSaved()
-        self.tSearch.SetFocus()     # Start up with the entry cursor in the search box
         self.RefreshWindow()
 
         self.Show(True)
         self.Raise()    # Bring the window to the top
-        self.tSearch.SetFocus()     # And put the focus/cursor in the search box
+        self.tSearch.SetFocus()     # Put the focus/cursor in the search box (after Show, so it actually takes)
 
 
     @property
