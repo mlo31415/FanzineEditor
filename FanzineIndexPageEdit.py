@@ -4141,8 +4141,10 @@ class ReplaceURLDialog(wx.Dialog):
         sizer.Add(self.CreateStdDialogButtonSizer(wx.OK|wx.CANCEL), 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 12)
         self.SetSizerAndFit(sizer)
         self.CentreOnParent()
-        self.tURL.SetFocus()
-        self.tURL.SelectAll()
+        # Defer focus/select until the dialog is actually shown; doing it here (before ShowModal) sets focus on
+        # a not-yet-visible window, which fails at the Win32 level ("SetFocus failed with error 0x57").
+        wx.CallAfter(self.tURL.SetFocus)
+        wx.CallAfter(self.tURL.SelectAll)
 
     def GetValue(self) -> str:
         return self.tURL.GetValue().strip()
