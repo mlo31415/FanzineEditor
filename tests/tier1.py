@@ -190,6 +190,21 @@ def PdfWork() -> None:
     R.Check(f["height"]-srcHeight == 28, "replacing it with a header without an editor line shrinks the page back to +28", f"{f['height']-srcHeight}")
     os.remove(copy)
 
+    # Edie, 2026-11-13: a 370-page PDF exported from Excel (124,400 objects) froze FE for many minutes in the save's duplicate-object
+    # merging (garbage=3 or 4). A made-up PDF doesn't reproduce the slowness, so check the setting instead.
+    saves=[]
+    realSave=fitz.Document.save
+    def RecordSave(self, *a, **k):
+        saves.append(k.get("garbage", 0))
+        return realSave(self, *a, **k)
+    fitz.Document.save=RecordSave
+    try:
+        copy, problem=FIP.PrepareIssuePdf(src, row, cd, "Rabanos", editors="Fred Patten", mainName="Rabanos")
+    finally:
+        fitz.Document.save=realSave
+    R.Check(problem == "" and len(saves) == 2 and all(g < 3 for g in saves), "preparing a PDF never uses the slow duplicate merging (garbage 3 or 4)", str(saves))
+    os.remove(copy)
+
     many="Terry Carr\nDave Rike\nRon Ellik\nBob Pavlat\nBill Rotsler\nBjo Trimble\nTed White\nWalt Willis\nBob Shaw"
     copy, problem=FIP.PrepareIssuePdf(src, row, cd, "Rabanos", editors=many, mainName="Rabanos")
     f=PdfFacts(copy)
@@ -1137,7 +1152,7 @@ def SearchAndWatchdog() -> None:
     realLogError=FE.LogError
     FE.LogError=Capture
     m=FE.FanzinesEditorWindow(None)
-    w=FE.HangWatchdog(m, limit=0.5, beat=0.1, poll=0.1, maxDumps=2)
+    w=FE.HangWatchdog(m, limit=0.5, progressLimit=1.5, beat=0.1, poll=0.1, maxDumps=2)
     R.Check(w._timer.IsRunning() and w._timer.GetInterval() == 100, "the heartbeat timer is running", str(w._timer.GetInterval()))
     def Pump(seconds: float) -> None:      # FE responding for a while: as FE's MainLoop delivers the timer's beats (the tests run no MainLoop)
         end=time.monotonic()+seconds
@@ -1164,6 +1179,16 @@ def SearchAndWatchdog() -> None:
         finally:
             FE.ProgressMessage._progressMessageDlg=None
         R.Check(not any("hasn't responded" in s for s in logged), "busy behind a progress message (e.g. a big upload): nothing logged", str(logged[:1]))
+        logged.clear()
+        FE.ProgressMessage._progressMessageDlg=object()     # Behind a progress message, but for longer than progressLimit (Edie, 2026-11-13)
+        try:
+            StuckInHere(2.4)
+            Pump(0.3)
+        finally:
+            FE.ProgressMessage._progressMessageDlg=None
+        dumps=[s for s in logged if "hasn't responded" in s]
+        R.Check(len(dumps) >= 1 and "StuckInHere" in dumps[0], "stuck behind a progress message past its longer limit: logged after all",
+                f"{len(dumps)} dumps: {logged[:1]}")
     finally:
         w.Stop()
         Pump(0.3)

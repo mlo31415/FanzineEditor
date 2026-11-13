@@ -44,10 +44,11 @@ def KeepPreviousLogs(homedir: str) -> None:
 
 # If FE stops responding -- Edie, 2026-10-19: "it's cycling", with nothing in the logs -- write what every thread is doing
 # to the logs, so we can see where it's stuck or looping. A timer on the main window marks it as responding every second;
-# a background thread checks. Nothing is written while a progress message is up: uploading a big PDF keeps FE busy, too.
+# a background thread checks. While a progress message is up it waits longer (progressLimit), since uploading a big PDF
+# keeps FE busy, too -- but not forever: Edie, 2026-11-13, a PDF whose preparation never finished, and nothing in the logs.
 class HangWatchdog:
-    def __init__(self, owner: wx.Window, limit: float=10.0, beat: float=1.0, poll: float=2.0, maxDumps: int=6) -> None:
-        self._limit, self._poll, self._maxDumps=limit, poll, maxDumps
+    def __init__(self, owner: wx.Window, limit: float=10.0, progressLimit: float=60.0, beat: float=1.0, poll: float=2.0, maxDumps: int=6) -> None:
+        self._limit, self._progressLimit, self._poll, self._maxDumps=limit, progressLimit, poll, maxDumps
         self._lastBeat=time.monotonic()
         self._stopped=False
         self._timer=wx.Timer(owner)
@@ -72,17 +73,18 @@ class HangWatchdog:
         while not self._stopped:
             time.sleep(self._poll)
             now=time.monotonic()
-            if now-self._lastBeat < self._limit:
+            limit=self._progressLimit if ProgressMessage._progressMessageDlg is not None else self._limit
+            if now-self._lastBeat < limit:
                 if hungSince is not None:
                     LogError(f"Watchdog: FanzinesEditor is responding again, after {now-hungSince:.0f} s")
                     hungSince=None
                     dumps=0
                 continue
-            if self._stopped or ProgressMessage._progressMessageDlg is not None:
+            if self._stopped:
                 continue
             if hungSince is None:
                 hungSince=self._lastBeat
-            if dumps < self._maxDumps and now-lastDump >= self._limit:
+            if dumps < self._maxDumps and now-lastDump >= limit:
                 dumps+=1
                 lastDump=now
                 LogError(f"Watchdog: FanzinesEditor hasn't responded for {now-hungSince:.0f} s. What each thread is doing:\n"+self.Stacks())
