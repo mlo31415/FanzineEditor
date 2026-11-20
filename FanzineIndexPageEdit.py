@@ -10,6 +10,8 @@ import webbrowser
 from datetime import datetime
 from math import floor, ceil
 import tempfile
+import time
+from collections.abc import Callable
 from urllib.parse import quote, urljoin
 
 from bs4 import BeautifulSoup
@@ -1459,7 +1461,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
 
         pm.Update(f"Uploading {os.path.basename(localfile)} as {serverfilename}")
         Log(f"FTP().PutFile({copyfilepath}, {serverpathfile})")
-        if not FTP().PutFile(copyfilepath, serverpathfile):
+        if not FTP().PutFile(copyfilepath, serverpathfile, progress=UploadProgress(pm, serverfilename)):
             why=FTP().LastMessage       # (Reading it clears it)
             if isPdf:
                 os.remove(copyfilepath)     # Clean up the temporary metadata-annotated copy
@@ -4227,6 +4229,20 @@ def PDFEditors(row: FanzineIndexPageTableRow, colNames: ColDefinitionsList, edit
 # Make the copy of an issue's PDF which gets uploaded: fanac.org's metadata and the page header linking back to the fanzine.
 # Returns (the copy's path, or "" if the PDF can't be read; why the header couldn't be added, or "").
 # A PDF whose header can't be added is still worth uploading, so that's for the caller to report rather than a failure.
+# A progress callback for FTP().PutFile: every so often it shows how much of the file has been sent. The progress bar only moves
+# when the message is updated, so without this it sat still for the whole of a big upload (Edie, 2026-11-20: "unnerving").
+_uploadProgressInterval=0.5     # Seconds between updates (the tests set it to 0)
+
+def UploadProgress(pm: ProgressMessage2, filename: str) -> Callable[[int, int], None]:
+    last=time.monotonic()
+    def Progress(sent: int, size: int) -> None:
+        nonlocal last
+        if time.monotonic()-last >= _uploadProgressInterval:
+            last=time.monotonic()
+            pm.Update(f"Uploading {filename}: {sent/1e6:.1f} of {size/1e6:.1f} MB")
+    return Progress
+
+
 def PrepareIssuePdf(pdfPathFilename: str, row: FanzineIndexPageTableRow, colNames: ColDefinitionsList, serverDir: str, editors: str="",
                     mainName: str="", country: str="", fanzineType: str="", clubname: str="") -> tuple[str, str]:
     copyfilepath=SetPDFMetadata(pdfPathFilename, row, colNames, editors=editors, mainName=mainName, country=country,

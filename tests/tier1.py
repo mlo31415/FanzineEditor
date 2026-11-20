@@ -344,6 +344,23 @@ def Uploads() -> None:
     f=ServerPdf(f"/{T}/Apollo/t_rot.pdf")
     R.Check(not f["hasHeader"] and f["rotation"] == 90 and Dialogs.Messages and "rotated 90" in Dialogs.Messages[-1], "page 1 rotated: no header, and says why")
 
+    R.Section("A file's upload shows its progress (Edie, 2026-11-20: the bar sat still for a whole big upload)")
+    shown=[]
+    class RecordingProgress(harness._QuietProgress):
+        def Update(self, message, *a, **k):
+            shown.append(message)
+    realProgress, realInterval=FIP.ProgressMessage2, FIP._uploadProgressInterval
+    FIP.ProgressMessage2, FIP._uploadProgressInterval=RecordingProgress, 0
+    try:
+        AddRow(w, "t_g.pdf", Pdf("t_g.pdf", "progress"), "Apollo 100")
+        Upload(w)
+    finally:
+        FIP.ProgressMessage2, FIP._uploadProgressInterval=realProgress, realInterval
+    size=len(S.Get(f"/{T}/Apollo/t_g.pdf") or b"")
+    sending=[x for x in shown if x.startswith("Uploading t_g.pdf: ")]
+    R.Check(size > 8192 and len(sending) == -(-size//8192) and sending[-1] == f"Uploading t_g.pdf: {size/1e6:.1f} of {size/1e6:.1f} MB",
+            "the message is updated as each block is sent, ending with the whole file", f"{size} bytes; {len(sending)} updates; last {sending[-1:]}")
+
     R.Section("Issue counts for the Classic list (FE-6)")
     w.Datasource.AppendEmptyRows(2)         # A text row and an empty row: neither is an issue
     w.Datasource.Rows[-2].IsTextRow=True

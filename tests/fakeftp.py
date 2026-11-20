@@ -111,14 +111,18 @@ class FakeServer:
         self.Files[pn]=self.Files.pop(po)      # (Like the real server, this replaces an existing file of the new name)
         return "250 File successfully renamed or moved"
 
-    def storbinary(self, cmd: str, fp, *args, **kwargs) -> str:
+    def storbinary(self, cmd: str, fp, blocksize: int=8192, callback=None, *args, **kwargs) -> str:
         verb, name=cmd.split(" ", 1)
         p=self._abs(name)
         if posixpath.dirname(p) not in self.Dirs:
             raise error_perm(f"553 Can't open that file: No such file or directory")
         if self._fails("stor", p):
             return "550 Simulated upload failure"
-        data=fp.read()
+        data=b""
+        while block := fp.read(blocksize):     # Block by block, calling back after each, as ftplib does
+            data+=block
+            if callback is not None:
+                callback(block)
         self.Files[p]=(self.Files.get(p, b"") if verb == "APPE" else b"")+data
         return "226-File successfully transferred\n226 0.001 seconds"
 
