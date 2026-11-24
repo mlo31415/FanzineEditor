@@ -1229,7 +1229,7 @@ def HeaderLayout() -> None:
     page=Page("Apollo")
     eds=ExtractBetweenHTMLComments(page, "eds")
     R.Check(re.sub(r"<[^>]+>", "", eds) == "Joe Hensley, Harry Warner, Jr." and eds.count("<a href") == 2, "editors written as one comma-separated list (each linked to Fancyclopedia)", eds)
-    empty=[x for x in ("type", "loc", "tags") if f'<span style="display:block"><!--{x}--><!--{x}-->' in page]
+    empty=[x for x in ("type", "loc", "tags") if re.search(f'<span style="display:block[^"]*"><!--{x}--><!--{x}-->', page)]
     R.Check(empty == ["type", "loc", "tags"] and "Tags:" not in page, "no type, location or tags: their lines are empty blocks (no blank lines)", str(empty))
     w.Destroy()
 
@@ -1255,6 +1255,8 @@ def HeaderLayout() -> None:
     gap='<!--topcommentsgap--><div style="height:0.6em"></div><!--topcommentsgap-->'
     w.Datasource.TopComments=""
     Upload(w)
+    R.Check(all(f'<span style="display:block; font-weight:normal; font-size:0.85em"><!--{x}-->' in Page("Apollo") for x in ("loc", "tags")),
+            "the location and tags lines: not bold, 85% size (mlo, 2026-11-24)")
     R.Check("<!--topcommentsgap--><!--topcommentsgap-->" in Page("Apollo"), "no top comments: nothing between them and the buttons")
     w.Datasource.TopComments="Some comments"
     Upload(w)
