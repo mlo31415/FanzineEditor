@@ -1317,6 +1317,10 @@ def Tags() -> None:
     d._boxes["typo"].ProcessEvent(ev)
     R.Check(d.CheckedTags == ["Clubzine", "Fanhistory", "sf", "Typo"] and d.NewMasterTags == ["Clubzine", "Typo"],
             "checked and unchecked at will; a checked unlisted tag joins the master list like a new one", f"{d.CheckedTags} {d.NewMasterTags}")
+    d._boxes["clubzine"].SetValue(False)
+    d._boxes["clubzine"].ProcessEvent(wx.CommandEvent(wx.wxEVT_CHECKBOX, d._boxes["clubzine"].GetId()))
+    R.Check(d.CheckedTags == ["Fanhistory", "sf", "Typo"] and d.NewMasterTags == ["Typo"],
+            "a new tag, then unchecked: not added to the master list (mlo)", f"{d.CheckedTags} {d.NewMasterTags}")
     d.Destroy()
 
     # From the page's Edit button

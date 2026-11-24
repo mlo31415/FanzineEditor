@@ -8,6 +8,7 @@ import wx
 # Every tag in the master list is shown, in alphabetical order, with a checkbox; the page's tags are checked. A tag
 # on the page which isn't in the master list (e.g. a typo in a hand-made page) is shown at the top in bold, unchecked:
 # checking it keeps it on the page and adds it to the master list, just as New Tag would; leaving it unchecked drops it.
+# (A tag added by New Tag which is then unchecked isn't added to the master list.)
 # After OK, CheckedTags is the page's new list of tags and NewMasterTags the tags to be added to the master list.
 class EditTagsDialog(wx.Dialog):
     def __init__(self, parent: wx.Window|None, pageTags: list[str], masterTags: list[str]):
@@ -98,7 +99,7 @@ class EditTagsDialog(wx.Dialog):
     def CheckedTags(self) -> list[str]:
         return sorted([x for x in self._unlisted+self._tags if x.casefold() in self._checked], key=lambda x: x.casefold())
 
-    # The tags to be added to the master list: those added by New Tag, and the page's unlisted tags which were checked
+    # The tags to be added to the master list: those added by New Tag and the page's unlisted tags -- but only the checked ones
     @property
     def NewMasterTags(self) -> list[str]:
-        return self._new+[x for x in self._unlisted if x.casefold() in self._checked]
+        return [x for x in self._new+self._unlisted if x.casefold() in self._checked]
