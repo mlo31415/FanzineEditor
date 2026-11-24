@@ -1255,8 +1255,9 @@ def HeaderLayout() -> None:
     gap='<!--topcommentsgap--><div style="height:0.6em"></div><!--topcommentsgap-->'
     w.Datasource.TopComments=""
     Upload(w)
-    R.Check(all(f'<span style="display:block; font-weight:normal; font-size:0.85em"><!--{x}-->' in Page("Apollo") for x in ("loc", "tags")),
-            "the location and tags lines: not bold, 85% size (mlo, 2026-11-24)")
+    R.Check(all(f'<span style="display:block; font-weight:normal; font-size:0.75em"><!--{x}-->' in Page("Apollo") for x in ("loc", "tags")),
+            "the location and tags lines: not bold, 75% of the dates' size (mlo, 2026-11-24)")
+    R.Check(Page("Apollo").count('<h3 class="sansserif"') == 2, "the header's h3 lines in the title's sans-serif font (mlo, 2026-11-24)")
     R.Check("<!--topcommentsgap--><!--topcommentsgap-->" in Page("Apollo"), "no top comments: nothing between them and the buttons")
     w.Datasource.TopComments="Some comments"
     Upload(w)
