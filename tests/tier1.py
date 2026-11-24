@@ -1213,6 +1213,37 @@ def SearchAndWatchdog() -> None:
         m.Destroy()
 
 
+def HeaderLayout() -> None:
+    R.Section("A page's header: editors as a list, empty lines gone, tags (mlo, 2026-11-23)")
+    from HelpersPackage import ExtractBetweenHTMLComments
+    R.Check(FIP.SplitEditorList("Joe Hensley <br> Lionel Innman") == ["Joe Hensley", "Lionel Innman"], "an older page's editors, one per line, still read")
+    R.Check(FIP.SplitEditorList("Harry Warner, Jr, Lee Hoffman, et al, Fred Remus, Jr.") == ["Harry Warner, Jr", "Lee Hoffman, et al", "Fred Remus, Jr."],
+            "a comma inside an editor's entry ('Jr', 'et al') isn't a separator", str(FIP.SplitEditorList("Harry Warner, Jr, Lee Hoffman, et al, Fred Remus, Jr.")))
+
+    FreshServer()
+    w=OpenPage("Apollo")
+    w.tEditors.SetValue("Joe Hensley\nHarry Warner, Jr.\n")
+    w.tLocaleText.SetValue("")
+    w.Datasource.FanzineType=""
+    Upload(w)
+    page=Page("Apollo")
+    eds=ExtractBetweenHTMLComments(page, "eds")
+    R.Check(re.sub(r"<[^>]+>", "", eds) == "Joe Hensley, Harry Warner, Jr." and eds.count("<a href") == 2, "editors written as one comma-separated list (each linked to Fancyclopedia)", eds)
+    empty=[x for x in ("type", "loc", "tags") if f'<span style="display:block"><!--{x}--><!--{x}-->' in page]
+    R.Check(empty == ["type", "loc", "tags"] and "Tags:" not in page, "no type, location or tags: their lines are empty blocks (no blank lines)", str(empty))
+    w.Destroy()
+
+    w=OpenPage("Apollo")
+    R.Check(w.Datasource.Editors == "Joe Hensley\nHarry Warner, Jr.", "and read back as the same two editors", repr(w.Datasource.Editors))
+    harness.Server.Put(f"/{T}/Apollo/index.html", page.replace("<!--tags--><!--tags-->", "<!--tags-->Tags: Humor, SF<!--tags-->"))
+    w.Destroy()
+    w=OpenPage("Apollo")
+    R.Check(w.Datasource.Tags == "Humor, SF", "a page's tags are read", w.Datasource.Tags)
+    Upload(w)
+    R.Check("<!--tags-->Tags: Humor, SF<!--tags-->" in Page("Apollo"), "and kept when it's uploaded again")
+    w.Destroy()
+
+
 def SelectionKeptOnce() -> None:
     R.Section("A selection is kept once, not doubled with every redraw (Edie, 2026-10-19)")
     import WxDataGrid
@@ -1366,7 +1397,7 @@ def WindowPlacement() -> None:
 
 
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, NamelessFiles, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, ListRedrawFailure, SearchAndWatchdog, SelectionKeptOnce, ReconnectLostPage, WindowPlacement):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, NamelessFiles, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, ListRedrawFailure, SearchAndWatchdog, HeaderLayout, SelectionKeptOnce, ReconnectLostPage, WindowPlacement):
     try:
         group()
     except Exception:

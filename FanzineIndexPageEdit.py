@@ -3321,6 +3321,21 @@ def ColNamesToColDefs(headers: list[str]) -> ColDefinitionsList:
 # first time a genuine V2 page is opened; getting it wrong corrupts issue links, so leave it intact.
 #####################################################################################################
 
+# A page's editors were once written one per line (<br>), and are now a comma-separated list. A comma inside one editor's
+# entry isn't a separator, though: "Harry Warner, Jr." and "Lee Hoffman, et al" (both on the Classic list) keep the piece
+# after the comma.
+def SplitEditorList(s: str) -> list[str]:
+    eds=[]
+    for line in s.split("<br>"):
+        for piece in line.split(","):
+            piece=piece.strip()
+            if len(eds) > 0 and re.fullmatch(r"(jr|sr|ii|iii|iv|et al)\.?", piece, flags=re.IGNORECASE):
+                eds[-1]+=", "+piece
+            elif piece != "":
+                eds.append(piece)
+    return eds
+
+
 class FanzineIndexPage(GridDataSource):
     def __init__(self):
         GridDataSource.__init__(self)
@@ -3341,6 +3356,7 @@ class FanzineIndexPage(GridDataSource):
         self.FanzineType: str=""
         self.Complete=False     # Is this fanzine series complete?
         self.Credits=""         # Who is to be credited for this affair?
+        self.Tags: str=""       # The page's tags, comma-separated. Not yet defined or editable in FE: kept as found on the page.
         self.Updated: ClassicFanzinesDate=ClassicFanzinesDate("Long, long ago")
         self.Created: ClassicFanzinesDate=ClassicFanzinesDate("Long, long ago")
 
@@ -3710,11 +3726,12 @@ class FanzineIndexPage(GridDataSource):
         other=ExtractHTMLUsingFanacTagCommentPair(topstuff, "other")
         other=[CleanUnicodeText(x) for x in [y for y in SplitOnSpansOfLineBreaks(other)]]
         self.Name.Othernames=other
-        self.Editors=[CleanUnicodeText(x) for x in RemoveHyperlink(ExtractHTMLUsingFanacTagCommentPair(topstuff, "eds"), repeat=True).split("<br>")]
+        self.Editors=[CleanUnicodeText(x) for x in SplitEditorList(RemoveHyperlink(ExtractHTMLUsingFanacTagCommentPair(topstuff, "eds"), repeat=True))]
         self.Dates=ExtractHTMLUsingFanacTagCommentPair(topstuff, "dates")
         self.Complete="complete" in ExtractHTMLUsingFanacTagCommentPair(topstuff, "complete").lower()
         self.FanzineType=ExtractHTMLUsingFanacTagCommentPair(topstuff, "type")
         self.Clubname=CleanUnicodeText(ExtractHTMLUsingFanacTagCommentPair(topstuff, "club"))
+        self.Tags=CleanUnicodeText(ExtractHTMLUsingFanacTagCommentPair(topstuff, "tags")).removeprefix("Tags:").strip()
 
         self.Significance=ExtractInvisibleTextInsideFanacComment(html, "sig")
         self.Ordering=ExtractInvisibleTextInsideFanacComment(html, "ordering") or "Normal"      # Absent on pre-feature pages -> Normal
@@ -3895,12 +3912,13 @@ class FanzineIndexPage(GridDataSource):
 
         output=InsertBetweenHTMLComments(output, "name", UnicodeToHtmlEscapes(self.Name.MainName))
         output=InsertBetweenHTMLComments(output, "other", self.Name.OthernamesAsHTML)
-        output=InsertBetweenHTMLComments(output, "eds", "<br>".join([SpecialNameFormatToHtmlFancylink(UnicodeToHtmlEscapes(x.strip())) for x in self.Editors.split("\n")]))
+        output=InsertBetweenHTMLComments(output, "eds", ", ".join([SpecialNameFormatToHtmlFancylink(UnicodeToHtmlEscapes(x.strip())) for x in self.Editors.split("\n") if x.strip() != ""]))
         output=InsertBetweenHTMLComments(output, "dates", UnicodeToHtmlEscapes(self.Dates.strip()))
         output=InsertBetweenHTMLComments(output, "complete", "(Complete)" if self.Complete else "")
         output=InsertBetweenHTMLComments(output, "type", self.FanzineType.strip())
         output=InsertBetweenHTMLComments(output, "club", f" - {UnicodeToHtmlEscapes(self.Clubname)}" if self.Clubname != "" else "")
         output=InsertBetweenHTMLComments(output, "loc", TurnPythonListIntoWordList(self.Locale))
+        output=InsertBetweenHTMLComments(output, "tags", f"Tags: {UnicodeToHtmlEscapes(self.Tags)}" if self.Tags != "" else "")     # No tags: no line
 
         output=InsertInvisibleTextInsideFanacComment(output, "sig", self.Significance)
         output=InsertInvisibleTextInsideFanacComment(output, "ordering", self.Ordering)
