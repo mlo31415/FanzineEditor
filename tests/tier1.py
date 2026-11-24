@@ -1374,6 +1374,29 @@ def Tags() -> None:
             "and the list of fanzines, unchanged, isn't rewritten")
     m.Destroy()
 
+    R.Section("Two progress messages in a row, owned by the same window (shared WxHelpers; mlo, 2026-11-24)")
+    # The tests' progress messages are quiet stand-ins, so this uses real ones -- in a separate process, since the failure
+    # was a crash (an access violation) which would take the test run with it
+    import subprocess
+    script=("import os, sys, time, tempfile, wx\n"
+            "app=wx.App()\n"
+            "from Log import LogOpen\n"
+            "d=tempfile.mkdtemp()\n"
+            "LogOpen(os.path.join(d, 'l.txt'), os.path.join(d, 'e.txt'))\n"
+            "from WxHelpers import ModalDialogManager, ProgressMessage2\n"
+            "f=wx.Frame(None)\n"
+            "for msg in ('first', 'second'):\n"
+            "    with ModalDialogManager(ProgressMessage2, msg, parent=f):\n"
+            "        time.sleep(0.2)\n"
+            "f.Show()\n"
+            "for _ in range(25):\n"
+            "    wx.SafeYield(); time.sleep(0.02)\n"
+            "f.Destroy()\n"
+            "print('survived')\n")
+    p=subprocess.run([sys.executable, "-c", script], cwd=harness.FE_DIR, capture_output=True, text=True, timeout=60)
+    R.Check(p.returncode == 0 and "survived" in p.stdout, "both open and close, and the app carries on (was: an access violation)",
+            f"exit code {p.returncode}: {p.stderr[-300:]}")
+
 
 def SelectionKeptOnce() -> None:
     R.Section("A selection is kept once, not doubled with every redraw (Edie, 2026-10-19)")

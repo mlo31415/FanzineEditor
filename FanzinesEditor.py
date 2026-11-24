@@ -564,8 +564,14 @@ class FanzinesEditorWindow(FanzinesGridGen):
         if Settings().IsTrue("Test mode"):
             self.RootDir=Settings().Get("Test Root Directory", self.RootDir)
 
-        with ModalDialogManager(ProgressMessage2, "Downloading main fanzine page", parent=self):
-                cfllist=GetClassicFanzinesList()
+        # The list of fanzines, then the master list of tags. (Both under the one progress message: a second one opened
+        # straight after the first, while this window wasn't yet shown, crashed FE with an access violation.)
+        with ModalDialogManager(ProgressMessage2, "Downloading main fanzine page", parent=self) as pm:
+            cfllist=GetClassicFanzinesList()
+            tagsLoaded=False
+            if cfllist is not None and len(cfllist) > 0:
+                pm.Update("Downloading the master list of tags")
+                tagsLoaded=MasterTags().Load(f"/{self.RootDir}")
         if cfllist is None or len(cfllist) == 0:
             # Without the list there is nothing to edit. Say so, and let main() close down -- rather than carry on with
             # a window that is never shown, leaving FE running invisibly (and holding the lock) with no way to quit it.
@@ -574,9 +580,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
                           "FanzinesEditor", wx.OK|wx.ICON_ERROR)
             self.failure=True
             return
-        # The master list of tags. (Without it, FE can't start: an upload of a list read as empty would wipe the server's.)
-        with ModalDialogManager(ProgressMessage2, "Downloading the master list of tags", parent=self):
-            tagsLoaded=MasterTags().Load(f"/{self.RootDir}")
+        # Without the master list of tags, FE can't start: an upload of a list read as empty would wipe the server's.
         if not tagsLoaded:
             wx.MessageBox(f"The master list of tags ({MasterTags.Filename}) could not be read from the server, so "
                           f"FanzinesEditor cannot start. Check the connection and try again; the log has the details.",
