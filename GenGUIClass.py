@@ -281,6 +281,26 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		fgSizerComments.Add( self.tLocaleText, 0, wx.ALL|wx.EXPAND, 5 )
 
+		self.m_staticTextTags = wx.StaticText( self, wx.ID_ANY, u"Tags:", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.m_staticTextTags.Wrap( -1 )
+
+		fgSizerComments.Add( self.m_staticTextTags, 0, wx.ALIGN_RIGHT|wx.ALL, 5 )
+
+		bSizerTags = wx.BoxSizer( wx.HORIZONTAL )
+
+		self.stTags = wx.StaticText( self, wx.ID_ANY, u"(none)", wx.DefaultPosition, wx.DefaultSize, 0 )
+		self.stTags.Wrap( -1 )
+
+		self.stTags.SetToolTip( u"This page's tags, as a comma-separated list" )
+
+		bSizerTags.Add( self.stTags, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+
+		self.bEditTags = wx.Button( self, wx.ID_ANY, u"Edit", wx.DefaultPosition, wx.DefaultSize, 0 )
+		bSizerTags.Add( self.bEditTags, 0, wx.ALL, 5 )
+
+
+		fgSizerComments.Add( bSizerTags, 0, wx.EXPAND, 5 )
+
 		self.m_staticText9 = wx.StaticText( self, wx.ID_ANY, u"Credits: ", wx.DefaultPosition, wx.DefaultSize, 0 )
 		self.m_staticText9.Wrap( -1 )
 
@@ -436,6 +456,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		self.cbComplete.Bind( wx.EVT_CHECKBOX, self.OnCheckComplete )
 		self.tTopComments.Bind( wx.EVT_TEXT, self.OnTopCommentsText )
 		self.tLocaleText.Bind( wx.EVT_TEXT, self.OnLocaleText )
+		self.bEditTags.Bind( wx.EVT_BUTTON, self.OnEditTags )
 		self.tCredits.Bind( wx.EVT_TEXT, self.OnCreditsText )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_CHANGED, self.OnGridCellChanged )
 		self.wxGrid.Bind( wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnGridCellLeftClick )
@@ -539,6 +560,9 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 		event.Skip()
 
 	def OnLocaleText( self, event ):
+		event.Skip()
+
+	def OnEditTags( self, event ):
 		event.Skip()
 
 	def OnCreditsText( self, event ):

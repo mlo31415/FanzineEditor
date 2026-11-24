@@ -459,6 +459,7 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
                 self.rbOrdering.SetSelection(iOrder)
             self.tClubname.ChangeValue(self.Datasource.Clubname)
             self.tLocaleText.ChangeValue(self.Datasource.LocaleAsText)
+            self.ShowTags()
             self.tTopComments.ChangeValue(self.Datasource.TopComments)
 
             self.cbComplete.SetValue(self.Datasource.Complete)      # (A checkbox SetValue does not fire events)
@@ -1909,6 +1910,22 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.RefreshWindowDeferred()
 
     #------------------
+    # The tags are shown as a comma-separated list, or "(none)"
+    def ShowTags(self) -> None:
+        self.stTags.SetLabel(self.Datasource.Tags if self.Datasource.Tags != "" else "(none)")
+        self.Layout()      # The Edit button follows the end of the list, so it moves when the list's length changes
+
+    #------------------
+    def OnEditTags(self, event):
+        with wx.TextEntryDialog(self, "Tags, separated by commas:", "Edit Tags", value=self.Datasource.Tags) as dlg:     # (with: destroyed on Cancel, too)
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            tags=[x.strip() for x in dlg.GetValue().split(",")]
+        self.Datasource.Tags=", ".join([x for x in tags if x != ""])
+        self.ShowTags()
+        self.RefreshWindow(DontRefreshGrid=True)
+
+    #------------------
     def OnCreditsText(self, event):
         self.Datasource.Credits=self.tCredits.GetValue().strip()
         self.RefreshWindowDeferred()
@@ -3356,7 +3373,7 @@ class FanzineIndexPage(GridDataSource):
         self.FanzineType: str=""
         self.Complete=False     # Is this fanzine series complete?
         self.Credits=""         # Who is to be credited for this affair?
-        self.Tags: str=""       # The page's tags, comma-separated. Not yet defined or editable in FE: kept as found on the page.
+        self.Tags: str=""       # The page's tags, comma-separated. (What the tags are is not yet defined.)
         self.Updated: ClassicFanzinesDate=ClassicFanzinesDate("Long, long ago")
         self.Created: ClassicFanzinesDate=ClassicFanzinesDate("Long, long ago")
 
@@ -3367,7 +3384,7 @@ class FanzineIndexPage(GridDataSource):
             s+=self._colDefs.Signature()
         s+=hash(f"{self._name};{self.TopComments.strip()};{' '.join(self.Locale).strip()}")
         s+=hash(f"{self.TopComments.strip()};{self.Significance}")
-        s+=hash(f"{self.Name.MainName};{self.Editors};{self.Dates};{self.FanzineType};{self.Clubname};{self.Credits};{self.Ordering};{self.Complete}")
+        s+=hash(f"{self.Name.MainName};{self.Editors};{self.Dates};{self.FanzineType};{self.Clubname};{self.Credits};{self.Ordering};{self.Complete};{self.Tags}")
         s+=sum([x.Signature()*(i+1) for i, x in enumerate(self._fanzineList)])
         s+=hash(self._specialTextColor)
         return s
