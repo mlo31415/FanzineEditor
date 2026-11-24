@@ -56,6 +56,7 @@ def _StubDialogs(wx) -> None:
             Dialogs.Questions.append(message)
         def ShowModal(self): return Dialogs.Answer
         def SetYesNoLabels(self, *a): return True
+        def SetYesNoCancelLabels(self, *a): return True
         def Destroy(self): pass
         def __enter__(self): return self
         def __exit__(self, *a): pass

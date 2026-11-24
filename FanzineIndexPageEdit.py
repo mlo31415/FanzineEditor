@@ -26,6 +26,8 @@ from FanzineNames import FanzineNames
 from FanzineDateTime import FanzineDate, InterpretRelativeWords
 from FanzineIndexPageTableRow import FanzineIndexPageTableRow
 from FanzineIndexPageOrdering import AnalyzeOrdering as AnalyzeFIPOrdering, ParseMessyNumber
+from MasterTags import MasterTags, SplitTags
+from EditTagsDialog import EditTagsDialog
 
 from FTP import FTP
 
@@ -1916,9 +1918,16 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.Layout()      # The Edit button follows the end of the list, so it moves when the list's length changes
 
     #------------------
-    # The dialog for editing the tags is yet to be defined. It will set self.Datasource.Tags, then call ShowTags() and RefreshWindow().
+    # Choose the page's tags from the master list (to which new ones may be added)
     def OnEditTags(self, event):
-        pass
+        with EditTagsDialog(self, SplitTags(self.Datasource.Tags), MasterTags().Tags) as dlg:     # (with: destroyed on Cancel, too)
+            if dlg.ShowModal() != wx.ID_OK:
+                return
+            for tag in dlg.NewMasterTags:
+                MasterTags().Add(tag)
+            self.Datasource.Tags=", ".join(dlg.CheckedTags)
+        self.ShowTags()
+        self.RefreshWindow(DontRefreshGrid=True)
 
     #------------------
     def OnCreditsText(self, event):

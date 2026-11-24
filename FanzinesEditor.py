@@ -28,6 +28,7 @@ from FanzineNames import FanzineNames
 from GenGUIClass import FanzinesGridGen
 from GenLogDialogClass import LogDialog
 from ClassicFanzinesLine import ClassicFanzinesLine
+from MasterTags import MasterTags
 
 
 # The logs are started afresh each time FE starts, so keep the last session's as "... (previous).txt". After a problem
@@ -573,6 +574,16 @@ class FanzinesEditorWindow(FanzinesGridGen):
                           "FanzinesEditor", wx.OK|wx.ICON_ERROR)
             self.failure=True
             return
+        # The master list of tags. (Without it, FE can't start: an upload of a list read as empty would wipe the server's.)
+        with ModalDialogManager(ProgressMessage2, "Downloading the master list of tags", parent=self):
+            tagsLoaded=MasterTags().Load(f"/{self.RootDir}")
+        if not tagsLoaded:
+            wx.MessageBox(f"The master list of tags ({MasterTags.Filename}) could not be read from the server, so "
+                          f"FanzinesEditor cannot start. Check the connection and try again; the log has the details.",
+                          "FanzinesEditor", wx.OK|wx.ICON_ERROR)
+            self.failure=True
+            return
+
         cfllist.sort(key=lambda cfl: cfl.ServerDir.casefold())
         self._fanzinesList=cfllist      # Update the linear list of fanzines
         self.Datasource.FanzineList=self._fanzinesList      # Update the rectangular grid of fanzine server directories
@@ -611,7 +622,8 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
     def OnClose(self, event):
         # Offer Exit Anyway / Upload and Exit / Cancel when the list has unsaved changes (added/deleted fanzines).
-        choice=OnCloseHandling3(event, self.NeedsSaving(), "The list of fanzines has been changed but not yet uploaded.")
+        changed=" and ".join(([] if len(self._listChanges) == 0 else ["the list of fanzines"])+(["the master list of tags"] if MasterTags().Edited else []))
+        choice=OnCloseHandling3(event, self.NeedsSaving(), f"{changed[:1].upper()}{changed[1:]} {'have' if ' and ' in changed else 'has'} been changed but not yet uploaded.")
         if choice == "cancel":
             return
         if choice == "upload":
@@ -675,8 +687,9 @@ class FanzinesEditorWindow(FanzinesGridGen):
 
 
     # Only real changes count. (Comparing the displayed grid with what was saved made a search look like a change.)
+    # Tags added to the master list (from a fanzine's Edit Tags) count, too: they're uploaded along with the list.
     def NeedsSaving(self):
-        return len(self._listChanges) > 0
+        return len(self._listChanges) > 0 or MasterTags().Edited
 
 
     def OnSearchText(self, event):       
@@ -741,6 +754,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
                 changed=True
                 reconnected=fsw.CFL.ServerDir
 
+        self.UpdateNeedsSavingFlag()    # (Tags may have been added to the master list)
         if not changed:
             return
         self._fanzinesList.sort(key=lambda cfl: cfl.ServerDir.casefold())
@@ -807,6 +821,7 @@ class FanzinesEditorWindow(FanzinesGridGen):
                 return
             fipw.ShowModal()
 
+        self.UpdateNeedsSavingFlag()    # (Tags may have been added to the master list)
         # The edit may have updated some of the parameters -- and rows may have been moved to other fanzines
         # (possibly newly created ones) whose list entries also need updating or adding.
         # (We can't use icol/irow to locate the entry -- they're meaningless if a search was active -- so we
@@ -829,6 +844,19 @@ class FanzinesEditorWindow(FanzinesGridGen):
     # Upload the fanzines list to the classic fanzine page
     @GuardReentry
     def OnUploadPressed( self, event ):
+        # Tags added to the master list this session go up first
+        if MasterTags().Edited:
+            with ModalDialogManager(ProgressMessage2, f"Uploading '{MasterTags.Filename}'", parent=self):
+                tagsUploaded=MasterTags().Upload(f"/{self.RootDir}")
+            if not tagsUploaded:
+                wx.MessageBox("The master list of tags could not be uploaded (the log has the details), so nothing was "
+                              "uploaded. Your changes are still pending: try the upload again later.", "Upload failed",
+                              wx.OK|wx.ICON_WARNING, parent=self)
+                return
+            self.UpdateNeedsSavingFlag()
+            if len(self._listChanges) == 0:
+                return      # (The list itself hasn't changed)
+
         # FE is often left running for days, and other sessions may have uploaded the list since this one read it. So
         # don't write our copy over theirs: re-read the list from the server and apply just this session's changes.
         with ModalDialogManager(ProgressMessage2, "Downloading main fanzine page", parent=self):

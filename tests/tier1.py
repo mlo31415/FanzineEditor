@@ -1243,7 +1243,7 @@ def HeaderLayout() -> None:
     Upload(w)
     R.Check("<!--tags-->Tags: Humor, SF<!--tags-->" in Page("Apollo"), "and kept when it's uploaded again")
 
-    w.Datasource.Tags="Humor, Fanhistory"       # (What the yet-to-be-defined Edit dialog will do)
+    w.Datasource.Tags="Humor, Fanhistory"       # (As the Edit Tags dialog's OK does: see Tags())
     w.ShowTags()
     R.Check(w.stTags.GetLabel() == "Humor, Fanhistory" and w.NeedsSaving(), "changed tags: shown, and the page marked as changed", w.stTags.GetLabel())
     Upload(w)
@@ -1263,6 +1263,112 @@ def HeaderLayout() -> None:
     w=OpenPage("Apollo")
     R.Check(w.Datasource.TopComments == "Some comments", "and the comments read back without it", repr(w.Datasource.TopComments))
     w.Destroy()
+
+
+def Tags() -> None:
+    R.Section("Tags: the master list, and choosing a page's tags from it (mlo, 2026-11-24)")
+    from MasterTags import MasterTags
+    from EditTagsDialog import EditTagsDialog
+    tagsFile=f"/{T}/{MasterTags.Filename}"
+
+    S=FreshServer()
+    m=FE.FanzinesEditorWindow(None)
+    R.Check(S.Exists(tagsFile) and S.Get(tagsFile) == b"" and MasterTags().Tags == [] and not m.NeedsSaving(),
+            "no master list on the server: an empty one is created there at startup; nothing to upload", str(MasterTags().Tags))
+    m.Destroy()
+    S.Put(tagsFile, "Humor, sf ,  , Fanhistory,\nhumor")
+    m=FE.FanzinesEditorWindow(None)
+    R.Check(MasterTags().Tags == ["Fanhistory", "Humor", "sf"] and not m.NeedsSaving(),
+            "read at startup: alphabetical, blanks and spaces ignored, one of each (ignoring case)", str(MasterTags().Tags))
+    m.Destroy()
+    realLoad=MasterTags.Load
+    MasterTags.Load=lambda self, rootDir: False
+    Dialogs.Clear()
+    try:
+        m=FE.FanzinesEditorWindow(None)
+    finally:
+        MasterTags.Load=realLoad
+    R.Check(m.failure and any("master list of tags" in x for x in Dialogs.Messages), "can't be read: FE says why and doesn't start", str(Dialogs.Messages))
+    m.Destroy()
+
+    # The dialog itself
+    d=EditTagsDialog(None, ["Humor", "Typo", "fanhistory"], MasterTags().Tags)
+    boxes=[(cb.GetLabel(), cb.GetValue(), cb.GetFont().GetWeight() == wx.FONTWEIGHT_BOLD) for cb in d._list.GetChildren()]
+    R.Check(boxes == [("Typo", False, True), ("Fanhistory", True, False), ("Humor", True, False), ("sf", False, False)],
+            "the dialog: a page tag not in the master list on top in bold, unchecked; then the master list, the page's tags checked", str(boxes))
+    Dialogs.TextAnswers.append("SF")
+    d.bNewTag.Command(wx.CommandEvent(wx.wxEVT_BUTTON, d.bNewTag.GetId()))
+    R.Check(d._boxes["sf"].GetValue() and len(d._boxes) == 4 and d.NewMasterTags == [], "New Tag, one that's already there (ignoring case): it's just checked")
+    Dialogs.TextAnswers.append(" Clubzine ")
+    d.bNewTag.Command(wx.CommandEvent(wx.wxEVT_BUTTON, d.bNewTag.GetId()))
+    labels=[cb.GetLabel() for cb in d._list.GetChildren()]
+    R.Check(labels == ["Typo", "Clubzine", "Fanhistory", "Humor", "sf"] and d._boxes["clubzine"].GetValue(), "New Tag: added in its place, checked", str(labels))
+    Dialogs.Clear()
+    Dialogs.TextAnswers.append("Q&A, misc")
+    d.bNewTag.Command(wx.CommandEvent(wx.wxEVT_BUTTON, d.bNewTag.GetId()))
+    Dialogs.TextAnswers.append(None)
+    d.bNewTag.Command(wx.CommandEvent(wx.wxEVT_BUTTON, d.bNewTag.GetId()))
+    R.Check(len(d._boxes) == 5 and any("can't contain a comma" in x for x in Dialogs.Messages), "a tag with a comma is refused, saying why; Cancel adds nothing", str(Dialogs.Messages))
+    d._boxes["humor"].SetValue(False)
+    d._boxes["humor"].ProcessEvent(wx.CommandEvent(wx.wxEVT_CHECKBOX, d._boxes["humor"].GetId()))
+    d._boxes["typo"].SetValue(True)
+    ev=wx.CommandEvent(wx.wxEVT_CHECKBOX, d._boxes["typo"].GetId())
+    ev.SetInt(1)
+    d._boxes["typo"].ProcessEvent(ev)
+    R.Check(d.CheckedTags == ["Clubzine", "Fanhistory", "sf", "Typo"] and d.NewMasterTags == ["Clubzine", "Typo"],
+            "checked and unchecked at will; a checked unlisted tag joins the master list like a new one", f"{d.CheckedTags} {d.NewMasterTags}")
+    d.Destroy()
+
+    # From the page's Edit button
+    FreshServer()
+    S=harness.Server
+    S.Put(tagsFile, "Fanhistory, Humor")
+    m=FE.FanzinesEditorWindow(None)
+    w=OpenPage("Apollo")
+    w.Datasource.Tags="Humor, Typo"
+    w.ShowTags()
+    Upload(w)
+    realShowModal=EditTagsDialog.ShowModal
+    seen: list[str]=[]
+    def Choose(answer: int, newTag: str, check: list[str]):
+        def ShowModal(self):
+            seen[:]=[cb.GetLabel() for cb in self._list.GetChildren()]
+            self.AddNewTag(newTag)
+            for tag in check:
+                self._checked.add(tag.casefold())
+            return answer
+        return ShowModal
+    try:
+        EditTagsDialog.ShowModal=Choose(wx.ID_CANCEL, "Zines", ["Typo"])
+        w.bEditTags.Command(wx.CommandEvent(wx.wxEVT_BUTTON, w.bEditTags.GetId()))
+        R.Check(seen == ["Typo", "Fanhistory", "Humor"] and w.Datasource.Tags == "Humor, Typo" and not w.NeedsSaving() and MasterTags().Tags == ["Fanhistory", "Humor"]
+                and not MasterTags().Edited, "Edit, then Cancel: neither the page nor the master list changes", f"{seen} {w.Datasource.Tags!r} {MasterTags().Tags}")
+        EditTagsDialog.ShowModal=Choose(wx.ID_OK, "Zines", ["Typo"])
+        w.bEditTags.Command(wx.CommandEvent(wx.wxEVT_BUTTON, w.bEditTags.GetId()))
+    finally:
+        EditTagsDialog.ShowModal=realShowModal
+    R.Check(w.Datasource.Tags == "Humor, Typo, Zines" and w.stTags.GetLabel() == "Humor, Typo, Zines" and w.NeedsSaving(),
+            "Edit, then OK: the page gets the checked tags (shown, the page marked as changed)", w.stTags.GetLabel())
+    R.Check(MasterTags().Tags == ["Fanhistory", "Humor", "Typo", "Zines"] and MasterTags().Edited, "and the master list gets the new tags", str(MasterTags().Tags))
+    Upload(w)
+    R.Check("<!--tags-->Tags: Humor, Typo, Zines<!--tags-->" in Page("Apollo"), "the page's tags are uploaded with the page")
+    w.Destroy()
+
+    m.UpdateNeedsSavingFlag()
+    R.Check(m.NeedsSaving() and m.GetTitle().rstrip().endswith("*") and S.Get(tagsFile) == b"Fanhistory, Humor",
+            "the main window: an edited master list is a change to upload ('*'); not uploaded yet")
+    Dialogs.Clear()
+    Dialogs.Answer=wx.ID_CANCEL
+    m.OnClose(None)
+    Dialogs.Answer=wx.ID_YES
+    R.Check(any("master list of tags has been changed" in x for x in Dialogs.Questions), "closing asks about it", str(Dialogs.Questions))
+    classicBefore=S.Get("/fanzines/Classic_Fanzines.html")
+    m.OnUploadPressed(None)
+    R.Check(S.Get(tagsFile) == b"Fanhistory, Humor, Typo, Zines" and not m.NeedsSaving() and not m.GetTitle().rstrip().endswith("*"),
+            "Upload: the master list goes up, and nothing is left to upload", S.Get(tagsFile))
+    R.Check(not S.Exists(f"/{T}/Classic_Fanzines.html") and S.Get("/fanzines/Classic_Fanzines.html") == classicBefore,
+            "and the list of fanzines, unchanged, isn't rewritten")
+    m.Destroy()
 
 
 def SelectionKeptOnce() -> None:
@@ -1418,7 +1524,7 @@ def WindowPlacement() -> None:
 
 
 # ======================================================================================================================
-for group in (PureFunctions, PdfWork, Deltas, Uploads, NamelessFiles, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, ListRedrawFailure, SearchAndWatchdog, HeaderLayout, SelectionKeptOnce, ReconnectLostPage, WindowPlacement):
+for group in (PureFunctions, PdfWork, Deltas, Uploads, NamelessFiles, Regenerate, Moves, PageWindow, MainWindow, Safeguards, TidyUps, TidyUps2, Collections, NewComputer, FtpFailures, ReplaceURL, ListRedrawFailure, SearchAndWatchdog, HeaderLayout, Tags, SelectionKeptOnce, ReconnectLostPage, WindowPlacement):
     try:
         group()
     except Exception:
