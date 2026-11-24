@@ -1243,18 +1243,14 @@ def HeaderLayout() -> None:
     Upload(w)
     R.Check("<!--tags-->Tags: Humor, SF<!--tags-->" in Page("Apollo"), "and kept when it's uploaded again")
 
-    Dialogs.TextAnswers.append(None)
-    w.bEditTags.Command(wx.CommandEvent(wx.wxEVT_BUTTON, w.bEditTags.GetId()))
-    R.Check(w.Datasource.Tags == "Humor, SF" and not w.NeedsSaving(), "Edit, then Cancel: nothing changes", w.Datasource.Tags)
-    Dialogs.TextAnswers.append(" Humor , , Fanhistory ")
-    w.bEditTags.Command(wx.CommandEvent(wx.wxEVT_BUTTON, w.bEditTags.GetId()))
-    R.Check(w.Datasource.Tags == "Humor, Fanhistory" and w.stTags.GetLabel() == "Humor, Fanhistory" and w.NeedsSaving(),
-            "Edit, then OK: the list is tidied, shown, and the page marked as changed", f"{w.Datasource.Tags!r} {w.stTags.GetLabel()!r}")
+    w.Datasource.Tags="Humor, Fanhistory"       # (What the yet-to-be-defined Edit dialog will do)
+    w.ShowTags()
+    R.Check(w.stTags.GetLabel() == "Humor, Fanhistory" and w.NeedsSaving(), "changed tags: shown, and the page marked as changed", w.stTags.GetLabel())
     Upload(w)
     R.Check("<!--tags-->Tags: Humor, Fanhistory<!--tags-->" in Page("Apollo"), "and uploaded")
-    Dialogs.TextAnswers.append("  ")
-    w.bEditTags.Command(wx.CommandEvent(wx.wxEVT_BUTTON, w.bEditTags.GetId()))
-    R.Check(w.Datasource.Tags == "" and w.stTags.GetLabel() == "(none)", "all tags removed: '(none)' again", w.stTags.GetLabel())
+    w.Datasource.Tags=""
+    w.ShowTags()
+    R.Check(w.stTags.GetLabel() == "(none)", "all tags removed: '(none)' again", w.stTags.GetLabel())
 
     gap='<!--topcommentsgap--><div style="height:0.6em"></div><!--topcommentsgap-->'
     w.Datasource.TopComments=""

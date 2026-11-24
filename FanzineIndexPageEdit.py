@@ -1916,14 +1916,9 @@ class FanzineIndexPageWindow(FanzineIndexPageEditGen):
         self.Layout()      # The Edit button follows the end of the list, so it moves when the list's length changes
 
     #------------------
+    # The dialog for editing the tags is yet to be defined. It will set self.Datasource.Tags, then call ShowTags() and RefreshWindow().
     def OnEditTags(self, event):
-        with wx.TextEntryDialog(self, "Tags, separated by commas:", "Edit Tags", value=self.Datasource.Tags) as dlg:     # (with: destroyed on Cancel, too)
-            if dlg.ShowModal() != wx.ID_OK:
-                return
-            tags=[x.strip() for x in dlg.GetValue().split(",")]
-        self.Datasource.Tags=", ".join([x for x in tags if x != ""])
-        self.ShowTags()
-        self.RefreshWindow(DontRefreshGrid=True)
+        pass
 
     #------------------
     def OnCreditsText(self, event):
