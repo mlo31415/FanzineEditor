@@ -1241,6 +1241,17 @@ def HeaderLayout() -> None:
     R.Check(w.Datasource.Tags == "Humor, SF", "a page's tags are read", w.Datasource.Tags)
     Upload(w)
     R.Check("<!--tags-->Tags: Humor, SF<!--tags-->" in Page("Apollo"), "and kept when it's uploaded again")
+
+    gap='<!--topcommentsgap--><div style="height:0.6em"></div><!--topcommentsgap-->'
+    w.Datasource.TopComments=""
+    Upload(w)
+    R.Check("<!--topcommentsgap--><!--topcommentsgap-->" in Page("Apollo"), "no top comments: nothing between them and the buttons")
+    w.Datasource.TopComments="Some comments"
+    Upload(w)
+    R.Check(gap in Page("Apollo"), "top comments: half a line before the buttons")
+    w.Destroy()
+    w=OpenPage("Apollo")
+    R.Check(w.Datasource.TopComments == "Some comments", "and the comments read back without it", repr(w.Datasource.TopComments))
     w.Destroy()
 
 

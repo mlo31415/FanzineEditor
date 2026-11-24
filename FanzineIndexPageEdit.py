@@ -3930,6 +3930,8 @@ class FanzineIndexPage(GridDataSource):
             LogError(f"PutFanzineIndexPage({url}) failed: InsertHTMLUsingFanacComments('topcomments')")
             return False
         output=temp
+        # Half a line between the top comments, if there are any, and the row of buttons (a line of text is about 1.2em)
+        output=InsertBetweenHTMLComments(output, "topcommentsgap", '<div style="height:0.6em"></div>' if insert.strip() != "" else "")
 
         keywords=""     # Not currently being used
         temp=InsertInvisibleTextInsideFanacComment(output, "keywords", keywords)
