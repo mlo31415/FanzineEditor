@@ -2262,7 +2262,7 @@
                     <property name="maxlength">0</property>
                     <property name="min_size">-1,3</property>
                     <property name="minimize_button">0</property>
-                    <property name="minimum_size">-1,100</property>
+                    <property name="minimum_size">-1,66</property>
                     <property name="moveable">1</property>
                     <property name="name">tTopComments</property>
                     <property name="pane_border">1</property>

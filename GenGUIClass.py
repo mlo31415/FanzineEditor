@@ -265,7 +265,7 @@ class FanzineIndexPageEditGen ( wx.Dialog ):
 
 		self.tTopComments = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE )
 		self.tTopComments.SetToolTip( u"Other top blather for the fanzine series page." )
-		self.tTopComments.SetMinSize( wx.Size( -1,100 ) )
+		self.tTopComments.SetMinSize( wx.Size( -1,66 ) )
 
 		fgSizerComments.Add( self.tTopComments, 1, wx.ALL|wx.EXPAND, 5 )
 
